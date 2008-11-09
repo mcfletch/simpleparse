@@ -1,0 +1,24 @@
+include MANIFEST.in
+include license.txt
+include setup.py
+recursive-include . *.py
+recursive-include stt *
+recursive-include doc *.html
+recursive-include doc *.css
+prune examples/html.py
+prune examples/py*
+prune examples/rtf*
+global-exclude *CVS*
+global-exclude *Cvs*
+global-exclude *CVS*
+global-exclude *cvs*
+global-exclude *.scc
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.gz
+global-exclude *.zip
+global-exclude *.bat
+global-exclude *.exe
+global-exclude *.sxw
+global-exclude *.so
+global-exclude *.pyd

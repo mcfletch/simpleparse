@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+      	               
+  <meta http-equiv="CONTENT-TYPE"
+ content="text/html; charset=windows-1252">
+  <title>Common Problems with SimpleParse 2.0</title>
+                     	 	               
+  <meta name="GENERATOR" content="OpenOffice.org 641  (Win32)">
+      	               
+  <meta name="AUTHOR" content="Mike Fletcher">
+      	               
+  <meta name="CREATED" content="20020705;15224300">
+      	               
+  <meta name="CHANGEDBY" content="Mike Fletcher">
+      	               
+  <meta name="CHANGED" content="20020706;20211800">
+      	               
+  <link rel="stylesheet" type="text/css" href="sitestyle.css">
+                   
+  <meta name="author" content="Mike C. Fletcher">
+</head>
+  <body lang="en-US">
+           
+<h1>Common Problems</h1>
+           
+<p>Describes common errors, anti-patterns and known bugs with the SimpleParse 
+  2.0 engine.</p>
+           
+<h2>Repetition-as-Recursion</h2>
+           
+<p>Is <b>extremely inefficient</b>, it generates 4 new Python objects and 
+  a number of new object pointers for every match (figure &gt; 100 bytes for
+  each match), on top of the engine overhead in tracking the recursion, so
+ if you have a 1-million character match that's “matching” for every character, 
+  you'll have hundreds of megabytes of memory used.</p>
+           
+<p>In addition, if you are not using the non-recursive rewrite of mx.TextTools, 
+  you can actually blow up the C stack with the recursive calls to tag().
+ Symptoms of this are a memory access error when attempting to parse.</p>
+           
+<pre><font color="#ff0000"><font size="2" style="font-size: 11pt;"><span
+ style="background: transparent none repeat scroll 50% 0%;">a := 'b', a? # bad!</span></font></font><br><font
+ color="#0000ff"><span
+ style="background: transparent none repeat scroll 50% 0%;">a := 'b'+ # good!</span></font></pre>
+         
+<h2> Null-match Children of Repeating Groups</h2>
+           
+<p>At present, there's no way for the engine to know whether a child has been
+satisfied (matched) because they are optional (or all of their children are
+optional), or because they actually matched.  The problem with the obvious 
+  solution of just checking whether we've moved forward in the text is that 
+  many classes of match object may match depending on external (non-text-based)
+   conditions, so if we do the check, all of those mechanisms suddenly fail. 
+   For now, make sure:</p>
+           
+<ul>
+      	<li>                         
+    <p><b>No child</b> of a 	<b>repeating FirstOfGroup</b> (x/y/z)+ or (x/y/z)* 
+  can <b>match a 	Null-string</b></p>
+      	</li>
+       <li>                         
+    <p><b>At least one child </b>	of a <b>repeating SequentialGroup </b>(x,y,z)+ 
+  or (x,y,z)* <b>must not 	match</b> the Null-string</p>
+      </li>
+         
+</ul>
+           
+<p>You can recognize this situation by the process going into an endless loop
+with little or no memory being consumed.  To fix this one, I'd likely need
+to add another return value type to the mxTextTools engine.</p>
+           
+<h2>No Backtracking</h2>
+           
+<p>The TextTools engine does not support backtracking as seen in RE engines 
+  and many parsers, so productions like this can never match:</p>
+           
+<pre><font color="#ff0000">a := (b/c)*, c</font></pre>
+         
+<p> Because the 'c' productions will all have been consumed by the FirstOfGroup, 
+  so the last 'c' can never match.  This is a fundamental limit of the current 
+  back-end, so unless a new back-end is created, the problem will not go away.
+   You will need to design your grammars accordingly.</p>
+           
+<h2>First-Of, not Longest-Of (Meaning of / )</h2>
+           
+<p>The production c := (a/b) produces a FirstOfGroup, that is, a group which 
+  <b>matches the first child to match</b>.  Many parsers and regex engines 
+ use an algorithm that matches all children and chooses the longest successful 
+  match.  It would be possible to define a new TextTools tagging command to
+  support  the longest-of semantics for Table/SubTable matches, but I haven't
+  felt the need to do so.  If such a command is created, it will likely be
+ spelled '|' rather than '/' in the SimpleParse grammar.<br>
+</p>
+<h2>Grouping Rules</h2>
+<p>Although not particularly likely, users of SimpleParse 1.0 may have relied
+on the (extremely non-intuitive) grouping mechanism for element tokens in
+their grammars.  With that mechanism, the group:<br>
+</p>
+<pre>a,b,c/d,e<br></pre>
+<p>was interpreted as:<br>
+</p>
+<pre>a,b,(c/(d,e))<br></pre>
+<p>The new rule is simply that alternation binds closer than sequences, so
+the same grammar becomes:<br>
+</p>
+<pre>a,b,(c/d),e<br></pre>
+<p>which, though no more (or less) intuitive than:<br>
+</p>
+<pre>(a,b,c)/(d,e) ### it doesn't work this way!!!<br></pre>
+<p>is certainly better than the original mechanism.<br>
+</p>
+ 
+<h2>mxTextTools Versions</h2>
+ 
+<p>You will, if possible, want to use the non-recursive rewrite of the 2.1.0
+mxTextTools engine (2.1.0nr).  At the time of writing, the mainline 2.1.0b3
+has some errors (which I'm told are fixed for 2.1.0final), while the non-recursive 
+rewrite passes all tests.  The bugs in the (recursive) engine(s) that are
+known (and not likely to be fixed in the case of 2.1.0 final) are:<br>
+ </p>
+ 
+<ul>
+   <li>Recursive data structure returns from reported subtable matches (not 
+a problem for SimpleParse, we never report a subtable match. [2.0.3 only]</li>
+   <li>Failure to truncate/report position for a failed table correctly (may 
+confuse your code, as the results from failed matches may show up in your 
+tag-lists [2.0.3 only]</li>
+   <li>AppendToTag only supports list objects with [2.0.3 only]</li>
+   <li>C Stack overflow with recursive calls [2.0.3 AND 2.1.0 (recursive)]<br>
+   </li>
+ 
+</ul>
+ <a href="index.html">Up to index...</a><br>
+         
+<p align="center">A <a href="http://sourceforge.net"> <img
+ src="http://sourceforge.net/sflogo.php?group_id=55673&amp;type=5"
+ width="210" height="62" border="0" alt="SourceForge Logo">
+   </a><br>
+   Open Source <a href="http://simpleparse.sourceforge.net/">project</a><br>
+ </p>
+ <br>
+</body>
+</html>

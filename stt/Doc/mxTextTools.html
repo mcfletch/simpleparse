@@ -1,0 +1,2677 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+  <HEAD>
+    <TITLE>TextTools - Fast Text Manipulation Tools for Python</TITLE>
+    <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+    <STYLE TYPE="text/css">
+      p { text-align: justify; }
+      ul.indent { }
+      body { }
+    </STYLE>
+  </HEAD>
+
+  <BODY TEXT="#000000" BGCOLOR="#FFFFFF" LINK="#0000EE" VLINK="#551A8B" ALINK="#FF0000">
+
+    <HR NOSHADE WIDTH="100%">
+
+    <H2>mxTextTools - Fast Text Manipulation Tools for Python</H2>
+
+    <HR SIZE=1 NOSHADE WIDTH="100%">
+    <TABLE WIDTH="100%">
+      <TR>
+	<TD>
+	  <SMALL>
+	    <A HREF="#Engine">Engine</A> :
+	    <A HREF="#TextSearchObjects">TextSearch Objects</A> :
+	    <A HREF="#CharSetObjects">CharSet Objects</A> :
+	    <A HREF="#Functions">Functions</A> :
+	    <A HREF="#Constants">Constants</A> :
+	    <A HREF="#Examples">Examples</A> :
+	    <A HREF="#Structure">Structure</A> :
+	    <A HREF="#Support">Support</A> :
+            <A HREF="http://www.egenix.com/files/python/eGenix-mx-Extensions.html#Download-mxBASE"><B>Download</B></A> :
+	    <A HREF="#Copyright">Copyright &amp; License</A> :
+	    <A HREF="#History">History</A> :
+	    <A HREF="" TARGET="_top">Home</A>
+	</SMALL>
+	</TD>
+	<TD ALIGN=RIGHT VALIGN=TOP>
+	  <SMALL>
+	    <FONT COLOR="#FF0000">Version 2.1.0</FONT>
+	  </SMALL>
+	</TD>
+    </TABLE>
+    <HR SIZE=1 NOSHADE WIDTH="100%">
+
+    <H3>Introduction</H3>
+
+    <UL CLASS="indent">
+
+	<P>
+	  mxTextTools is a collection of high-speed string
+	  manipulation routines and new Python objects for dealing
+	  with common text processing tasks.
+	  
+	<P>
+	  One of the major features of this package is the integrated
+	  Tagging Engine which allows accessing the speed of compiled
+	  C programs while maintaining the portability of Python.  The
+	  Tagging Engine uses byte code "programs" written in form of
+	  Python tuples. These programs are then translated into an
+	  internal binary form which gets processed by a very fast
+	  virtual machine designed specifically for scanning text
+	  data. 
+	  
+	<P>
+	  As a result, the Tagging Engine allows parsing text at
+	  higher speeds than e.g. regular expression packages while
+	  still maintaining the flexibility of programming the parser
+	  in Python. Callbacks and user-defined matching functions
+	  extends this approach far beyond what you could do with
+	  other common text processing methods.
+
+	<P>
+	  Two other major features are the search and character set
+	  objects provided by the package. Both are implemented in C
+	  to give you maximum performance on all supported platforms.
+
+	<P>
+	  A note about the word '<I>tagging</I>': This originated from
+	  what is done in HTML to mark some text with a certain extra
+	  information. The Tagging Engine extends this notion to
+	  assigning Python objects to text substrings. Every substring
+	  marked in this way carries a 'tag' (the object) which can be
+	  used to do all kinds of useful things.
+
+	<P>
+	  If you are looking for more tutorial style documentation of
+	  mxTextTools, there's a new book by David Mertz about <A
+	  HREF="http://gnosis.cx/TPiP/">Text Processing with
+	  Python</A> which covers mxTextTools and other text oriented
+	  tools at great length.
+
+    </UL><!--CLASS="indent"-->
+    
+    <A NAME="Engine">
+
+    <H3>Tagging Engine</H3>
+
+    <UL CLASS="indent">
+
+	<P>
+	  The Tagging Engine is a low-level virtual machine (VM) which
+	  executes text search specific byte codes. This byte code is
+	  passed to the engine in form of Tag Tables which define the
+	  "program" to execute in terms of commands and command
+	  arguments.
+
+	<P>
+	  The Tagging Engine is capable of handling 8-bit text and
+	  Unicode (with some minor exceptions). Even combinations of
+	  the two string formats are accepted, but should be avoided
+	  for performance reasons in production code.
+
+	<H4>Tag List</H4>
+
+	<P>
+	  Marking certains parts of a text should not involve storing
+	  hundreds of small strings. This is why the Tagging Engine
+	  uses a specially formatted list of tuples to return the
+	  results.
+
+	<P>
+	  A Tag List is a list of tuples marking certain slices of a
+	  text. The tuples always have the format <PRE><FONT
+	  COLOR="#000066">(object, left_index, right_index, subtags)
+	  </FONT></PRE>
+	<P>
+	  with the meaning: <CODE>object</CODE> contains information
+	  about the slice <CODE>[left_index:right_index]</CODE> in
+	  some text. <CODE>subtags</CODE> is either another Tag List
+	  created by recursively invoking the Tagging Engine or
+	  <CODE>None</CODE>. 
+
+	<P>
+	  <U>Note:</U> Only the commands <CODE>Table</CODE> and
+	  <CODE>TableInList</CODE> create new Tag Lists and make them
+	  available via <CODE>subtags</CODE> and then only if the
+	  Tagging Engine was not called with <CODE>None</CODE> as
+	  value for the <CODE>taglist</CODE>. All other commands set
+	  this tuple entry to <CODE>None</CODE>. This is important to
+	  know if you want to analyze a generated Tag List, since it
+	  may require recursing into the <CODE>subtags</CODE> Tag List
+	  if that entry is not <CODE>None</CODE>.
+
+	<H4>Tag Table</H4>
+
+	<P>
+	  To create such taglists, you have to define a Tag Table and
+	  let the Tagging Engine use it to mark the text.  Tag Tables
+	  are defined using standard Python tuples containing other
+	  tuples in a specific format:
+
+	<PRE><FONT COLOR="#000066">tag_table = (('lowercase',AllIn,a2z,+1,+2),
+	     ('upper',AllIn,A2Z,+1),
+	     (None,AllIn,white+newline,+1),
+	     (None,AllNotIn,alpha+white+newline,+1),
+	     (None,EOF,Here,-4)) # EOF </FONT></PRE>
+
+	<P>
+	  The tuples contained in the table use a very simple format:
+	    <PRE><FONT COLOR="#000066">(tagobj, command+flags, command_argument
+	      		[,jump_no_match] [,jump_match=+1])
+	    </FONT></PRE>
+
+	<P>
+	  Starting with version 2.1.0 of mxTextTools, the Tagging
+	  Engine no longer uses these tuples directly, but instead
+	  compiles the Tag Table definitions into special TagTable
+	  objects. These objects are then processed by the Tagging
+	  Engine. 
+	  
+	<P>
+	  Even though the <CODE>tag()</CODE> Tagging Engine API
+	  compiles Tag Table definitions into the TagTable object
+	  on-the-fly, you can also compile the definitions yourself
+	  and then pass the TagTable object directly to
+	  <CODE>tag()</CODE>.
+
+	<H4>Jump Target Support</H4>
+
+	<P>
+	  To simplify writing Tag Table definitions, the Tag Table
+	  compiler also allows using string jump targets instead of
+	  jump offsets in the tuples:
+
+	<PRE><FONT COLOR="#000066">tag_table = (
+             'start',
+             ('lowercase',AllIn,a2z,+1,'skip'),
+	     ('upper',AllIn,A2Z,'skip'),
+
+             'skip',
+	     (None,AllIn,white+newline,+1),
+	     (None,AllNotIn,alpha+white+newline,+1),
+
+	     (None,EOF,Here,'start')) # EOF </FONT></PRE>
+
+	<P>
+	  These strings can be used as jump targets for jne and je
+	  when compiling the definition using TagTable() or
+	  UnicodeTagTable() and then get replaced with the numeric
+	  relative offsets at compile time.
+
+	<P>
+	  The Tagging Engine has a new command <CODE>JumpTarget</CODE>
+	  for this purpose which is implemented as no operation (NOP)
+	  command.
+
+	<H4>Tag Table Compiler</H4>
+
+	<P>
+	  Starting with version 2.1.0 of mxTextTools, the Tagging
+	  Engine uses compiled TagTable instances for performing the
+	  scanning. These TagTables are Python objects which can be
+	  created explicitely using a tag table definition in form of
+	  a tuple or a list (the latter are not cacheable, so it's
+	  usually better to transform the list into a tuple before
+	  passing it to the TagTable constructor).
+
+	<P>
+
+	  The <CODE>TagTable()</CODE> constructor will "compile" and
+	  check the tag table definition. It then stores the table in
+	  an internal data structure which allows fast access from
+	  within the Tagging Engine. The compiler also takes care of
+	  any needed conversions such as Unicode to string or
+	  vice-versa.
+
+	<P>
+
+	  There are generally two different kinds of compiled
+	  TagTables: one for scanning 8-bit strings and one for
+	  Unicode. <CODE>tag()</CODE> will complain if you try to scan
+	  strings with a UnicodeTagTable or Unicode with a string
+	  TagTable.
+
+	<P> 
+
+	  Note that <CODE>tag()</CODE> can take TagTables and tuples
+	  as tag table input. If given a tuple, it will automatically
+	  compile the tuple into a TagTable needed for the requested
+	  type of text (string or Unicode).
+
+	<H4>Caching of Compiled Tag Tables</H4>
+
+	<P> 
+
+	  The <CODE>TagTable()</CODE> constructor caches compiled
+	  TagTables if they are defined by a tuple and declared as
+	  cacheable. In that case, the compile TagTable will be stored
+	  in a dictionary addressed by the definition tuple's
+	  <CODE>id()</CODE> and be reused if the same compilation is
+	  requested again at some later point. The cache dictionary is
+	  exposed to the user as <CODE>tagtable_cache</CODE>
+	  dictionary. It has a hard limit of 100 entries, but can also
+	  be managed by user routines to lower this limit.
+
+	<H4>Semantics</H4>
+
+	<P>
+	  The Tagging Engine reads the Tag Table starting at the top
+	  entry. While performing the command actions (see below for
+	  details) it moves a read-head over the characters of the
+	  text. The engine stops when a command fails to match and no
+	  alternative is given or when it reaches a non-existing
+	  entry, e.g. by jumping beyond the end of the table.
+
+	<P>
+	  Tag Table entries are processed as follows:
+
+	<P>
+	  If the <CODE>command</CODE> matched, say the slice
+	  <CODE>text[l:r]</CODE>, the default action is to append
+	  <CODE>(tagobj,l,r,subtags)</CODE> to the taglist (this
+	  behaviour can be modified by using special
+	  <CODE>flags</CODE>; if you use <CODE>None</CODE> as tagobj,
+	  no tuple is appended) and to continue matching with the
+	  table entry that is reached by adding
+	  <CODE>jump_match</CODE> to the current position (think of
+	  them as relative jump offsets). 
+
+	  The head position of the engine stays where the command left
+	  it (over index <CODE>r</CODE>), e.g. for
+	  <CODE>(None,AllIn,'A')</CODE> right after the last 'A'
+	  matched.
+
+	<P>
+	  In case the <CODE>command</CODE> does not match, the
+	  engine either continues at the table entry reached after
+	  skipping <CODE>jump_no_match</CODE> entries, or if this
+	  value is not given, terminates matching the current
+	  table and returns <I>not matched</I>. The head position is
+	  always restored to the position it was in before the
+	  non-matching command was executed, enabling
+	  backtracking.
+
+	<P>
+	  The format of the <CODE>command_argument</CODE> is dependent
+	  on the command. It can be a string, a set, a search object,
+	  a tuple of some other wild animal from Python land. See the
+	  command section below for details.
+
+	<P>
+	  A table matches a string if and only if the Tagging Engine
+	  reaches a table index that lies beyond the end of the
+	  table. The engine then returns <I>matched ok</I>. Jumping
+	  beyond the start of the table (to a negative table index)
+	  causes the table to return with result <I>failed to
+	  match</I>.
+
+	<H4>Context Object Support</H4>
+
+	<P>
+	  Starting with version 2.1.0, the Tagging Engine supports
+	  carrying along an optional context object. The object can be
+	  used for storing data specific to the tagging procedure,
+	  error information, etc.
+
+	<P>
+	  You can access the context object by using a Python function
+	  as tag object which is then called with the context object
+	  as last argument if <CODE>CallTag</CODE> is used as command
+	  flag or in matching functions which are called as a result
+	  of the <CODE>Call</CODE> or <CODE>CallArg</CODE> commands.
+
+	<P>
+	  To remain backward compatible, the context object is only
+	  provided as last argument if given to the <CODE>tag()</CODE>
+	  function.
+
+	<P>
+	  New commands which make use of the context object at a lower
+	  level will eventually appear in the Tagging Engine in future
+	  releases.
+
+	<H4>Tagging Commands</H4>
+
+	<P>
+	  The commands and constants used here are integers defined in
+	  <TT>Constants/TagTables.py</TT> and imported into the
+	  package's root module. For the purpose of explaining the
+	  taken actions we assume that the tagging engine was called
+	  with <CODE>tag(text,table,start=0,stop=len(text))</CODE>. The
+	  current head position is indicated by <CODE>x</CODE>.
+
+	<P>
+	<TABLE BORDER=0 CELLSPACING=1 CELLPADDING=5 BGCOLOR="#F3F3F3">
+	  <TR BGCOLOR="#D6D6D6">
+	    <TD><B>Command</B></TD>
+
+	    <TD><B>Matching Argument</B></TD>
+
+	    <TD><B>Action</B></TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>Fail</TD>
+
+	    <TD>Here</TD>
+
+	    <TD>
+	      Causes the engine to fail matching at the current head
+	      position.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>Jump</TD>
+
+	    <TD>To</TD>
+
+	    <TD>
+	      Causes the engine to perform a relative jump by
+	      <CODE>jump_no_match</CODE> entries.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>AllIn</TD>
+
+	    <TD>string</TD>
+
+	    <TD>
+	      Matches all characters found in <CODE>text[x:stop]</CODE>
+	      up to the first that is not included in string. At least
+	      one character must match.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>AllNotIn</TD>
+
+	    <TD>string</TD>
+
+	    <TD>
+	      Matches all characters found in <CODE>text[x:stop]</CODE>
+	      up to the first that is included in string. At least one
+	      character must match.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>AllInSet</TD>
+
+	    <TD>set</TD>
+
+	    <TD>
+		Matches all characters found in
+		<CODE>text[x:stop]</CODE> up to the first that is not
+		included in the string set. At least one character
+		must match.  <U>Note:</U> String sets only work with
+		8-bit text. Use <CODE>AllInCharSet</CODE> if you plan
+		to use the tag table with 8-bit and Unicode text.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>AllInCharSet</TD>
+
+	    <TD>CharSet object</TD>
+
+	    <TD>
+	      Matches all characters found in <CODE>text[x:stop]</CODE>
+	      up to the first that is not included in the CharSet. At
+	      least one character must match.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>Is</TD>
+
+	    <TD>character</TD>
+
+	    <TD>
+	      Matches iff <CODE>text[x] == character</CODE>.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>IsNot</TD>
+
+	    <TD>character</TD>
+
+	    <TD>
+	      Matches iff <CODE>text[x] != character</CODE>.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>IsIn</TD>
+
+	    <TD>string</TD>
+
+	    <TD>
+	      Matches iff <CODE>text[x] is in string</CODE>.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>IsNotIn</TD>
+
+	    <TD>string</TD>
+
+	    <TD>
+	      Matches iff <CODE>text[x] is not in string</CODE>.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>IsInSet</TD>
+
+	    <TD>set</TD>
+
+	    <TD>
+		Matches iff <CODE>text[x] is in set</CODE>.
+		<U>Note:</U> String sets only work with 8-bit
+		text. Use <CODE>IsInCharSet</CODE> if you plan to use
+		the tag table with 8-bit and Unicode text.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>IsInCharSet</TD>
+
+	    <TD>CharSet object</TD>
+
+	    <TD>
+		Matches iff <CODE>text[x]</CODE> is contained in the
+		CharSet.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>Word</TD>
+
+	    <TD>string</TD>
+
+	    <TD>
+	      Matches iff <CODE>text[x:x+len(string)] == string</CODE>.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>WordStart</TD>
+
+	    <TD>string</TD>
+
+	    <TD>
+	      Matches all characters up to the first occurance of
+	      string in <CODE>text[x:stop]</CODE>.
+	      <P>
+		If string is not found, the command does not match and
+		the head position remains unchanged. Otherwise, the
+		head stays on the first character of string in the
+		found occurance.
+	      <P>
+		At least one character must match.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>WordEnd</TD>
+
+	    <TD>string</TD>
+
+	    <TD>
+	      Matches all characters up to the first occurance of
+	      string in <CODE>text[x:stop]</CODE>. 
+	      <P>
+		If string is not found, the command does not match and
+		the head position remains unchanged.  Otherwise, the
+		head stays on the last character of string in the
+		found occurance.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>sWordStart</TD>
+
+	    <TD>TextSearch object</TD>
+
+	    <TD>
+	      Same as WordStart except that the TextSearch object is
+	      used to perform the necessary action (which can be much
+	      faster) and zero matching characters are allowed.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>sWordEnd</TD>
+
+	    <TD>TextSearch object</TD>
+
+	    <TD>
+	      Same as WordEnd except that the TextSearch object is
+	      used to perform the necessary action (which can be much
+	      faster).
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>sFindWord</TD>
+
+	    <TD>TextSearch object</TD>
+
+	    <TD>
+	      Uses the TextSearch object to find the given substring.
+	      <P>
+		If found, the tagobj is assigned only to the slice of
+		the substring. The characters leading up to it are
+		ignored.
+	      <P>
+		The head position is adjusted to right after the
+		substring -- just like for sWordEnd.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>Call</TD>
+
+	    <TD>function</TD>
+
+	    <TD>
+	      Calls the matching <CODE>function(text,x,stop)</CODE> or
+	      <CODE>function(text,x,stop,context)</CODE> if a context
+	      object was provided to the <CODE>tag()</CODE> function
+	      call.
+	      <P>
+		The function must return the index <CODE>y</CODE> of
+		the character in <CODE>text[x:stop]</CODE> right after
+		the matching substring.
+	      <P>
+		The entry is considered to be matching, iff <CODE>x !=
+		y</CODE>. The engines head is positioned on
+		<CODE>y</CODE> in that case.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>CallArg</TD>
+
+	    <TD>(function,[arg0,...])</TD>
+
+	    <TD>
+	      Same as Call except that
+	      <CODE>function(text,x,stop[,arg0,...])</CODE> or
+	      <CODE>function(text,x,stop,[,arg0,...],context)</CODE>
+	      (if a <CODE>context</CODE> object is used) is being
+	      called.
+		<P>
+		  The command argument must be a tuple.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>Table</TD>
+
+	    <TD>tagtable or ThisTable</TD>
+
+	    <TD>
+	      Matches iff tagtable matches <CODE>text[x:stop]</CODE>.
+	      <P>
+		This calls the engine recursively.
+	      <P>
+		In case of success the head position is adjusted to
+		point right after the match and the returned taglist
+		is made available in the subtags field of this table's
+		taglist entry.
+	      <P>
+		You may pass the special constant
+		<CODE>ThisTable</CODE> instead of a Tag Table if you
+		want to call the current table recursively.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>SubTable</TD>
+
+	    <TD>tagtable or ThisTable</TD>
+
+	    <TD>
+	      Same as Table except that the subtable reuses this
+	      table's tag list for its tag list.  The
+	      <CODE>subtags</CODE> entry is set to None.
+	      <P>
+		You may pass the special constant
+		<CODE>ThisTable</CODE> instead of a Tag Table if you
+		want to call the current table recursively.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>TableInList</TD>
+
+	    <TD>(list_of_tables,index)</TD>
+
+	    <TD>
+	      Same as Table except that the matching table to be used
+	      is read from the <CODE>list_of_tables</CODE> at position
+	      <CODE>index</CODE> whenever this command is
+	      executed.
+	      <P>
+		This makes self-referencing tables possible which
+		would otherwise not be possible (since Tag Tables are
+		immutable tuples).
+	      <P>
+		Note that it can also introduce circular references,
+		so be warned !
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>SubTableInList</TD>
+
+	    <TD>(list_of_tables,index)</TD>
+
+	    <TD>
+	      Same as TableInList except that the subtable reuses this
+	      table's tag list. The <CODE>subtags</CODE> entry is set
+	      to <CODE>None</CODE>.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>EOF</TD>
+
+	    <TD>Here</TD>
+
+	    <TD>
+	      Matches iff the head position is beyond
+	      <CODE>stop</CODE>.  The match recorded by the Tagging
+	      Engine is the <CODE>text[stop:stop]</CODE>.
+	    </TD>
+	  </TR>
+
+	  <TR VALIGN=TOP>
+	    <TD>Skip</TD>
+
+	    <TD>offset</TD>
+
+	    <TD>
+	      Always matches and moves the head position to <CODE>x +
+	      offset</CODE>.
+	    </TD>
+	  </TR>
+
+	  
+	  <TR VALIGN=TOP>
+	    <TD>Move</TD>
+
+	    <TD>position</TD>
+
+	    <TD>
+	      Always matches and moves the head position to
+	      <CODE>slice[position]</CODE>. Negative indices move the
+	      head to <CODE>slice[len(slice)+position+1]</CODE>,
+	      e.g. (None,Move,-1) moves to EOF. <CODE>slice</CODE>
+	      refers to the current text slice being worked on by the
+	      Tagging Engine.
+	    </TD>
+	  </TR>
+
+	  
+	  <TR VALIGN=TOP>
+	    <TD>JumpTarget</TD>
+
+	    <TD>Target String</TD>
+
+	    <TD>
+	      Always matches, does not move the head position. 
+		<P>
+		  This command is only used internally by the Tag
+		  Table compiler, but can also be used for writing Tag
+		  Table definitions, e.g. to follow the path the
+		  Tagging Engine takes through a Tag Table definition.
+	    </TD>
+	  </TR>
+
+	  
+	  <TR VALIGN=TOP>
+	    <TD>Loop</TD>
+
+	    <TD>count</TD>
+
+	    <TD>
+	      Remains undocumented for this release.
+	    </TD>
+	  </TR>
+
+	  
+	  <TR VALIGN=TOP>
+	    <TD>LoopControl</TD>
+
+	    <TD>Break/Reset</TD>
+
+	    <TD>
+	      Remains undocumented for this release.
+	    </TD>
+	  </TR>
+
+	</TABLE>
+
+	<P>
+	  The following flags can be added to the command integers above:
+
+	<P>
+	<UL CLASS="indent">
+	    <DL>
+
+	      <DT>
+		CallTag
+		
+	      <DD>
+		Instead of appending <CODE>(tagobj,l,r,subtags)</CODE>
+		to the taglist upon successful matching, call
+		<CODE>tagobj(taglist,text,l,r,subtags)</CODE> or
+		<CODE>tagobj(taglist,text,l,r,subtags,context)</CODE>
+		if a context object was passed to the
+		<CODE>tag()</CODE> function.
+		<P>
+
+	      <DT>
+		AppendMatch
+
+	      <DD>
+		Instead of appending <CODE>(tagobj,l,r,subtags)</CODE>
+		to the taglist upon successful matching, append the
+		match found as string.  
+		<P>
+		  Note that this will produce non-standard taglists ! 
+		  It is useful in combination with <CODE>join()</CODE>
+		  though and can be used to implement smart split()
+		  replacements algorithms.
+		<P>
+		  
+	      <DT>
+		AppendToTagobj
+
+	      <DD>
+		Instead of appending <CODE>(tagobj,l,r,subtags)</CODE>
+		to the taglist upon successful matching, call
+		<CODE>tagobj.append((None,l,r,subtags))</CODE>.
+		<P>
+		  
+	      <DT>
+		AppendTagobj
+
+	      <DD>
+		Instead of appending <CODE>(tagobj,l,r,subtags)</CODE>
+		to the taglist upon successful matching, append
+		<CODE>tagobj</CODE> itself. 
+		<P>
+		  Note that this can cause the taglist to have a
+		  non-standard format, i.e. functions relying on the
+		  standard format could fail. 
+		<P>
+		  This flag is mainly intended to build
+		  <I>join-lists</I> usable by the
+		  <CODE>join()</CODE>-function (see below).
+		<P>
+
+	      <DT>
+		LookAhead
+
+	      <DD>
+		If this flag is set, the current position of the head
+		will be reset to <CODE>l</CODE> (the left position of
+		the match) after a successful match.
+		<P>
+		  This is useful to implement lookahead strategies.
+		<P>
+		  Using the flag has no effect on the way the tagobj
+		  itself is treated, i.e. it will still be processed
+		  in the usual way.
+		<P>
+
+	    </DL>
+	</UL><!--CLASS="indent"-->
+
+	<P>
+	  Some additional constants that can be used as argument or relative
+	  jump position:
+
+	<P>
+	<UL CLASS="indent">
+	    <DL>
+
+	      <DT>
+		To
+		
+	      <DD>
+		Useful as argument for 'Jump'.
+		<P>
+
+	      <DT>
+		Here
+		
+	      <DD>
+		Useful as argument for 'Fail' and 'EOF'.
+		<P>
+
+	      <DT>
+		MatchOk
+		
+	      <DD>
+		Jumps to a table index beyond the tables end, causing
+		the current table to immediatly return with 'matches
+		ok'.
+		<P>
+
+	      <DT>
+		MatchFail
+		
+	      <DD>
+		Jumps to a negative table index, causing the current
+		table to immediatly return with 'failed to match'.
+		<P>
+
+	      <DT>
+		ToBOF,ToEOF
+		
+	      <DD>
+		Useful as arguments for 'Move': (None,Move,ToEOF)
+		moves the head to the character behind the last
+		character in the current slice, while
+		(None,Move,ToBOF) moves to the first character.
+		<P>
+
+	      <DT>
+		ThisTable
+		
+	      <DD>
+		Useful as argument for 'Table' and 'SubTable'. See
+		above for more information.
+		<P>
+
+	    </DL>
+	</UL><!--CLASS="indent"-->
+
+	<P>
+	  Internally, the Tag Table is used as program for a state
+	  machine which is coded in C and accessible through the
+	  package as <CODE>tag()</CODE> function along with the
+	  constants used for the commands (e.g. Allin, AllNotIn,
+	  etc.). Note that in computer science one normally
+	  differentiates between finite state machines, pushdown
+	  automata and turing machines. The Tagging Engine offers all
+	  these levels of complexity depending on which techniques you
+	  use, yet the basic structure of the engine is best compared
+	  to a finite state machine.
+
+	<P>
+	  <U>Tip:</U> if you are getting an error 'call of a
+	  non-function' while writing a table definition, you probably
+	  have a missing ',' somewhere in the tuple !
+
+	<H4>Third Party Tools for Tag Table Writing</H4>
+
+	<P>
+	  Writing these Tag Tables by hand is not always
+	  easy. However, since Tag Tables can easily be generated
+	  using Python code, it is possible to write tools which
+	  convert meta-languages into Tag Tables which then run on all
+	  platforms supported by mxTextTools at nearly C speeds.
+	  
+	<P>
+	  Mike C. Fletcher has written a nice tools for generating Tag
+	  Tables using an EBNF notation. You may want to check out his
+	  <A
+	  HREF="http://members.home.com/mcfletch/programming/simpleparse/simpleparse.html">SimpleParse</A>
+	  add-on for mxTextTools. 
+
+	<P>
+	  Recently, Tony J. Ibbs has also started to work in this
+	  direction. His <A
+	  HREF="http://homepage.ntlworld.com/tibsnjoan/mxtext/metalang.html">meta-language
+	  for mxTextTools</A> aims at simplifying the task of writing
+	  Tag Table tuples.
+
+	<P>
+	  More references to third party extensions or applications
+	  built on top of mxTextTools can be found in the <A
+	  HREF="#AddOns">Add-ons Section</A>.
+
+	<H4>Debugging</H4>
+
+	<P>
+	  The packages includes a nearly complete Python emulation of
+	  the Tagging Engine in the Examples subdirectory
+	  (pytag.py). Though it is unsupported it might still provide
+	  some use since it has a builtin debugger that will let you
+	  step through the Tag Tables as they are executed. See the
+	  source for further details.
+
+	<P>
+	  As an alternative you can build a version of the Tagging
+	  Engine that provides lots of debugging output. See
+	  <TT>mxTextTools/Setup</TT> for explanations on how to do
+	  this. When enabled the module will create several
+	  <TT>.log</TT> files containing the debug information of
+	  various parts of the implementation whenever the Python
+	  interpreter is run with the debug flag enabled (python
+	  -d). These files should give a fairly good insight into the
+	  workings of the Tag Engine (though it still isn't as elegant
+	  as it could be).
+
+	<P>
+	  Note that the debug version of the module is almost as fast
+	  as the regular build, so you might as well do regular work
+	  with it.
+
+    </UL><!--CLASS="indent"-->
+
+    <A NAME="TextSearchObjects">
+
+    <H3>TextSearch Object</H3>
+
+    <UL CLASS="indent">
+
+	<P>
+	  The TextSearch object is immutable and usable for one search
+	  string per object only. However, once created, the
+	  TextSearch objects can be applied to as many text strings as
+	  you like -- much like compiled regular expressions. Matching
+	  is done exact (doing translations on-the-fly if supported by
+	  the search algorithm).
+
+	<P>
+	  Furthermore, the TextSearch objects can be pickled and
+	  implement the copy protocol as defined by the copy
+	  module. Comparisons and hashing are not implemented (the
+	  objects are stored by id in dictionaries).
+
+	<P>
+	  Depending on the search algorithm, TextSearch objects can
+	  search in 8-bit strings and/or Unicode. Searching in memory
+	  buffers is currently not supported. Accordingly, the search
+	  string itself may also be an 8-bit string or Unicode.
+
+	<H4>TextSearch Object Constructors</H4>
+
+	<UL CLASS="indent">
+
+	    <P>
+	      In older versions of mxTextTools there were two separate
+	      constructors for search objects: <CODE>BMS()</CODE> for
+	      Boyer-Moore and <CODE>FS()</CODE> for the (unpublished)
+	      FastSearch algorithm. With 2.1.0 the interface was
+	      changed to merge these two constructors into one having
+	      the algorithm type as parameter.
+
+	    <P>
+	      <U>Note:</U> The FastSearch algorithm is *not* included
+	      in the public release of mxTextTools.
+
+	    <P>
+	    <DL>
+	      <DT><CODE><FONT COLOR="#000099">
+		    TextSearch(match,translate=None,algorithm=default_algorithm)
+		  </FONT></CODE></DT>
+
+	      <DD>
+		Create a TextSearch substring search object for the
+		string match implementing the algorithm specified in
+		the constructor.
+		<P>
+		  <CODE>algorithm</CODE> defines the algorithm to
+		  use. Possible values are:
+		<DL>
+
+		  <DT>BOYERMOORE</DT> 
+		  
+		  <DD>Enhanced Boyer-Moore-Horspool style algorithm
+		  for searching in 8-bit text. Unicode is not
+		  supported.  On-the-fly translation is
+		  supported. <P></DD>
+
+		  <DT>FASTSEARCH</DT> 
+		  
+		  <DD>Enhanced Boyer-Moore style algorithm for
+		  searching in 8-bit text. This algorithm provides
+		  better performance for match patterns having
+		  repeating sequences, like e.g.  DNA strings. Unicode
+		  is not supported. On-the-fly translation is
+		  supported.
+		    <P>
+		      Not included in the public release of
+		      mxTextTools. <P></DD>
+
+		  <DT>TRIVIAL</DT> 
+		  
+		  <DD>Trivial right-to-left search algorithm. This
+		  algorithm can be used to search in 8-bit text and
+		  Unicode.  On-the-fly translation is not
+		  supported. </DD>
+
+		</DL>
+
+		<P>
+		  <CODE>algorithm</CODE> defaults to BOYERMOORE (or
+		  FASTSEARCH if available) for 8-bit match strings and
+		  TRIVIAL for Unicode match strings.
+
+		<P>
+		  <CODE>translate</CODE> is an optional
+		  translate-string like the one used in the module
+		  're', i.e. a 256 character string mapping the
+		  oridnals of the base character set to new
+		  characters. It is supported by the BOYERMOORE and
+		  the FASTSEARCH algorithm only.  
+
+		<P>
+		  This function supports keyword arguments.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    BMS(match[,translate])</FONT></CODE></DT>
+
+	      <DD>
+		<B>DEPRECATED:</B> Use TextSearch(match, translate,
+		BOYERMOORE) instead.  
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    FS(match[,translate])</FONT></CODE></DT>
+
+	      <DD>
+		<B>DEPRECATED:</B> Use TextSearch(match, translate,
+		FASTSEARCH) instead.  
+	      </DD><P>
+
+	    </DL>
+	</UL><!--CLASS="indent"-->
+
+	<H4>TextSearch Object Instance Variables</H4>
+
+	<UL CLASS="indent">
+	    <P>
+	      To provide some help for reflection and pickling the
+	      TextSearch object gives (read-only) access to these
+	      attributes.
+
+	    <P>
+	    <DL>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    match</FONT></CODE></DT>
+
+	      <DD>
+		The string that the search object will look for in the
+		search text.<P></DD>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    translate</FONT></CODE></DT>
+
+	      <DD>
+		The translate string used by the object or None (if no
+		translate string was passed to the
+		constructor).<P></DD>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    algorithm</FONT></CODE></DT>
+
+	      <DD>
+		The algorithm used by the TextSearch object. For possible
+		values, see the TextSearch() constructor documentation.
+	      <P></DD>
+
+	    </DL>
+
+	</UL><!--CLASS="indent"-->
+
+	<H4>TextSearch Object Instance Methods</H4>
+
+	<UL CLASS="indent">
+	    <P>
+	      The TextSearch object has the following methods:
+
+	    <P>
+	    <DL>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    search(text,[start=0,stop=len(text)])</FONT></CODE></DT>
+
+	      <DD>
+		Search for the substring match in text, looking only
+		at the slice <CODE>[start:stop]</CODE> and return
+		the slice <CODE>(l,r)</CODE> where the substring was
+		found, or <CODE>(start,start)</CODE> if it was not
+		found.</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    find(text,[start=0,stop=len(text)])</FONT></CODE></DT>
+
+	      <DD>
+		Search for the substring match in text, looking only
+		at the slice <CODE>[start:stop]</CODE> and return
+		the index where the substring was found, or
+		<CODE>-1</CODE> if it was not found. This interface is
+		compatible with <CODE>string.find</CODE>.</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    findall(text,start=0,stop=len(text))</FONT></CODE></DT>
+
+	      <DD>
+		Same as <CODE>search()</CODE>, but return a list of
+		all non-overlapping slices <CODE>(l,r)</CODE> where
+		the match string can be found in text.</DD><P>
+
+	    </DL>
+
+	    <P>
+	      Note that translating the text before doing the search
+	      often results in a better performance. Use
+	      <CODE>string.translate()</CODE> to do that efficiently.
+
+	</UL><!--CLASS="indent"-->
+    </UL><!--CLASS="indent"-->
+
+    <A NAME="CharSetObjects">
+
+    <H3>CharSet Object</H3>
+
+    <UL CLASS="indent">
+
+	<P>
+	  The CharSet object is an immutable object which can be used
+	  for character set based string operations like text
+	  matching, searching, splitting etc.
+
+	<P>
+	  CharSet objects can be pickled and implement the copy
+	  protocol as defined by the copy module as well as the
+	  'in'-protocol, so that <CODE>c in charset</CODE> works as
+	  expected. Comparisons and hashing are not implemented (the
+	  objects are stored by id in dictionaries).
+
+	<P>
+	  The objects support both 8-bit strings and UCS-2 Unicode in
+	  both the character set definition and the various methods.
+	  Mixing of the supported types is also allowed.  Memory
+	  buffers are currently not supported.
+
+	<H4>CharSet Object Constructor</H4>
+
+	<UL CLASS="indent">
+
+	    <P>
+	    <DL>
+	      <DT><CODE><FONT COLOR="#000099">
+		    CharSet(definition)
+		  </FONT></CODE></DT>
+
+	      <DD>
+		Create a CharSet object for the given character set
+		definition.
+		<P>
+		  <CODE>definition</CODE> may be an 8-bit string or
+		  Unicode. 
+		<P>
+		  The constructor supports the re-module syntax for
+		  defining character sets: "a-e" maps to "abcde" (the
+		  backslash can be used to escape the special meaning
+		  of "-", e.g.  r"a\-e" maps to "a-e") and "^a-e" maps
+		  to the set containing all but the characters
+		  "abcde".
+		<P>
+		  Note that the special meaning of "^" only applies if
+		  it appears as first character in a CharSet
+		  definition. If you want to create a CharSet with the
+		  single character "^", then you'll have to use the
+		  escaped form: r"\^". The non-escape form "^" would
+		  result in a CharSet matching all characters.
+		<P>
+		  To add the backslash character to a CharSet you have
+		  to escape with itself: r"\\".
+		<P>
+		  Watch out for the Python quoting semantics in these
+		  explanations: the small r in front of some of these
+		  strings makes the raw Python literal strings which
+		  means that no interpretation of backslashes is
+		  applied: r"\\" == "\\\\" and r"a\-e" == "a\\-e".
+
+	      </DD><P>
+
+	    </DL>
+	</UL><!--CLASS="indent"-->
+
+	<H4>CharSet Object Instance Variables</H4>
+
+	<UL CLASS="indent">
+	    <P>
+	      To provide some help for reflection and pickling the
+	      CharSet object gives (read-only) access to these
+	      attributes.
+
+	    <P>
+	    <DL>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    definition</FONT></CODE></DT>
+
+	      <DD>
+		The definition string which was passed to the
+		constructor.  <P></DD>
+
+	    </DL>
+
+	</UL><!--CLASS="indent"-->
+
+	<H4>CharSet Object Instance Methods</H4>
+
+	<UL CLASS="indent">
+	    <P>
+	      The CharSet object has these methods:
+
+	    <P>
+	    <DL>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    contains(char)
+		  </FONT></CODE></DT>
+
+	      <DD>
+		Return 1 if char is included in the character set, 0
+		otherwise.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    search(text[, direction=1, start=0, stop=len(text)])
+		  </FONT></CODE></DT>
+
+	      <DD>
+		Search <CODE>text[start:stop]</CODE> for the first
+		character included in the character set. Returns
+		<CODE>None</CODE> if no such character is found or the
+		index position of the found character.
+		<P>
+		  <CODE>direction</CODE> defines the search direction:
+		  a positive value searches forward starting from
+		  <CODE>text[start]</CODE>, while a negative value
+		  searches backwards from <CODE>text[stop-1]</CODE>.
+	      
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    match(text[, direction=1, start=0, stop=len(text)])
+		  </FONT></CODE></DT>
+
+	      <DD>
+		Look for the longest match of characters in
+		<CODE>text[start:stop]</CODE> which appear in the
+		character set. Returns the length of this match as
+		integer.
+		<P>
+		  <CODE>direction</CODE> defines the match direction:
+		  a positive value searches forward starting from
+		  <CODE>text[start]</CODE> giving a prefix match,
+		  while a negative value searches backwards from
+		  <CODE>text[stop-1]</CODE> giving a suffix match.
+	      
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    split(text, [,start=0, stop=len(text)])</FONT></CODE></DT>
+
+	      <DD>
+		Split <CODE>text[start:stop]</CODE> into a list of
+		substrings using the character set definition,
+		omitting the splitting parts and empty substrings.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    splitx(text, [,start=0, stop=len(text)])</FONT></CODE></DT>
+
+	      <DD>
+		Split <CODE>text[start:stop]</CODE> into a list of
+		substrings using the character set definition, such
+		that every second entry consists only of characters in
+		the set.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    strip(text[, where=0, start=0, stop=len(text)])</FONT></CODE></DT>
+
+	      <DD>
+		Strip all characters in <CODE>text[start:stop]</CODE>
+		appearing in the character set.  
+		<P>
+		  <CODE>where</CODE> indicates where to strip (&lt;0:
+		  left; =0: left and right; &gt;0: right).
+	      </DD><P>
+
+	    </DL>
+
+	</UL><!--CLASS="indent"-->
+    </UL><!--CLASS="indent"-->
+
+    <A NAME="Functions">
+
+    <H3>Functions</H3>
+
+    <UL CLASS="indent">
+
+	<P>
+	  These functions are defined in the package:
+
+	<P>
+	<UL CLASS="indent">
+	    <DL>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    tag(text,tagtable,sliceleft=0,sliceright=len(text),taglist=[],context=None)
+		  </FONT></CODE></DT>
+
+	      <DD>
+		This is the interface to the Tagging Engine.
+
+		<P>
+		  <CODE>text</CODE> may be an 8-bit string or
+		  Unicode. <CODE>tagtable</CODE> must be either Tag
+		  Table definition (a tuple of tuples) or a compiled
+		  TagTable() object matching the <CODE>text</CODE>
+		  string type. Tag Table definitions are automatically
+		  compiled into TagTable() objects by this
+		  constructor.
+
+		<P>
+		  Returns a tuple <CODE>(success, taglist,
+		  nextindex)</CODE>, where nextindex indicates the
+		  next index to be processed after the last character
+		  matched by the Tag Table.
+
+		<P>
+		  In case of a non match (success == 0), it points to
+		  the error location in text.  If you provide a tag
+		  list it will be used for the processing. 
+
+		<P>
+		  Passing <CODE>None</CODE> as taglist results in no
+		  tag list being created at all. 
+
+		<P>
+		  <CODE>context</CODE> is an optional extension to the
+		  Tagging Engine introduced in version 2.1.0 of
+		  mxTextTools. If given, it is made available to the
+		  Tagging Engine during the scan and can be used for
+		  e.g. <CODE>CallTag</CODE>.
+
+		<P>
+		  This function supports keyword arguments.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    join(joinlist[,sep='',start=0,stop=len(joinlist)])</FONT></CODE></DT>
+
+	      <DD>
+		This function works much like the corresponding
+		function in module 'string'. It pastes slices from
+		other strings together to form a new string. 
+
+		<P>
+		  The format expected as <I>joinlist</I> is similar to
+		  a tag list: it is a sequence of tuples
+		  <CODE>(string,l,r[,...])</CODE> (the resulting
+		  string will then include the slice
+		  <CODE>string[l:r]</CODE>) or strings (which are
+		  copied as a whole). Extra entries in the tuple are
+		  ignored. 
+
+		<P>
+		  The optional argument sep is a separator to be used
+		  in joining the slices together, it defaults to the
+		  empty string (unlike string.join). start and stop
+		  allow to define the slice of joinlist the function
+		  will work in.
+		
+		<P>
+		  <U>Important Note:</U> The syntax used for negative
+		  slices is different than the Python standard: -1
+		  corresponds to the first character *after* the string,
+		  e.g. ('Example',0,-1) gives 'Example' and not 'Exampl',
+		  like in Python. To avoid confusion, don't use negative
+		  indices. 
+
+		<P>
+		  This function can handle mixed 8-bit string /
+		  Unicode input. Coercion is always towards Unicode.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    cmp(a,b)</FONT></CODE></DT>
+
+	      <DD>
+		Compare two valid taglist tuples w/r to their slice
+		position. This is useful for sorting joinlists and not
+		much slower than sorting integers, since the function is
+		coded in C.  </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    joinlist(text,list[,start=0,stop=len(text)])</FONT></CODE></DT>
+
+	      <DD>
+		Produces a joinlist suitable for passing to
+		<CODE>join()</CODE> from a list of tuples
+		<CODE>(replacement,l,r,...)</CODE> in such a way that all
+		slices <CODE>text[l:r]</CODE> are replaced by the given
+		replacement. 
+
+		<P>
+		  A few restrictions apply, though:
+		<OL>
+
+		  <LI>
+		    the list must be sorted ascending (e.g. using the
+		    cmp() as compare function)
+
+		  <LI>
+		    it may not contain overlapping slices
+
+		  <LI>
+		    the slices may not contain negative indices
+
+		  <LI>
+		    if the taglist cannot contain overlapping slices, you
+		    can give this function the taglist produced by tag()
+		    directly (sorting is not needed, as the list will
+		    already be sorted)
+
+		</OL>
+
+		<P>
+		  If one of these conditions is not met, a ValueError
+		  is raised.  
+
+		<P>
+		  This function can handle mixed 8-bit string /
+		  Unicode input. Coercion is always towards Unicode.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    upper(string)</FONT></CODE></DT>
+
+	      <DD>
+		Returns the string with all characters converted to upper
+		case. 
+
+		<P>
+		  Note that the translation string used is generated
+		  at import time. Locale settings will only have an
+		  effect if set prior to importing the package. 
+
+		<P>
+		  This function is almost twice as fast as the one in
+		  the string module. 
+
+		<P>
+		  This function can handle mixed 8-bit string /
+		  Unicode input. Coercion is always towards Unicode.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    lower(string)</FONT></CODE></DT>
+
+	      <DD>
+		Returns the string with all characters converted to lower
+		case. Same note as for upper(). 
+
+		<P>
+		  This function can handle mixed 8-bit string /
+		  Unicode input. Coercion is always towards Unicode.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    is_whitespace(text,start=0,stop=len(text))</FONT></CODE></DT>
+
+	      <DD>
+		Returns 1 iff text[start:stop] only contains whitespace
+		characters (as defined in Constants/Sets.py), 0
+		otherwise.
+
+		<P>
+		  This function can handle 8-bit string or Unicode
+		  input.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    replace(text,what,with,start=0,stop=len(text))</FONT></CODE></DT>
+
+	      <DD>
+		Works just like string.replace() -- only faster since a
+		search object is used in the process. 
+
+		<P>
+		  This function can handle mixed 8-bit string /
+		  Unicode input. Coercion is always towards Unicode.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    multireplace(text,replacements,start=0,stop=len(text))</FONT></CODE></DT>
+
+	      <DD>
+		Apply multiple replacement to a text in one processing
+		step.
+
+		<P>
+		  replacements must be list of tuples (replacement,
+		  left, right).  The replacement string is then used
+		  to replace the slice text[left:right].
+
+		<P>
+		  Note that the replacements do not affect one another
+		  w/r to indexing: indices always refer to the
+		  original text string.
+		
+		<P>
+		  Replacements may not overlap. Otherwise a ValueError
+		  is raised.
+
+		<P>
+		  This function can handle mixed 8-bit string /
+		  Unicode input. Coercion is always towards Unicode.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    find(text,what,start=0,stop=len(text))</FONT></CODE></DT>
+
+	      <DD>
+		Works just like string.find() -- only faster since a
+		search object is used in the process. 
+
+ 		<P>
+		  This function can handle 8-bit string and
+		  Unicode input.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    findall(text,what,start=0,stop=len(text))</FONT></CODE></DT>
+
+	      <DD>
+		Returns a list of slices representing all
+		non-overlapping occurances of what in
+		text[start:stop]. The slices are given as 2-tuples
+		<CODE>(left,right)</CODE> meaning that
+		<CODE>what</CODE> can be found at text[left:right].
+
+		<P>
+		  This function can handle mixed 8-bit string /
+		  Unicode input. Coercion is always towards Unicode.
+
+		</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    collapse(text,separator=' ')</FONT></CODE></DT>
+
+	      <DD>
+		Takes a string, removes all line breaks, converts all
+		whitespace to a single separator and returns the
+		result. Tim Peters will like this one with separator
+		'-'.
+ 		<P>
+		  This function can handle mixed 8-bit string /
+		  Unicode input. Coercion is always towards Unicode.
+		  </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    charsplit(text,char,start=0,stop=len(text))</FONT></CODE></DT>
+
+	      <DD>
+		Returns a list that results from splitting
+		text[start:stop] at all occurances of the character
+		given in char. 
+
+		<P>
+		  This is a special case of string.split() that has
+		  been optimized for single character splitting
+		  running 40% faster. 
+
+		<P>
+		  This function can handle mixed 8-bit string /
+		  Unicode input. Coercion is always towards Unicode.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    splitat(text,char,nth=1,start=0,stop=len(text))</FONT></CODE></DT>
+
+	      <DD>
+		Returns a 2-tuple that results from splitting
+		text[start:stop] at the nth occurance of char. 
+
+		<P>
+		  If the character is not found, the second string is
+		  empty. nth may also be negative: the search is then
+		  done from the right and the first string is empty in
+		  case the character is not found.  
+
+		<P>
+		  The splitting character itself is not included in
+		  the two substrings. 
+
+		<P>
+		  This function can handle mixed 8-bit string /
+		  Unicode input. Coercion is always towards Unicode.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    suffix(text,suffixes,start=0,stop=len(text)[,translate])</FONT></CODE></DT>
+
+	      <DD>
+		Looks at text[start:stop] and returns the first
+		matching suffix out of the tuple of strings given in
+		suffixes.  
+
+		<P>
+		  If no suffix is found to be matching, None is
+		  returned.  An empty suffix ('') matches the
+		  end-of-string. 
+
+		<P>
+		  The optional 256 char translate string is used to
+		  translate the text prior to comparing it with the
+		  given suffixes. It uses the same format as the
+		  search object translate strings. If not given, no
+		  translation is performed and the match done exact.
+		  On-the-fly translation is not supported for Unicode
+		  input.
+
+		<P>
+		  This function can handle either 8-bit strings or
+		  Unicode. Mixing these input types is not supported.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    prefix(text,prefixes,start=0,stop=len(text)[,translate])</FONT></CODE></DT>
+
+	      <DD>
+		Looks at text[start:stop] and returns the first
+		matching prefix out of the tuple of strings given in
+		prefixes.  
+
+		<P>
+		  If no prefix is found to be matching, None is
+		  returned. An empty prefix ('') matches the
+		  end-of-string. 
+
+		<P>
+		  The optional 256 char translate string is used to
+		  translate the text prior to comparing it with the
+		  given suffixes. It uses the same format as the
+		  search object translate strings. If not given, no
+		  translation is performed and the match done exact.
+		  On-the-fly translation is not supported for Unicode
+		  input.
+
+		<P>
+		  This function can handle either 8-bit strings or
+		  Unicode. Mixing these input types is not supported.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    splitlines(text)</FONT></CODE></DT>
+
+	      <DD>
+		Splits text into a list of single lines.
+
+		<P>
+		  The following combinations are considered to be
+		  line-ends: '\r', '\r\n', '\n'; they may be used in
+		  any combination.  The line-end indicators are
+		  removed from the strings prior to adding them to the
+		  list.
+
+		<P>
+		  This function allows dealing with text files from
+		  Macs, PCs and Unix origins in a portable way.
+
+ 		<P>
+		  This function can handle 8-bit string and
+		  Unicode input.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    countlines(text)</FONT></CODE></DT>
+
+	      <DD>
+		Returns the number of lines in text.
+
+		<P>
+		  Line ends are treated just like for splitlines() in
+		  a portable way.  
+
+ 		<P>
+		  This function can handle 8-bit string and
+		  Unicode input.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    splitwords(text)</FONT></CODE></DT>
+
+	      <DD>
+		Splits text into a list of single words delimited by
+		whitespace.
+
+		<P>
+		  This function is just here for completeness. It
+		  works in the same way as string.split(text).  Note
+		  that CharSet().split() gives you much more control
+		  over how splitting is performed. whitespace is
+		  defined as given below (see <A
+		  HREF="#Constants">Constants</A>).
+
+ 		<P>
+		  This function can handle 8-bit string and
+		  Unicode input.
+
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    str2hex(text)</FONT></CODE></DT>
+
+	      <DD>
+		Returns text converted to a string consisting of two
+		byte HEX values, e.g. ',.-' is converted to
+		'2c2e2d'. The function uses lowercase HEX
+		characters.
+		<P>
+		  Unicode input is not supported.
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    hex2str(hex)</FONT></CODE></DT>
+
+	      <DD>
+		Returns the string hex interpreted as two byte HEX
+		values converted to a string, e.g. '223344' becomes
+		'"3D'. The function expects lowercase HEX characters
+		per default but can also work with upper case
+		ones.
+		<P>
+		  Unicode input is not supported.
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    isascii(text)</FONT></CODE></DT>
+
+	      <DD>
+		Returns 1/0 depending on whether text only contains
+		ASCII characters or not.</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    set(string[,logic=1])</FONT></CODE></DT>
+
+	      <DD>
+		<B>DEPRECATED:</B> Use CharSet() instead.
+		<P>
+		  Returns a character set for string: a bit encoded
+		  version of the characters occurring in string.
+
+		<P>
+		  If logic is 0, then all characters <I>not</I> in
+		  string will be in the set. 
+		<P>
+		  Unicode input is not supported.
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    invset(string)</FONT></CODE></DT>
+
+	      <DD>
+		<B>DEPRECATED:</B> Use CharSet("^...") instead.
+		<P>
+		  Same as <CODE>set(string,0)</CODE>.  
+		<P>
+		  Unicode input is not supported.
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    setfind(text,set[,start=0,stop=len(text)])</FONT></CODE></DT>
+
+	      <DD>
+		<B>DEPRECATED:</B> Use CharSet().find() instead.
+		<P>
+		  Find the first occurence of any character from set
+		  in <CODE>text[start:stop]</CODE>. <CODE>set</CODE>
+		  must be a string obtained from <CODE>set()</CODE>.
+		<P>
+		  Unicode input is not supported.
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    setstrip(text,set[,start=0,stop=len(text),mode=0])</FONT></CODE></DT>
+
+	      <DD>
+		<B>DEPRECATED:</B> Use CharSet().strip() instead.
+		<P>
+		  Strip all characters in text[start:stop] appearing
+		  in set.  mode indicates where to strip (&lt;0: left;
+		  =0: left and right; &gt;0: right). set must be a
+		  string obtained with <CODE>set()</CODE>.
+		<P>
+		  Unicode input is not supported.
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    setsplit(text,set[,start=0,stop=len(text)])</FONT></CODE></DT>
+
+	      <DD>
+		<B>DEPRECATED:</B> Use CharSet().split() instead.
+		<P>
+		  Split text[start:stop] into substrings using set,
+		  omitting the splitting parts and empty
+		  substrings. <CODE>set</CODE> must be a string
+		  obtained from <CODE>set()</CODE>.
+		<P>
+		  Unicode input is not supported.
+	      </DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    setsplitx(text,set[,start=0,stop=len(text)])</FONT></CODE></DT>
+
+	      <DD>
+		<B>DEPRECATED:</B> Use CharSet().splitx() instead.
+		<P>
+		  Split text[start:stop] into substrings using set, so
+		  that every second entry consists only of characters
+		  in set. <CODE>set</CODE> must be a string obtained
+		  from <CODE>set()</CODE>.
+		<P>
+		  Unicode input is not supported.
+	      </DD><P>
+
+	    </DL>
+	</UL><!--CLASS="indent"-->
+
+	<P>
+	  The <TT>TextTools.py</TT> also defines some other functions, but
+	  these are left undocumented since they may disappear in future
+	  releases.
+
+	<P>
+
+    </UL><!--CLASS="indent"-->
+
+    <A NAME="Constants">
+
+    <H3>Constants</H3>
+
+    <UL CLASS="indent">
+
+	<P>
+	  The package exports these constants. They are defined in
+	  <TT>Constants/Sets</TT>.
+
+	<P>
+	  Note that Unicode defines many more characters in the
+	  following categories. The character sets defined here are
+	  restricted to ASCII (and parts of Latin-1) only.
+
+	<P>
+	<UL CLASS="indent">
+	    <DL>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    a2z</FONT></CODE></DT>
+
+	      <DD>
+		'abcdefghijklmnopqrstuvwxyz'</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    A2Z</FONT></CODE></DT>
+
+	      <DD>
+		'ABCDEFGHIJKLMNOPQRSTUVWXYZ'</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    a2z</FONT></CODE></DT>
+
+	      <DD>
+		'abcdefghijklmnopqrstuvwxyz'</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    umlaute</FONT></CODE></DT>
+
+	      <DD>
+		'äöüß'</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    Umlaute</FONT></CODE></DT>
+
+	      <DD>
+		'ÄÖÜ'</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    alpha</FONT></CODE></DT>
+
+	      <DD>
+		A2Z + a2z</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    a2z</FONT></CODE></DT>
+
+	      <DD>
+		'abcdefghijklmnopqrstuvwxyz'</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    german_alpha</FONT></CODE></DT>
+
+	      <DD>
+		A2Z + a2z + umlaute + Umlaute</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    number</FONT></CODE></DT>
+
+	      <DD>
+		'0123456789'</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    alphanumeric</FONT></CODE></DT>
+
+	      <DD>
+		alpha + number</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    white</FONT></CODE></DT>
+
+	      <DD>
+		' \t\v'</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    newline</FONT></CODE></DT>
+
+	      <DD>
+		'\n\r'</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    formfeed</FONT></CODE></DT>
+
+	      <DD>
+		'\f'</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    whitespace</FONT></CODE></DT>
+
+	      <DD>
+		white + newline + formfeed</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    any</FONT></CODE></DT>
+
+	      <DD>
+		All characters from \000-\377</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    *_charset</FONT></CODE></DT>
+
+	      <DD>
+		All of the above as CharSet() objects.</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    *_set</FONT></CODE></DT>
+
+	      <DD>
+		All of the above as set() compatible character
+		sets.</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    tagtable_cache</FONT></CODE></DT>
+
+	      <DD>
+		This the cache dictionary which is used by the
+		TagTable() compiler to store compiled Tag Table
+		definitions.  It has a hard limit of 100 entries, but
+		can also be managed by user routines to lower this
+		limit.</DD><P>
+
+	      <DT><CODE><FONT COLOR="#000099">
+		    BOYERMOORE, FASTSEARCH, TRIVIAL</FONT></CODE></DT>
+		  
+	      <DD>
+		TextSearch() algorithm values.
+	      </DD><P>
+
+	    </DL>
+	</UL><!--CLASS="indent"-->
+	  
+    </UL><!--CLASS="indent"-->
+
+    <A NAME="Examples">
+
+    <H3>Examples of Use</H3>
+
+    <UL CLASS="indent">
+
+	<P>
+	  The <TT>Examples/</TT> subdirectory of the package contains a
+	  few examples of how tables can be written and used. Here is a
+	  non-trivial example for parsing HTML (well, most of it):
+
+	<PRE><FONT COLOR="#000066">
+    from simpleparse.stt.TextTools import *
+
+    error = '***syntax error'			# error tag obj
+
+    tagname_set = set(alpha+'-'+number)
+    tagattrname_set = set(alpha+'-'+number)
+    tagvalue_set = set('"\'> ',0)
+    white_set = set(' \r\n\t')
+
+    tagattr = (
+	   # name
+	   ('name',AllInSet,tagattrname_set),
+	   # with value ?
+	   (None,Is,'=',MatchOk),
+	   # skip junk
+	   (None,AllInSet,white_set,+1),
+	   # unquoted value
+	   ('value',AllInSet,tagvalue_set,+1,MatchOk),
+	   # double quoted value
+	   (None,Is,'"',+5),
+	     ('value',AllNotIn,'"',+1,+2),
+	     ('value',Skip,0),
+	     (None,Is,'"'),
+	     (None,Jump,To,MatchOk),
+	   # single quoted value
+	   (None,Is,'\''),
+	     ('value',AllNotIn,'\'',+1,+2),
+	     ('value',Skip,0),
+	     (None,Is,'\'')
+	   )
+
+    valuetable = (
+	# ignore whitespace + '='
+	(None,AllInSet,set(' \r\n\t='),+1),
+	# unquoted value
+	('value',AllInSet,tagvalue_set,+1,MatchOk),
+	# double quoted value
+	(None,Is,'"',+5),
+	 ('value',AllNotIn,'"',+1,+2),
+	 ('value',Skip,0),
+	 (None,Is,'"'),
+	 (None,Jump,To,MatchOk),
+	# single quoted value
+	(None,Is,'\''),
+	 ('value',AllNotIn,'\'',+1,+2),
+	 ('value',Skip,0),
+	 (None,Is,'\'')
+	)
+
+    allattrs = (# look for attributes
+	       (None,AllInSet,white_set,+4),
+	        (None,Is,'>',+1,MatchOk),
+	        ('tagattr',Table,tagattr),
+	        (None,Jump,To,-3),
+	       (None,Is,'>',+1,MatchOk),
+	       # handle incorrect attributes
+	       (error,AllNotIn,'> \r\n\t'),
+	       (None,Jump,To,-6)
+	       )
+
+    htmltag = ((None,Is,'&lt;'),
+	       # is this a closing tag ?
+	       ('closetag',Is,'/',+1),
+	       # a coment ?
+	       ('comment',Is,'!',+8),
+		(None,Word,'--',+4),
+		('text',sWordStart,BMS('-->'),+1),
+		(None,Skip,3),
+		(None,Jump,To,MatchOk),
+		# a SGML-Tag ?
+		('other',AllNotIn,'>',+1),
+		(None,Is,'>'),
+		    (None,Jump,To,MatchOk),
+		   # XMP-Tag ?
+		   ('tagname',Word,'XMP',+5),
+		    (None,Is,'>'),
+		    ('text',WordStart,'&lt;/XMP&gt;'),
+		    (None,Skip,len('&lt;/XMP&gt;')),
+		    (None,Jump,To,MatchOk),
+		   # get the tag name
+		   ('tagname',AllInSet,tagname_set),
+		   # look for attributes
+		   (None,AllInSet,white_set,+4),
+		    (None,Is,'>',+1,MatchOk),
+		    ('tagattr',Table,tagattr),
+		    (None,Jump,To,-3),
+		   (None,Is,'>',+1,MatchOk),
+		   # handle incorrect attributes
+		   (error,AllNotIn,'> \n\r\t'),
+		   (None,Jump,To,-6)
+		  )
+
+    htmltable = (# HTML-Tag
+		 ('htmltag',Table,htmltag,+1,+4),
+		 # not HTML, but still using this syntax: error or inside XMP-tag !
+		 (error,Is,'&lt;',+3),
+		  (error,AllNotIn,'&gt;',+1),
+		  (error,Is,'>'),
+		 # normal text
+		 ('text',AllNotIn,'<',+1),
+		 # end of file
+		 ('eof',EOF,Here,-5),
+		)
+      
+	</FONT></PRE>
+
+	<P>
+	  I hope this doesn't scare you away <TT>:-)</TT> ... it's
+	  fast as hell.
+
+    </UL><!--CLASS="indent"-->
+
+    <A NAME="Structure">
+
+    <H3>Package Structure</H3>
+
+    <UL CLASS="indent">
+
+    <PRE>
+[TextTools]
+       [Constants]
+              Sets.py
+              TagTables.py
+       Doc/
+       [Examples]
+              HTML.py
+              Loop.py
+              Python.py
+              RTF.py
+              RegExp.py
+              Tim.py
+              Words.py
+              altRTF.py
+              pytag.py
+       [mxTextTools]
+              test.py
+       TextTools.py
+    </PRE>
+
+    <P>
+      Entries enclosed in brackets are packages (i.e. they are
+      directories that include a <TT>__init__.py</TT> file). Ones with
+      slashes are just ordinary subdirectories that are not accessible
+      via <CODE>import</CODE>.
+
+    <P>
+      The package TextTools imports everything needed from the other
+      components. It is sometimes also handy to do a <CODE>from
+      simpleparse.stt.TextTools.Constants.TagTables import *</CODE>.
+
+    <P>
+      <TT>Examples/</TT> contains a few demos of what the Tag Tables
+      can do.
+
+    <P>
+
+    </UL><!--CLASS="indent"-->
+    
+    <A NAME="AddOns">
+
+    <H4>Optional Add-Ons for mxTextTools</H4>
+
+    <UL CLASS="indent">
+
+    <P>
+      Mike C. Fletcher is working on a Tag Table generator called <A
+      HREF="http://members.home.com/mcfletch/programming/simpleparse/simpleparse.html">SimpleParse</A>.
+      It works as parser generating front end to the Tagging Engine
+      and converts a EBNF style grammar into a Tag Table directly
+      useable with the <CODE>tag()</CODE> function.
+
+    <P>
+      Tony J. Ibbs has started to work on a <A
+      HREF="http://www.tibsnjoan.demon.co.uk/mxtext/Metalang.html">meta-language
+      for mxTextTools</A>. It aims at simplifying the task of writing
+      Tag Table tuples using a Python style syntax. It also gets rid
+      off the annoying jump offset calculations.
+
+    <P>
+      Andrew Dalke has started work on a parser generator called <A
+      HREF="http://www.biopython.org/~dalke/Martel/">Martel</A> built
+      upon mxTextTools which takes a regular expression grammer for a
+      format and turns the resultant parsed tree into a set of
+      callback events emulating the XML/SAX API. The results look very
+      promising !
+
+    </UL><!--CLASS="indent"-->
+
+    <A NAME="Support">
+
+    <H3>Support</H3>
+
+    <UL CLASS="indent">
+
+	<P>
+	  eGenix.com is providing commercial support for this
+	  package. If you are interested in receiving information
+	  about this service please see the <A
+	  HREF="http://www.egenix.com/files/python/eGenix-mx-Extensions.html#Support">eGenix.com
+	  Support Conditions</A>.
+
+    </UL><!--CLASS="indent"-->
+
+    <A NAME="Copyright">
+
+    <H3>Copyright &amp; License</H3>
+
+    <UL CLASS="indent">
+
+	<P>
+	  &copy; 1997-2000, Copyright by Marc-Andr&eacute; Lemburg;
+	  All Rights Reserved.  mailto: <A
+	  HREF="mailto:mal@lemburg.com">mal@lemburg.com</A>
+	<P>
+	  &copy; 2000-2001, Copyright by eGenix.com Software GmbH,
+	  Langenfeld, Germany; All Rights Reserved.  mailto: <A
+	  HREF="mailto:info@egenix.com">info@egenix.com</A>
+
+	<P>
+	  This software is covered by the <A
+	  HREF="mxLicense.html#Public"><B>eGenix.com Public
+	  License Agreement</B></A>. The text of the license is also
+	  included as file "LICENSE" in the package's main directory.
+
+	<P>
+	  <B> By downloading, copying, installing or otherwise using
+	  the software, you agree to be bound by the terms and
+	  conditions of the eGenix.com Public License
+	  Agreement. </B>
+
+    </UL><!--CLASS="indent"-->
+
+    <A NAME="History">
+
+    <H3>History & Future</H3>
+
+    <UL CLASS="indent">
+
+	<P>Things that still need to be done:
+
+	<P><UL>
+
+	    <LI>Add a tag command to match word-in-list. This could
+	    also be extended to use multi pattern search objects.
+
+	    <P><LI>Add a command or feature to allow efficient
+	    lookahead. A table will have to be able to return
+	    differentiated information about what part of it actually
+	    did match. E.g. if the table matches A(B|C|D) and the
+	    string is found to match AC, there should be a way for the
+	    caller to identify and use that information for further
+	    execution. [This should be possible now using the new
+	    context object.]
+
+	    <P><LI>Add a per-call stack and command to manipulate
+	    it. This would provide for a way to do recursion without
+	    relying on the C stack and also provide a means to
+	    implement communication between the different recursive
+	    levels (might be of use for the above bullet). [Postponed.
+	    The new context object can be used for all such tricks,
+	    e.g. by maintaining a list as a stack. More commands which
+	    will make use of the context object will eventually appear
+	    in future versions.]
+
+	    <P><LI> Convert some more APIs to use the buffer interface
+	    instead of insisting on Python string objects. [Postponed.
+	    In fact, in 2.1.0 many APIs which previously supported the
+	    buffer interface no longer do. This will probably be fixed
+	    in some future version if possible. ]
+
+	    <P><LI> Use a special list implementation for taglists
+	    which resize in larger chunks (e.g. 1024 entries per
+	    realloc()). The current scheme implemented in the standard
+	    Python list implementation does way to many realloc()s,
+	    slowing down the taglist creation considerably. [This
+	    still waits to be done. I believe that a special tag list
+	    implementation might be needed for this special
+	    application. ]
+
+	</UL>
+
+	<P>Things that changed from 2.0.3 to 2.1.0:
+
+	<P>
+	  Version 2.1.0 introduces full Unicode support to mxTextTools
+	  and the Tagging Engine. As a result, a few things had to be
+	  restructured and modified. Hopefully, the new design
+	  decisions will provide more room for future enhancements.
+
+	<P>
+	  The new version is expected to behave nearly 100% backward
+	  compatible to previous versions. If needed, aliases or
+	  factory functions were provided to maintain interface
+	  compatibility.
+
+	<P><UL>
+
+	  <LI> Moved command constant definitions from
+	    Constants.py to the C extension.
+
+	    <P><LI> <B>Restructured tag commands and their
+	      numbering</B> so that low-level commands come before the
+	    special ones. Old tag tables need to be "recompiled" due
+	    to this change !
+
+	    <P><LI> Added a Tag-Table compiler. The tagging engine
+	    will now only work with compiled TagTables.
+
+	    <P><LI> Restored Python 1.5.2 compatibility (all Unicode
+	    usages are optional).
+
+	    <P><LI> Made TE polymorph w/r underlying datatype and
+	    created two versions: one for unsigned char and one for
+	    Py_UNICODE.
+
+	    <P><LI> Wrote Tag-Table cache support.
+
+	    <P><LI> tag() now accepts keyword arguments.
+
+	    <P><LI> <B>Merged BMS and FS into a new TextSearch
+	      object</B>. The used algorithm is now an argument to
+	    this single object constructor.
+
+	    <P><LI> Passing an unknown search object type to the TE
+	    is now an error.
+
+	    <P><LI> Nearly all instances where a SystemError could
+	    have been raised now raise an mxTextTools.Error instead.
+
+	    <P><LI> <B>Removed support for buffer-compatible input
+	      objects</B>. This will probably be reintegrated in some
+	    future release.
+
+	    <P><LI> Added new AllInCharSet and IsInCharSet commands.
+
+	    <P><LI> Implemented Unicode support in search objects
+	    using a trivial algorithm. Translation is not supported
+	    for Unicode.
+
+	    <P><LI> Added a huge set of regression tests for all the C
+	    APIs and the Tagging Engine.
+
+	    <P><LI> Fixed a bug in the strip APIs which caused a core
+	    dump in situations where the complete string contents
+	    would have been stripped. Thanks to Jeffrey Chang for
+	    finding this one.
+
+	    <P><LI> Fixed a bug in the handling of SubTable: the
+	    subtaglist entries of the tag table entries pointed
+	    recursively to the taglist containing them. This was
+	    updated to the documented behaviour of using None for the
+	    subtaglist entries.
+
+	    <P><LI> Added support for a context object which is passed
+	    along while processing a tag table with the Tagging
+	    Engine.
+
+	    <P><LI> Added more type casts to the C code to make some
+	    pedantic compilers happy (eg. the Mac OS X one).
+
+	    <P><LI> Fixed a bug found by Simon Cusack in the RTF.py
+	    example.
+
+	    <P><LI> Fixed a bug in tagdict(). Thanks to Joel Rosdahl
+	    for reporting this.
+
+	</UL>
+
+	<P>Things that changed from 2.0.2 to 2.0.3:
+
+	<P><UL>
+
+            <LI> Added isascii().
+
+	</UL>
+
+	<P>Things that changed from 2.0.0 to 2.0.2:
+
+	<P><UL>
+
+            <LI> Fixed a bug in the Words.py example. Thanks to Michael Husmann
+	    for finding this one.
+
+            <P><LI> Fixed a memory leak in the CallTag processing.
+
+	</UL>
+
+ 	<P>Things that changed from <A
+	HREF="mxTextTools-1.1.1.zip">1.1.1</A> to 2.0.0:
+
+	<P><UL>
+
+            <LI> Fixed a cast bug in mxTextTools which shows up on
+            Alphas.  Thanks to Tony Ibbs for reporting this one.
+
+            <P><LI> <B>Changed</B> the semantics of the 'Move'
+            command.  It now works relative to the current slice
+            rather than absolute as it did before. As side effect, you
+            can now easily skip back to the first character in the
+            currently processed text slice (note that the 'Table'
+            commands position always work on sub slices of the text
+            slice passed to the tag() function).
+
+	    <P><LI> Added constant Constants.TagTables.ToBOF.
+
+	    <P><LI> Changed some internals producing a slight speedup.
+	    Converted some of the functions to use the buffer
+	    interface instead of string objects.
+
+	    <P><LI> Fixed a bug that caused the HTML parsers not to
+	    detect empty value definitions, e.g. VALUE="". Found by
+	    Felix Thibault.
+
+	    <P><LI> Added multireplace().
+
+	    <P><LI> Fixed a bug in the code for SubTableInList: it
+	    created a new sub tag list even though it should have used
+	    the table's tag list.
+
+	    <P><LI> Fixed a bug in the CALLARG opcode argument
+	    handling code. Thanks to Rod Watterworth for spotting this
+	    one.
+
+	    <P><LI> Fixed a typo in the collapse() keyword parameter:
+	    seperator -> separator.
+
+	    <P><LI> Added LookAhead flag. Thanks to Andrew Dalke for
+	    inspiring this flag.
+
+	    <P><LI> Fixed SubTable and SubTableInList to remove any
+	    additions to the taglist in case of an unsuccessful match.
+
+	    <P><LI> <B>Moved</B> the package under a new top-level
+	    package 'mx'. It is part of the <I>eGenix.com mx BASE
+	    distribution</I>.
+
+	</UL>
+
+	<P>Things that changed from <A
+	HREF="mxTextTools-1.1.0.zip">1.1.0</A> to 1.1.1:
+
+	<P><UL>
+
+            <LI> Added a compile time switch for the type code used in
+            parsing input data for the various APIs dealing with text
+            data. It defaults to "s#" meaning that all objects
+            implementing the getreadbuffer interface are useable; this
+            includes text encoding such as Unicode too, so beware of
+            mixing searching pattern object types and text object
+            types.
+
+            <P><LI> Fixed a bugglet in the definition of MatchFail. It
+            should be the constant -20000, not -1. Also, there was a
+            bug in the finishing part of the Tagging Engine: jumps to
+            negative table indices did not result in a 'match
+            fail'. Thanks to Tony J. Ibbs for pointing this out.
+
+	</UL>
+
+	<P>Things that changed from <A
+	HREF="mxTextTools-1.0.2.zip">1.0.2</A> to 1.1.0:
+
+	<P><UL>
+
+            <LI>Added MatchFail jump offset.
+
+            <P><LI>Added suffix() and prefix().
+
+	    <P><LI>Fixed the debugging output so that it will print to
+	    several .log-files instead of stdout.
+
+	    <P><LI>Changed the search objects to make them work on any
+	    type that supports the buffer protocol, e.g. memory mapped
+	    files. The Tagging Engine and the other functions still
+	    insist on real Python string objects.
+
+	    <P><LI>Changed join() to accept any sequence as joinlist,
+	    not just Python lists.
+
+	    <P><LI>Made the two search objects pickleable, copyable
+	    and added instance variables .match and .translate.
+
+	    <P><LI>Added start and stop optional arguments to join().
+
+	    <P><LI>Added AppendMatch flag.
+
+	    <P><LI>Added splitlines(), countlines(), str2hex() and
+	    hex2str().
+
+	    <P><LI>Added splitwords().
+
+	    <P><LI>Added SubTableInList command and compactified the
+	    Tagging Engine a bit.
+
+	    <P><LI>Added setstrip().
+
+	    <P><LI>Changed the compile time flag MAL_PYTHON to
+	    MAL_DEBUG_WITH_PYTHON and hacked up Setup.in a little.
+
+	</UL>
+
+	<P>Things that changed from <A
+	HREF="mxTextTools-1.0.1.zip">1.0.1</A> to 1.0.2:
+
+	<P><UL>
+
+            <LI>Fixed some of the undocumented printing functions.
+
+            <P><LI>Added Tim.py example for dynamic programming using
+            Tag Tables.
+
+	    <P><LI>Tuned the Tagging Engine a little more. Added optimizations
+	    to TextTools.join(). It is faster then string.join() now (but
+	    only excepts real Python lists as input).
+
+	    <P><LI>Added collapse(). Tim Peters will like this one...
+
+	    <P><LI>Tuned setsplit, setsplitx and joinlist
+	    somewhat. The performance is now comparable to
+	    string.split (for tasks producing the same output).
+
+	    <P><LI>Added charsplit() and splitat().
+
+	    <P><LI>Fixed a bug in join() that prevented the function
+	    from returning '' for empty lists. It raised a SystemError
+	    instead.
+
+	    <P><LI>Added better exception reporting to the tagging
+	    engine.  Errors are now reported together with the index
+	    of the Tag Table entry that caused the exception.
+
+	    <P><LI>Fixed and reformatted included debugging
+	    support. If you want the C engine to be very verbose about
+	    what it's doing, compile the engine using '-DMAL_DEBUG
+	    -DMAL_PYTHON'. If you run the Python interpreter with '-d'
+	    option, the engine will print tons of information to
+	    stdout, e.g. "python -d Examples/HTML.py
+	    Doc/mxTextTools.html". The engine remains silent without
+	    the -d switch.
+
+	    <P><LI>Added special ThisTable constant to simplify
+	    writing recursive Tag Tables.
+
+        </UL>
+
+	<P>Things that changed from <A
+	HREF="mxTextTools-1.0.0.zip">1.0.0</A> to 1.0.1:
+
+	<P><UL>
+
+            <LI>Added new functions find() and findall().
+
+            <P><LI>Fixed a few quirks that caused compilation problems
+            on Windows. Eliminated the dependency on hack.py in
+            TextTools.py and some of the examples.
+
+	    <P><LI>Added a compiled Windows PYD-file of the C
+	    extension.  Thanks to Gordon McMillan for providing it and
+	    pointing out a couple of portability bugs.
+
+	    <P><LI>Added instructions on how to build the C extension
+	    under WinXX courtesy of Gordon McMillan.
+
+	    <P><LI>Added some type casts to make CodeWarrior/Mac
+	    happy.  Thanks to Just van Rossum for this hint.
+
+        </UL>
+
+	<P>Things that changed from the really old <A
+	HREF="tagit.tgz">TagIt module</A> version 0.7 to mxTextTools
+	1.0.0:
+
+	<P><UL>
+
+            <LI>Added lots of new commands, fixed some bugs, added
+            documentation and wrapped everything into a package.
+
+            <P><LI>Added character set handling routines and search
+            objects.
+
+        </UL>
+
+    </UL><!--CLASS="indent"-->
+
+    <P>
+    <HR WIDTH="100%">
+    <CENTER><FONT SIZE=-1>
+        <P>
+          &copy; 1997-2000, Copyright by Marc-Andr&eacute; Lemburg;
+          All Rights Reserved.  mailto: <A
+          HREF="mailto:mal@lemburg.com">mal@lemburg.com</A>
+        <P>
+          &copy; 2000-2001, Copyright by eGenix.com Software GmbH; 
+          All Rights Reserved.  mailto: <A
+          HREF="mailto:info@egenix.com">info@egenix.com</A>
+    </FONT></CENTER>
+    </FONT></CENTER>
+
+  </BODY>
+</HTML>

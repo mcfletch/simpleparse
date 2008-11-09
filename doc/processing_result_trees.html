@@ -1,0 +1,241 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+             	                                    
+  <meta http-equiv="CONTENT-TYPE"
+ content="text/html; charset=windows-1252">
+  <title>Processing Result Trees</title>
+                                                 	 	                    
+               
+  <meta name="GENERATOR" content="OpenOffice.org 641  (Win32)">
+             	                                    
+  <meta name="AUTHOR" content="Mike Fletcher">
+             	                                    
+  <meta name="CREATED" content="20020705;13585200">
+             	                                    
+  <meta name="CHANGEDBY" content="Mike Fletcher">
+             	                                    
+  <meta name="CHANGED" content="20020706;20023400">
+             	                                    
+  <link rel="stylesheet" type="text/css" href="sitestyle.css">
+</head>
+  <body lang="en-US">
+                         
+<h1>Processing Result Trees</h1>
+                         
+<p>SimpleParse parsers generate tree structures describing the structure
+of your parsed content. This document briefly describes the structures, a
+simple mechanism for processing the structures, and ways to alter the structures
+  as they are generated to accomplish specific goals.</p>
+                         
+<p>Prerequisites:</p>
+                         
+<ul>
+              <li>     Python 2.x programming   </li>
+              <li>     Familiarity with creating SimpleParse 2.0 Parsers
+(see:        <a href="scanning_with_simpleparse.html">Scanning with SimpleParse</a>)
+     </li>
+                       
+</ul>
+                          
+<h2>Standard Result Trees</h2>
+                         
+<p>SimpleParse uses the same result format as is used for the underlying
+mx.TextTools engine.  The engine returns a three-item tuple from the parsing
+of the top-level (root) production like so:</p>
+                         
+<pre>success, resultTrees, nextCharacter = myParser.parse( someText, processor=None)</pre>
+                       
+<p> Success is a Boolean value indicating whether the production (by default
+      the root production) matched (was satisfied) at all.  If success is
+true, nextCharacter is  an   integer value indicating the next character
+to be parsed in the text  (i.e.   someText[ startCharacter:nextCharacter
+] was parsed).<br>
+   </p>
+     
+<p><i>[New in 2.0.0b2]</i> Note: If success is false, then nextCharacter is
+set to the (very ill-defined) "error position", which is the position reached
+by the last TextTools command in the top-level production before the entire
+table failed. This is a lower-level value than is usefully predictable within
+SimpleParse (for instance, negative results which cause a failure will actually
+report the position after the positive version of the element token succeeds).
+ You might, I suppose, use it as a hint to your users of where the error
+occured, but using error-on-fail SyntaxErrors is <b>by far</b> the prefered
+method.  Basically, if success is false, consider nextCharacter to contain
+garbage data.<br>
+    </p>
+       
+<p>When the processor argument to parse is false (or a non-callable object),
+  the system does not attempt     to use the default processing mechanism,
+ and returns the result trees directly.     The standard format for result-tree
+  nodes is as follows:</p>
+                         
+<pre>(production_name, start, stop, children_trees)</pre>
+                       
+<p> Where start and stop represent indexes in the source text such that sourcetext
+      [ start: stop] is the text which matched this production. The <b>list
+  of children   </b> is the list of a list of the result-trees for the child
+  productions within    the production, or <b>None</b> (Note: that last is
+ important, you can't automatically do a "for" over the children_trees).<br>
+    </p>
+       
+<p>Expanded productions, as well as unreported productions (and the children
+      of unreported productions), will not appear in the result trees, neither
+     will the root production. See <a href="simpleparse_grammars.html">Understanding
+  SimpleParse Grammars</a> for details. However, LookAhead productions where
+ the non-lookahead value would normally return results, will return their
+results in the position where the LookAhead is included in the grammar.</p>
+       
+<p>If the processor argument to parse is true and callable, the processor
+  object will be called with (success, resultTrees, nextCharacter) on completion
+  of parsing.  The processor can then take whatever processing steps desired,
+  the return value from calling the processor with the results is returned
+ directly to the caller of parse.<br>
+     </p>
+                                           
+<h2>DispatchProcessor</h2>
+                         
+<p>SimpleParse 2.0 provides a simple mechanism for processing result trees,
+  a recursive series of calls to attributes of  a  “Processor” object with
+ functions to automate the call-by-name dispatching.  This processor implementation
+ is available for examination in the simpleparse.dispatchprocessor module.
+  The main functions are:</p>
+                         
+<pre>def dispatch( source, tag, buffer ):<br>	"""Dispatch on source for tag with buffer<br><br>	Find the attribute or key "tag-object" (tag[0]) of source,<br>	then call it with (tag, buffer)<br>	"""<br>def dispatchList( source, taglist, buffer ):<br>	"""Dispatch on source for each tag in taglist with buffer"""<br><br>def multiMap( taglist, source=None, buffer=None ):<br>	"""Convert a taglist to a mapping from tag-object:[list-of-tags]<br>	<br>	For instance, if you have items of 3 different types, in any order,<br>	you can retrieve them all sorted by type with multimap( childlist)<br>	then access them by tagobject key.<br><br>	If source and buffer are specified, call dispatch on all items.<br>	"""<br><br>def singleMap( taglist, source=None, buffer=None ):<br>	"""Convert a taglist to a mapping from tag-object:tag, <br>	overwritting early with late tags.  If source and buffer<br>	are specified, call dispatch on all items."""<br><br>def getString( (tag, left, right, sublist), buffer):<br>	"""Return the string value of the tag passed"""<br><br>def lines( start=None, end=None, buffer=None ):<br>	"""Return number of lines in buffer[start:end]"""<br></pre>
+                       
+<p>With a class <b>DispatchProcessor</b>, which provides a __call__ implementation
+  to trigger dispatching for both "called as root processor" and "called
+to   process an individual result element" cases.<br>
+    </p>
+       
+<p>You define a DispatchProcessor sub-class with methods named for each production
+  that will be processed by the processor, with signatures of:<br>
+    </p>
+       
+<pre>from simpleparse.dispatchprocessor import *<br>class MyProcessorClass( DispatchProcessor ):<br>	def production_name( self, (tag,start,stop,subtags), buffer ):<br>		"""Process the given production and it's children"""<br></pre>
+       
+<p>Within those production-handling methods, you can call the dispatch functions
+  to process the sub-tags of the current production (keep in mind that the
+ sub-tags "list" may be a None object).  You can see examples of this processing
+ methodology in simpleparse.simpleparsegrammar, simpleparse.common.iso_date
+ and simpleparse.common.strings (among others).<br>
+    </p>
+       
+<p>For real-world Parsers, where you normally use the same processing class
+  for all runs of the parser, you can define a default Processor class like
+  so:<br>
+    </p>
+       
+<p></p>
+       
+<pre>class MyParser( Parser ):<br>	def buildProcessor( self ):<br>		return MyProcessorClass()</pre>
+                       
+<p>so that if no processor is explicitly specified in the parse call, your
+  "MyProcessorClass" instance will be used for processing the results.<br>
+    </p>
+                                          
+<h2><a name="nonstandardresulttrees"></a>Non-standard Result Trees (AppendMatch,
+AppendToTagobj, AppendTagobj,       CallTag)</h2>
+                         
+<p>SimpleParse 2.0 introduced features which expose certain of the mx.TextTool
+      library's features for producing non-standard result trees.  Although
+  not    generally recommended for use in “normal” parsers, these features
+ are useful    for certain types of text processing, and their exposure was
+ requested.  Each  flag has a different effect on the result tree, the particular
+ effects  are  discussed below.</p>
+                         
+<p>The exposure is through the Processor (or more precisely, a super-class
+      of Processor called “MethodSource”) object. To specify the use of one
+  of the flags, you set an attribute    in your MethodSource object (your
+Processor  object) with the    name _m_productionname (for the “method” to
+use, which  is either an actual    callable object for use with CallTag,
+or one of the  other mx.TextTools  flag   constants above).  In the case
+of  AppendTagobj  , you will likely want to   specify a particular tagobj
+object to be appended,  you do that by setting   an attribute named _o_productionname
+in your MethodSource.   For AppendToTagobj,   you <b>must</b><span
+ style=""> specify an _o_productionname  object with an “append” method.<br>
+    </span></p>
+       
+<p><span style="">Note: you can use MethodSource as your direct ancestor
+if you want to define a non-standard result tree, but don't want to do any
+processing of the results (this is the reason for having seperate classes).
+ MethodSource does not define a __call__ method.<br>
+    </span></p>
+                         
+<h3>CallTag</h3>
+                         
+<pre>_m_productionname = callableObject<code>(</code><br><code>    taglist,</code><br><code>    text,</code><br><code>    left,</code><br><code>    right,</code><br><code>    subtags</code><br><code>)</code></pre>
+                       
+<p> The given object/method is called on a successful match with the values
+      shown.  The text argument is the entire text buffer being parsed, the
+  rest    of the values are what you're accustomed to seeing in result tuples.</p>
+                         
+<p>Notes:</p>
+                         
+<ul>
+             	<li>               Nothing is (necessarily) added to the results 
+list when 	CallTag    is specified!  If you want something added, call taglist.append( 
+item ).   	    	</li>
+              <li>              Raising an error in the CallTag method will 
+ 	halt    parsing.    	</li>
+              <li>                    The  callableObject  is accessed from 
+ the   	MethodSource object using   standard getattr, so if you are using 
+a 	function,   it will need to define   a “self” parameter for 	the first 
+position.       </li>
+                       
+</ul>
+                         
+<h3>AppendToTagobj</h3>
+                         
+<pre>_m_productionname = AppendToTagobj<br>_o_productionname = objectWithAppendMethod</pre>
+                       
+<p> On a successful match, the system will call _o_productionname.append((None,l,r,subtags))
+      method.  For some processing tasks, it's conceivable you might want
+to   use   this method to pull out all instances of a production from a larger
+   (already-written)   grammar where going through the whole results tree
+to   find the deeply nested   productions is considered too involved.</p>
+                         
+<p>Notes:</p>
+                         
+<ul>
+             	<li>          Nothing is added to the results list when 	AppendToTagobj
+     is specified!    	</li>
+              <li>      Raising an error in the AppendToTagobj method 	will 
+ halt   parsing.    </li>
+                       
+</ul>
+                         
+<h3>AppendMatch</h3>
+                         
+<pre>_m_productionname = AppendMatch</pre>
+                       
+<p> On a successful match, the system will append the matched text to the 
+      result tree, rather than a tuple of results.  In situations where you 
+  just   want to extract the text, this can be useful.  The downside is that 
+  your  results tree has a non-standard format that you need to explicitly 
+ watch out for while processing the results.</p>
+                         
+<h3>AppendTagobj</h3>
+                         
+<pre>_m_productionname = AppendTagobj<br>_o_productionname = any object<br># object is optional, if omitted, the production name string is used</pre>
+                       
+<p> On a successful match, the system will append the tagobject to the result
+      tree, rather than a tuple of results.  In situations where you just
+want     notification that the production has matched (and it doesn't matter
+what    it matched), this can be useful.  The downside, again, is that your
+results    tree has a non-standard format that you need to explicitly watch
+out for   while processing the results.</p>
+             <a href="index.html">Up to index...</a><br>
+             
+<p align="center">A <a href="http://sourceforge.net"> <img
+ src="http://sourceforge.net/sflogo.php?group_id=55673&amp;type=5"
+ width="210" height="62" border="0" alt="SourceForge Logo">
+         </a><br>
+          Open Source <a href="http://simpleparse.sourceforge.net/">project</a><br>
+    </p>
+    <br>
+   <br>
+  <br>
+ <br>
+</body>
+</html>

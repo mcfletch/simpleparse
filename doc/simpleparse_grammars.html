@@ -1,0 +1,512 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+  <meta content="text/html; charset=windows-1252"
+ http-equiv="CONTENT-TYPE">
+  <title>SimpleParse Grammars</title>
+  <meta content="OpenOffice.org 641  (Win32)" name="GENERATOR">
+  <meta content="Mike Fletcher" name="AUTHOR">
+  <meta content="20020705;1503600" name="CREATED">
+  <meta content="Mike Fletcher" name="CHANGEDBY">
+  <meta content="20020706;20433000" name="CHANGED">
+  <link href="sitestyle.css" type="text/css" rel="stylesheet">
+  <meta content="Mike C. Fletcher" name="author">
+</head>
+<body lang="en-US">
+<h1>SimpleParse Grammars</h1>
+<p>SimpleParse uses a particular EBNF grammar which reflects the
+current
+set of features in the system. Though the system is modular enough that
+you could replace that grammar, most users will simply want to use the
+provided grammar. This document provides a quick reference for the
+various features of the grammar with examples of use and descriptions
+of their effects.</p>
+<p>Prerequisites:</p>
+<ul>
+  <li>Python 2.x programming</li>
+  <li>Some familiarity with EBNF grammars and other parsing terminology</li>
+</ul>
+<h2>An Example</h2>
+<p>Here is an example of a basic SimpleParse grammar:</p>
+<pre>declaration = r'''# note use of raw string when embedding in python code...<br>file           :=  [ \t\n]*, section+<br>section        :=  '[',identifier!,']'!, ts,'\n', body<br>body           :=  statement*<br>statement      :=  (ts,semicolon_comment)/equality/nullline<br>nullline       :=  ts,'\n'<br>comment        :=  -'\n'*<br>equality       :=  ts, identifier,ts,'=',ts,identified,ts,'\n'<br>identifier     :=  [a-zA-Z], [a-zA-Z0-9_]*<br>identified     :=  string/number/identifier<br>ts             :=  [ \t]*<br>'''</pre>
+<p> You can see that the format allows for comments in Python style,
+and fairly
+free-form treatment of whitespace around the various items (i.e. “s:=x”
+and
+“s := x” are equivalent). The grammar is actually written such that you
+can break productions (rules) across multiple lines if that will make
+your
+grammar more readable. &nbsp;The grammar also allows both ':=' and
+'::=' for the
+"defined as" symbol.<br>
+</p>
+<h2>Element Tokens</h2>
+<p>Element tokens are the basic operational unit of the grammar. The
+concrete implementation of the various tokens is the module
+simpleparse.objectgenerator, their syntax is defined in the module
+simpleparse.simpleparsegrammar. You can read a formal definition of the
+grammar used to define them at the end of this document.</p>
+<table cellspacing="8" cellpadding="2" border="0" width="100%">
+  <tbody>
+    <tr>
+      <th>
+      <p>Element Token</p>
+      </th>
+      <th>
+      <p>Examples</p>
+      </th>
+      <th>
+      <p>Effect</p>
+      </th>
+    </tr>
+    <tr>
+      <td valign="top">
+      <p>Character Range</p>
+      </td>
+      <td valign="top">
+      <pre>[ \t\n]<br>[a-zA-Z]<br>[a-zA-Z0-9_]</pre>
+      </td>
+      <td valign="top">
+      <p>Matches any 1 character in the given range</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <p>String Literal</p>
+      </td>
+      <td valign="top">
+      <pre>“[“<br>'['<br>'\t'<br>'\xa0'</pre>
+      </td>
+      <td valign="top">
+      <p>Match the sequence of characters as given, allowing for
+special, octal and hexadecimal escape characters</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <p>Case-insensitive String Literal<br>
+(new in 2.0.1a2)<br>
+      </p>
+      </td>
+      <td valign="top">
+      <pre>c"this"<br>c'this'<br>c' this\t\n'<br>c'\xa0'</pre>
+      </td>
+      <td valign="top">
+      <p>Match the sequence of characters without regard to the case of
+the target text, allowing for special, octal and hexadecimal escape
+characters.&nbsp; <br>
+      </p>
+      <p>Note: Case-insensitive literals are far slower than regular
+literals!<br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <p>Name Reference</p>
+      </td>
+      <td valign="top">
+      <pre>statement<br>semicolon_comment<br>ts</pre>
+      </td>
+      <td valign="top">
+      <p>Match the production whose name is specified. With 2.0, those
+productions may have been included from a library module or
+created by you and passed to the Parser object's initialiser.</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <p>Sequential Groups</p>
+      </td>
+      <td valign="top">
+      <pre>(a,b,c,d)</pre>
+      </td>
+      <td valign="top">
+      <p>Match a sequence of element token children. Sequential groups
+have a lower precedence than FirstOf groups (below), so the group
+(a,b/c,d)
+is equivalent to (a,(b/c),d).</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <p>FirstOf Groups</p>
+      </td>
+      <td valign="top">
+      <pre>(a/b/c/d)</pre>
+      </td>
+      <td valign="top">
+      <p>Match the first child which matches. <br>
+      </p>
+      <p>Note that this is very different from system which parse all
+children and choose the longest/most successful child-match.<br>
+      </p>
+      <p>Sequential groups have a lower precedence than FirstOf groups,
+so the group (a,b/c,d) is equivalent to (a,(b/c),d).</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <p>Error On Fail (Cut)<br>
+      </p>
+      </td>
+      <td valign="top">
+      <pre>!<br>! "Error Message"<br><br>(a,!,b,c,d,e,f)<br></pre>
+      </td>
+      <td valign="top">
+      <p>Used as a "token", the ErrorOnFail modifer (also called "cut"
+after Prolog's cut directive), declares that all subsequent items in
+the enclosing sequential group should be marked ErrorOnFail, as if the
+given ErrorOnFail modifier were applied to each one individually. </p>
+      <p>Note: can only be used as a member of a Sequential group,
+cannot be a member of a FirstOf group.<br>
+      </p>
+      <p>See the section <a href="#Modifiers">Modifiers/Operators</a>
+below for more details of the semantics surrounding this token.<br>
+      </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<h3>Character Classes, Strings and Escape Characters</h3>
+<p>Both character classes and strings in simpleparse may use octal
+escaping (of 1 to 3 octal digits), hexadecimal escaping (2 digits) or
+standard Python character escapes ( \a\b\f\n\r\t\v (Note that “u” and
+“U” are missing and that “\n” is interpreted according to the local
+machine, and thus may be non-portable, so an explicit declaration using
+hexadecimal code might be more suitable in cases where differentiation
+is required)). Strings may be either single or double quoted (but not
+triple quoted).</p>
+<p>To include a "]" character in a character class, make it the first
+character of the class. Similarly, a literal "-" character must be
+either the first (after the optional "]" character) or the last
+character. The grammar definition for a character class is as follows:</p>
+<pre style="margin-bottom: 0.2in;">'[', CHARBRACE?,CHARDASH?, (CHARRANGE/CHARNOBRACE)*, CHARDASH?, ']'</pre>
+<p> It is a common error to have declared something like [+-*] as a
+character range (every character including and between + and *)
+intending to specify [-+*] or [+*-] (three distinct characters).
+Symptoms
+include not matching '-' or matching characters that were not expected.<br>
+</p>
+<h2><a name="Modifiers"></a>Modifiers/Operators</h2>
+<p>Each element token can have a prefix and/or a postfix modifier
+applied to it to alter how the engine treats a match of the “base”
+element token.</p>
+<table cellspacing="8" cellpadding="2" border="0" width="100%">
+  <tbody>
+    <tr>
+      <th align="center">
+      <p>Modifier</p>
+      </th>
+      <th align="center">
+      <p>Example</p>
+      </th>
+      <th align="center">
+      <p>Meaning</p>
+      </th>
+    </tr>
+    <tr>
+      <td valign="top">
+      <p>-</p>
+      </td>
+      <td valign="top">
+      <p>-"this"<br>
+-those*<br>
+-[A-Z]+<br>
+-(them,their)<br>
+-(them/their)</p>
+      </td>
+      <td valign="top">
+      <p>Match a single character at the current position if the entire
+base element token doesn't match. If repeating, match any number of
+characters until the base element token matches.<br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <p>(postfix)?</p>
+      </td>
+      <td valign="top">
+      <p>"this"?<br>
+those?<br>
+[A-Z]?<br>
+(them,their)?<br>
+(them/their)?</p>
+      </td>
+      <td valign="top">
+      <p>Match the base element token, or if the base element token
+cannot match, match nothing.</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <p>? (prefix)</p>
+      </td>
+      <td valign="top">
+      <p>?"this"<br>
+?-those<br>
+?[A-Z]<br>
+?-(them,their)<br>
+      </p>
+      </td>
+      <td valign="top">
+      <p>Match the base element token, then return to the previous
+position (this is called "LookAhead" in the mx.TextTools
+documentation). The
+- modifier is applied "after" the lookahead, so that a lookahead on a
+negative match equates to "is not followed by", while lookahead on
+positive
+matches equates to "is followed by".<br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <p>*</p>
+      </td>
+      <td valign="top">
+      <p>"this"*<br>
+those*<br>
+[A-Z]*<br>
+(them,their)*<br>
+(them/their)*</p>
+      </td>
+      <td valign="top">
+      <p>Match the base element token from 0 to an infinite number of
+times.<br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <p>+</p>
+      </td>
+      <td valign="top">
+      <p>"this"+<br>
+those+<br>
+[A-Z]+<br>
+(them,their)+<br>
+(them/their)+</p>
+      </td>
+      <td valign="top">
+      <p>Match the base element token from 1 to an infinite number of
+times.<br>
+      </p>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <p>!<br>
+      </p>
+      </td>
+      <td valign="top">
+      <p>"this"!<br>
+"this"+!</p>
+      <p><br>
+"those" ! "Expected 'those' at position %(position)s"<br>
+      </p>
+      </td>
+      <td valign="top">
+      <p>Consider a failure to match a SyntaxError (stop parsing, and
+raise an exception). If the optional string-literal is included, it
+specifies the message (template) to be used for the SyntaxError. You
+can use %(varname)s formats to have the following variables substituted:<br>
+      </p>
+      <ul>
+        <li>position -- the character position at which parsing failed</li>
+        <li>line -- the (approximate) line on which parsing failed</li>
+        <li>lineChar -- the position on the line where parsing failed<br>
+        </li>
+        <li>expected -- the grammar's definition of the failed item</li>
+        <li>production -- the top-level production which included the
+failing
+item<br>
+        </li>
+        <li>text -- the text from the failure position to 50 characters
+beyond the failure position.</li>
+      </ul>
+      <p>Note: the error_on_failure flag is ignored for optional items
+(since they can never fail), and only raises an error if a repeating
+non-optional production fails completely.<br>
+      </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<p>Using the ErrorOnFail operator can be somewhat tricky.&nbsp; It is
+often easier to use the "stand-alone" element-token version of
+cut.&nbsp; Here's an example of use:<br>
+</p>
+<pre>top := a/b/bp<br>a   := 'a', !, ws, '=', ws, something<br>b   := 'b', ws, '=', !, ws, something<br>bp   := 'b', ws, '+=', !, ws, something<br></pre>
+<p>The production top can match an 'a =', a 'b =', or a 'b +=', but if
+it encounters an 'a' without an '=' following, it will raise a syntax
+error.&nbsp; For the two "b" productions, we don't want to raise a
+Syntax error if the 'b' is not followed by the '=' or '+=' because the
+grammar might match the other production, so we only cut off
+back-tracking after the operator is found.&nbsp; Consider this
+alternative:<br>
+</p>
+<pre>top := a/b/bp<br>a   := 'a'!, ws, '=', ws, something # BAD DON'T DO THIS!<br>b   := 'b', ws, '=', !, ws, something<br>bp   := 'b', ws, '+=', !, ws, something</pre>
+<p>This grammar does something very different (and somewhat
+useless).&nbsp; When the "top" production goes to match, it tries to
+match the "a" production, which tries to match the 'a' literal.&nbsp;
+If literal isn't there, for instance, for the text 'b =', then the 'a'
+literal will raise a SyntaxError.&nbsp; The result is that the "b" and
+"bp" productions can <strong>never</strong> match with this grammar.<br>
+</p>
+<h2>Declarations (Productions) and Result Trees</h2>
+<p>Each simpleparsegrammar is a series of declarations which define a
+production (rule) and bind it to a name which can be referenced by any
+production in the declaration set. Defining a production generally
+causes
+a result tuple to be created in the results tree (see below for what
+else can happen).</p>
+<h3>Default Result Tree Generation</h3>
+<p>Here are some examples showing sample productions and the result
+trees they would generate.</p>
+<table cellspacing="8" cellpadding="2" border="0" width="100%">
+  <tbody>
+    <tr>
+      <td> s := "this" </td>
+      <td> ('s', start, stop, [] ) # no children </td>
+    </tr>
+    <tr>
+      <td> s := them, those? </td>
+      <td> ('s', start, stop, [ ("them", start, stop, [...]), ("those",
+start, stop, [...]) ] )<br>
+('s', start, stop, [ ("them", start, stop, [...]) ) # optional value
+not there </td>
+    </tr>
+    <tr>
+      <td> s := them*, those </td>
+      <td> ('s', start, stop, [ ("them", start, stop, [...]), ("them",
+start, stop, [...]), ("those", start,
+stop, [...]) ] )<br>
+('s', start, stop, [ ("those", start, stop, [...]) ) # optional
+repeating value not present </td>
+    </tr>
+  </tbody>
+</table>
+<p>As a general rule, when a production matches, a match tuple is added
+to the result tree. The first item of this tuple is normally the
+name of the production (as a string), the second is the staring
+position of the match, the third is the stopping position of the match,
+and the fourth is a list of any child-production's result trees.</p>
+<h3>Expanded and Unreported Productions</h3>
+<p>Using these features allows you to trim unwanted entries out of your
+results tree (which is good for efficiency, as the system doesn't need
+to store the result-trees). Using expanded productions can allow
+you to reduce the complexity of your grammars by factoring out common
+patterns and allowing them to be included in multiple productions
+without
+generating extraneous result-tuples in the results tree. Both of these
+methods still produce standard results trees so no special work is
+required to process the results tree. (There are methods described in <a
+ href="processing_result_trees.html">Processing Results Trees</a> which
+can generate non-standard result trees for special purposes).</p>
+<table cellspacing="8" cellpadding="2" border="0" width="100%">
+  <tbody>
+    <tr>
+      <th>
+      <p>Report Type</p>
+      </th>
+      <th>
+      <p>Examples</p>
+      </th>
+      <th>
+      <p>Return Value</p>
+      </th>
+    </tr>
+    <tr>
+      <td>
+      <p>Normal</p>
+      </td>
+      <td>
+      <pre>a := (b,c)</pre>
+      </td>
+      <td>
+      <pre>('a', l, r, [<br>    ("b", l, r, [...]),<br>    ("c", l, r, [...]) <br>] )</pre>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      <p>Unreported</p>
+      </td>
+      <td>
+      <pre>a := (b,c)<br># b is “unreported”<br>&lt;b&gt; := “b”</pre>
+      </td>
+      <td>
+      <pre>('a', l, r, [<br>    # no b, no children of b<br>    ("c", l, r, [...]) <br>] )</pre>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      <p>Expanded</p>
+      </td>
+      <td>
+      <pre>a := (b,c)<br># b is “expanded”<br>&gt;b&lt; := (d,e) </pre>
+      </td>
+      <td>
+      <pre>('a', l, r, [<br>    # children of b are<br>    # returned as if they<br>    # were direct children of a<br>    ("d", l, r, [...]),<br>    ("e", l, r, [...]),<br>    ("c", l, r, [...]) <br>] )</pre>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<h2>Pre-built and Library Element Tokens</h2>
+<p>There are situations where the base parsing library simply isn't
+capable of accomplishing a particular matching task, or where it would
+be much something to define a method for matching a particular class of
+value than to define it with an EBNF grammar. In other instances, a
+particularly common pattern, such as floating point numbers or strings
+with standard (Python) escapes are wanted, and have been provided
+in a parsing library.</p>
+<p>SimpleParse allows you to pass a set of “pre-built” element tokens
+to
+the Parser during initialization. These pre-built parsers can either be
+instances of simpleparse.objectgenerator.ElementToken, or raw
+mx.TextTools tag-tables. To use them, pass the Parser's initializer a
+list of two-tuples
+of (name, parserObject):</p>
+<pre>parser = Parser( declaration, "v", prebuilts = [<br>		("word", parserObject1 ),<br>		("white",  parserObject2 ),<br>	]<br>)</pre>
+<p> You can see a working example (which uses Python's re module to
+create a prebuilt parser) in examples/prebuilt_call.py .</p>
+<p>SimpleParse 2.0 has introduced the ability to create libraries of
+common parsers for inclusion in other parsers. At present, the common
+package includes numbers, basic strings, the ISO date format, some
+character types, and some comment types. New contributions to the
+library are welcome. </p>
+<p>In general, importing a particular module from the common package
+makes the production names from the module available in any subsequent
+grammar defined. Refer to the documentation for a particular module to
+see what production names are exported.</p>
+<pre>from simpleparse.common import strings, comments, numbers</pre>
+<p> Many of the standard common parser modules also include
+“Interpreter” objects which can be used to process the results tree
+generated by the mini-grammar into a Python-friendly form. See the
+documentation for the individual modules.</p>
+<pre>class MyParser( Parser ):<br>	string = strings.StringInterpreter()</pre>
+<h2> Formal SimpleParse 2.0 EBNF Grammar</h2>
+<p>This is the formal definition of the SimpleParse 2.0 grammar.
+Although the grammar is functional (should parse any proper grammar),
+the grammar used during parser generation is a manually generated
+version found in the simpleparse.simpleparsegrammar module.</p>
+<pre>declaration = r"""declarationset      :=  declaration+<br>declaration         :=  ts, (unreportedname/expandedname/name) ,ts,':',':'?,'=',seq_group<br><br>element_token       :=  lookahead_indicator?, ts, negpos_indicator?,ts, (literal/range/group/name),ts, occurence_indicator?, ts, error_on_fail?<br><br>negpos_indicator    :=  [-+]<br>lookahead_indicator :=  "?"<br>occurence_indicator :=  [+*?]<br>error_on_fail       :=  "!", (ts,literal)?<br><br>&gt;group&lt;             :=  '(',seq_group, ')'<br>seq_group           :=  ts,(error_on_fail/fo_group/element_token),<br>                          (ts, seq_indicator, ts,<br>                              (error_on_fail/fo_group/element_token)<br>                          )*, ts<br><br>fo_group            :=  element_token, (ts, fo_indicator, ts, element_token)+<br><br><br># following two are likely something peoples might want to<br># replace in many instances...<br>&lt;fo_indicator&gt;      :=  "/"<br>&lt;seq_indicator&gt;     :=  ','<br><br>unreportedname      :=  '&lt;', name, '&gt;'<br>expandedname        :=  '&gt;', name, '&lt;'<br>name                :=  [a-zA-Z_],[a-zA-Z0-9_]*<br>&lt;ts&gt;                :=  ( [ \011-\015]+ / comment )*<br>comment             :=  '#',-'\n'*,'\n'<br>literal             :=  literalDecorator?,("'",(CHARNOSNGLQUOTE/ESCAPEDCHAR)*,"'")  /  ('"',(CHARNODBLQUOTE/ESCAPEDCHAR)*,'"')<br>literalDecorator    :=  [c]<br><br><br><br>range               :=  '[',CHARBRACE?,CHARDASH?, (CHARRANGE/CHARNOBRACE)*, CHARDASH?,']'<br>CHARBRACE           :=  ']'<br>CHARDASH            :=  '-'<br>CHARRANGE           :=  CHARNOBRACE, '-', CHARNOBRACE<br>CHARNOBRACE         :=  ESCAPEDCHAR/CHAR<br>CHAR                :=  -[]]<br>ESCAPEDCHAR         :=  '\\',( SPECIALESCAPEDCHAR / ('x',HEXESCAPEDCHAR) / ("u",UNICODEESCAPEDCHAR_16) /("U",UNICODEESCAPEDCHAR_32)/OCTALESCAPEDCHAR  )<br>SPECIALESCAPEDCHAR  :=  [\\abfnrtv"']<br>OCTALESCAPEDCHAR    :=  [0-7],[0-7]?,[0-7]?<br>HEXESCAPEDCHAR      :=  [0-9a-fA-F],[0-9a-fA-F]<br>CHARNODBLQUOTE      :=  -[\\"]+<br>CHARNOSNGLQUOTE     :=  -[\\']+<br>UNICODEESCAPEDCHAR_16 := [0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F]<br>UNICODEESCAPEDCHAR_32 := [0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F]<br>"""<br></pre>
+<a href="index.html">Up to index...</a><br>
+<p align="center">A <a href="http://sourceforge.net"> <img
+ alt="SourceForge Logo" border="0" height="62" width="210"
+ src="http://sourceforge.net/sflogo.php?group_id=55673&amp;type=5"> </a><br>
+Open Source <a href="http://simpleparse.sourceforge.net/">project</a><br>
+</p>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+</body>
+</html>
