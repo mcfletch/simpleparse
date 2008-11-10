@@ -67,7 +67,7 @@ static
 PyObject *mxTextTools_ToUpper(void)
 {
     char tr[256];
-    int i;
+    Py_ssize_t i;
     
     for (i = 0; i < 256; i++)
 	tr[i] = toupper((char)i);
@@ -78,7 +78,7 @@ static
 PyObject *mxTextTools_ToLower(void)
 {
     char tr[256];
-    int i;
+    Py_ssize_t i;
     
     for (i = 0; i < 256; i++)
 	tr[i] = tolower((char)i);
@@ -291,7 +291,7 @@ void mxTextSearch_Free(mxTextSearchObject *so)
 /* Get the match length from an TextSearch object or -1 in case of an
    error. */
 
-int mxTextSearch_MatchLength(PyObject *self)
+Py_ssize_t mxTextSearch_MatchLength(PyObject *self)
 {
     Py_Assert(mxTextSearch_Check(self),
 	      PyExc_TypeError,
@@ -328,22 +328,22 @@ int mxTextSearch_MatchLength(PyObject *self)
 }
 
 static
-int trivial_search(const char *text,
-		   int start,
-		   int stop,
+Py_ssize_t trivial_search(const char *text,
+		   Py_ssize_t start,
+		   Py_ssize_t stop,
 		   const char *match,
-		   int match_len)
+		   Py_ssize_t match_len)
 {
-    int ml1 = match_len - 1;
+    Py_ssize_t ml1 = match_len - 1;
     register const char *tx = &text[start];
-    register int x = start;
+    register Py_ssize_t x = start;
 
     if (ml1 < 0) 
 	return start;
 
     /* Brute-force method; from right to left */
     for (;;) {
-	register int j = ml1;
+	register Py_ssize_t j = ml1;
 	register const char *mj = &match[j];
 
 	if (x + j >= stop)
@@ -368,22 +368,22 @@ int trivial_search(const char *text,
 
 #ifdef HAVE_UNICODE
 static
-int trivial_unicode_search(const Py_UNICODE *text,
-			   int start,
-			   int stop,
+Py_ssize_t trivial_unicode_search(const Py_UNICODE *text,
+			   Py_ssize_t start,
+			   Py_ssize_t stop,
 			   const Py_UNICODE *match,
-			   int match_len)
+			   Py_ssize_t match_len)
 {
-    int ml1 = match_len - 1;
+    Py_ssize_t ml1 = match_len - 1;
     register const Py_UNICODE *tx = &text[start];
-    register int x = start;
+    register Py_ssize_t x = start;
 
     if (ml1 < 0) 
 	return start;
 
     /* Brute-force method; from right to left */
     for (;;) {
-	register int j = ml1;
+	register Py_ssize_t j = ml1;
 	register const Py_UNICODE *mj = &match[j];
 
 	if (x + j >= stop)
@@ -416,15 +416,15 @@ int trivial_unicode_search(const Py_UNICODE *text,
 
 */
 
-int mxTextSearch_SearchBuffer(PyObject *self,
+Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 			      char *text,
-			      int start,
-			      int stop,
-			      int *sliceleft,
-			      int *sliceright)
+			      Py_ssize_t start,
+			      Py_ssize_t stop,
+			      Py_ssize_t *sliceleft,
+			      Py_ssize_t *sliceright)
 {
-    int nextpos;
-    int match_len;
+    Py_ssize_t nextpos;
+    Py_ssize_t match_len;
 
     Py_Assert(mxTextSearch_Check(self),
 	      PyExc_TypeError,
@@ -511,15 +511,15 @@ int mxTextSearch_SearchBuffer(PyObject *self,
 }
 
 #ifdef HAVE_UNICODE
-int mxTextSearch_SearchUnicode(PyObject *self,
+Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
 			       Py_UNICODE *text,
-			       int start,
-			       int stop,
-			       int *sliceleft,
-			       int *sliceright)
+			       Py_ssize_t start,
+			       Py_ssize_t stop,
+			       Py_ssize_t *sliceleft,
+			       Py_ssize_t *sliceright)
 {
-    int nextpos;
-    int match_len;
+    Py_ssize_t nextpos;
+    Py_ssize_t match_len;
 
     Py_Assert(mxTextSearch_Check(self),
 	      PyExc_TypeError,
@@ -594,9 +594,9 @@ Py_C_Function( mxTextSearch_search,
 	       "where the substring was found, (start,start) otherwise.")
 {
     PyObject *text;
-    int start = 0;
-    int stop = INT_MAX;
-    int sliceleft, sliceright;
+    Py_ssize_t start = 0;
+    Py_ssize_t stop = INT_MAX;
+    Py_ssize_t sliceleft, sliceright;
     int rc;
 
     Py_Get3Args("O|ii:TextSearch.search",
@@ -646,9 +646,9 @@ Py_C_Function( mxTextSearch_find,
 	       "where the substring was found, -1 otherwise.")
 {
     PyObject *text;
-    int start = 0;
-    int stop = INT_MAX;
-    int sliceleft, sliceright;
+    Py_ssize_t start = 0;
+    Py_ssize_t stop = INT_MAX;
+    Py_ssize_t sliceleft, sliceright;
     int rc;
 
     Py_Get3Args("O|ii:TextSearch.find",
@@ -696,12 +696,12 @@ Py_C_Function( mxTextSearch_findall,
 {
     PyObject *text;
     PyObject *list = 0;
-    int start = 0;
-    int stop = INT_MAX;
-    int stop_index;
-    int match_len;
-    int listsize = INITIAL_LIST_SIZE;
-    int listitem = 0;
+    Py_ssize_t start = 0;
+    Py_ssize_t stop = INT_MAX;
+    Py_ssize_t stop_index;
+    Py_ssize_t match_len;
+    Py_ssize_t listsize = INITIAL_LIST_SIZE;
+    Py_ssize_t listitem = 0;
 
     Py_Get3Args("O|ii:TextSearch.findall",
 		text,start,stop);
@@ -730,7 +730,7 @@ Py_C_Function( mxTextSearch_findall,
     while (start <= stop_index) {
 	register PyObject *t,*v;
 	int rc;
-	int sliceleft, sliceright;
+	Py_ssize_t sliceleft, sliceright;
 
 	/* exact search */
 	if (PyString_Check(text))
@@ -943,9 +943,9 @@ static
 int init_string_charset(mxCharSetObject *cs,
 			PyObject *definition)
 {
-    register int i, j;
+    register Py_ssize_t i, j;
     char *def = PyString_AS_STRING(definition);
-    const int len = PyString_GET_SIZE(definition);
+    const Py_ssize_t len = PyString_GET_SIZE(definition);
     string_charset *lookup = 0;
     register unsigned char *bitmap;
     int logic = 1;
@@ -1052,12 +1052,12 @@ static
 int init_unicode_charset(mxCharSetObject *cs,
 			 PyObject *definition)
 {
-    register int i, j;
+    register Py_ssize_t i, j;
     Py_UNICODE *def = PyUnicode_AS_UNICODE(definition);
-    const int len = PyUnicode_GET_SIZE(definition);
+    const Py_ssize_t len = PyUnicode_GET_SIZE(definition);
     unicode_charset *lookup = 0;
     unsigned char bigmap[UNICODE_CHARSET_BIGMAP_SIZE];
-    int blocks;
+    Py_ssize_t blocks;
     int logic = 1;
 
     /* Handle logic change (first char is '^' for negative matching) */
@@ -1333,12 +1333,12 @@ int mxCharSet_Contains(PyObject *self,
 static
 int mxCharSet_FindChar(PyObject *self,
 		       unsigned char *text,
-		       int start,
-		       int stop,
+		       Py_ssize_t start,
+		       Py_ssize_t stop,
 		       const int mode,
 		       const int direction)
 {
-    register int i;
+    register Py_ssize_t i;
     register unsigned int c;
     register unsigned int block;
     unsigned char *bitmap;
@@ -1408,8 +1408,8 @@ int mxCharSet_FindChar(PyObject *self,
 static
 int mxCharSet_FindUnicodeChar(PyObject *self,
 			      Py_UNICODE *text,
-			      int start,
-			      int stop,
+			      Py_ssize_t start,
+			      Py_ssize_t stop,
 			      const int mode,
 			      const int direction)
 {
@@ -1537,11 +1537,11 @@ int mxCharSet_FindUnicodeChar(PyObject *self,
 static
 int mxCharSet_Search(PyObject *self,
 		     PyObject *text,
-		     int start,
-		     int stop,
+		     Py_ssize_t start,
+		     Py_ssize_t stop,
 		     int direction)
 {
-    int position;
+    Py_ssize_t position;
     
     if (PyString_Check(text)) {
 	Py_CheckStringSlice(text, start, stop);
@@ -1586,13 +1586,13 @@ int mxCharSet_Search(PyObject *self,
 
 */
 
-int mxCharSet_Match(PyObject *self,
+Py_ssize_t mxCharSet_Match(PyObject *self,
 		    PyObject *text,
-		    int start,
-		    int stop,
+		    Py_ssize_t start,
+		    Py_ssize_t stop,
 		    int direction)
 {
-    int position;
+    Py_ssize_t position;
     
     if (PyString_Check(text)) {
 	Py_CheckStringSlice(text, start, stop);
@@ -1641,11 +1641,11 @@ int mxCharSet_Match(PyObject *self,
 static
 PyObject *mxCharSet_Strip(PyObject *self,
 			  PyObject *text,
-			  int start,
-			  int stop,
-			  int where)
+			  Py_ssize_t start,
+			  Py_ssize_t stop,
+			  Py_ssize_t where)
 {
-    int left,right;
+    Py_ssize_t left,right;
     
     if (!mxCharSet_Check(self)) {
 	PyErr_BadInternalCall();
@@ -1733,15 +1733,15 @@ PyObject *mxCharSet_Strip(PyObject *self,
 static 
 PyObject *mxCharSet_Split(PyObject *self,
 			  PyObject *text,
-			  int start,
-			  int text_len,
+			  Py_ssize_t start,
+			  Py_ssize_t text_len,
 			  int include_splits)
 {
     PyObject *list = NULL;
     PyObject *s;
-    register int x;
-    int listitem = 0;
-    int listsize = INITIAL_LIST_SIZE;
+    register Py_ssize_t x;
+    Py_ssize_t listitem = 0;
+    Py_ssize_t listsize = INITIAL_LIST_SIZE;
 
     if (!mxCharSet_Check(self)) {
 	PyErr_BadInternalCall();
@@ -1759,7 +1759,7 @@ PyObject *mxCharSet_Split(PyObject *self,
 
 	x = start;
 	while (x < text_len) {
-	    int z;
+	    Py_ssize_t z;
 
 	    /* Skip all text in set (include_splits == 0), not in set
     	       (include_splits == 1) */
@@ -1812,7 +1812,7 @@ PyObject *mxCharSet_Split(PyObject *self,
 
 	x = start;
 	while (x < text_len) {
-	    int z;
+	    Py_ssize_t z;
 
 	    /* Skip all text in set (include_splits == 0), not in set
     	       (include_splits == 1) */
@@ -1898,7 +1898,7 @@ Py_C_Function( mxCharSet_search,
 {
     PyObject *text;
     int direction = 1;
-    int start = 0, stop = INT_MAX;
+    Py_ssize_t start = 0, stop = INT_MAX;
     int rc;
 
     Py_Get4Args("O|iii:CharSet.search", text, direction, start, stop);
@@ -1920,7 +1920,7 @@ Py_C_Function( mxCharSet_match,
 {
     PyObject *text;
     int direction = 1;
-    int start = 0, stop = INT_MAX;
+    Py_ssize_t start = 0, stop = INT_MAX;
     int rc;
 
     Py_Get4Args("O|iii:CharSet.match", text, direction, start, stop);
@@ -1939,7 +1939,7 @@ Py_C_Function( mxCharSet_split,
 	       )
 {
     PyObject *text;
-    int start = 0, stop = INT_MAX;
+    Py_ssize_t start = 0, stop = INT_MAX;
 
     Py_Get3Args("O|ii:CharSet.split", text, start, stop);
     
@@ -1954,7 +1954,7 @@ Py_C_Function( mxCharSet_splitx,
 	       )
 {
     PyObject *text;
-    int start = 0, stop = INT_MAX;
+    Py_ssize_t start = 0, stop = INT_MAX;
 
     Py_Get3Args("O|ii:CharSet.splitx", text, start, stop);
     
@@ -1969,8 +1969,8 @@ Py_C_Function( mxCharSet_strip,
 	       )
 {
     PyObject *text;
-    int where = 0;
-    int start = 0, stop = INT_MAX;
+    Py_ssize_t where = 0;
+    Py_ssize_t start = 0, stop = INT_MAX;
 
     Py_Get4Args("O|iii:CharSet.strip", text, where, start, stop);
     
@@ -2042,13 +2042,13 @@ PyObject *mxCharSet_GetAttr(mxCharSetObject *self,
 
 static
 PySequenceMethods mxCharSet_TypeAsSequence = {
-    (inquiry)0,				/*sq_length*/
+    (lenfunc)0,				/*sq_length*/
     (binaryfunc)0,			/*sq_concat*/
-    (intargfunc)0,			/*sq_repeat*/
-    (intargfunc)0,			/*sq_item*/
-    (intintargfunc)0,			/*sq_slice*/
-    (intobjargproc)0,			/*sq_ass_item*/
-    (intintobjargproc)0,		/*sq_ass_slice*/
+    (ssizeargfunc)0,			/*sq_repeat*/
+    (ssizeargfunc)0,			/*sq_item*/
+    (ssizessizeargfunc)0,			/*sq_slice*/
+    (ssizeobjargproc)0,			/*sq_ass_item*/
+    (ssizessizeobjargproc)0,		/*sq_ass_slice*/
 #if PY_VERSION_HEX >= 0x02000000
     (objobjproc)mxCharSet_Contains,     /*sq_contains*/
 #endif
@@ -2110,7 +2110,7 @@ PyObject *mxTagTable_New(PyObject *definition,
 
 static
 PyObject *tc_get_item(register PyObject *obj,
-		      register int i)
+		      register Py_ssize_t i)
 {
     if (PyTuple_Check(obj)) {
 	if (i > PyTuple_GET_SIZE(obj))
@@ -2127,7 +2127,7 @@ PyObject *tc_get_item(register PyObject *obj,
 }
 
 static
-int tc_length(register PyObject *obj)
+Py_ssize_t tc_length(register PyObject *obj)
 {
     if (obj == NULL)
 	return -1;
@@ -2142,17 +2142,17 @@ int tc_length(register PyObject *obj)
 /* Add a jump target to the jump dictionary */
 
 static
-int tc_add_jumptarget(PyObject *jumpdict,
+Py_ssize_t tc_add_jumptarget(PyObject *jumpdict,
 		      PyObject *targetname,
-		      int index)
+		      Py_ssize_t index)
 {
     PyObject *v;
     
     v = PyDict_GetItem(jumpdict, targetname);
     if (v != NULL)
 	Py_ErrorWithArg(PyExc_TypeError,
-			"tag table entry %i: "
-			"jump target already defined", index);
+			"tag table entry %d: "
+			"jump target already defined", (unsigned int) index);
     v = PyInt_FromLong(index);
     if (v == NULL)
 	goto onError;
@@ -2170,7 +2170,7 @@ int tc_add_jumptarget(PyObject *jumpdict,
 
 static
 PyObject *tc_convert_string_arg(PyObject *arg,
-				int tableposition,
+				Py_ssize_t tableposition,
 				int tabletype)
 {
     /* Convert to strings */
@@ -2185,16 +2185,16 @@ PyObject *tc_convert_string_arg(PyObject *arg,
 					    NULL);
 	    if (arg == NULL)
 		Py_ErrorWithArg(PyExc_TypeError,
-				"tag table entry %i: "
+				"tag table entry %d: "
 				"conversion from Unicode to "
-				"string failed", tableposition);
+				"string failed", (unsigned int)tableposition);
 	}
 #endif
 	else
 	    Py_ErrorWithArg(PyExc_TypeError,
-			    "tag table entry %i: "
+			    "tag table entry %d: "
 			    "command argument must be a "
-			    "string or unicode", tableposition);
+			    "string or unicode", (unsigned int)tableposition);
     }
 
 #ifdef HAVE_UNICODE
@@ -2210,15 +2210,15 @@ PyObject *tc_convert_string_arg(PyObject *arg,
 				    NULL);
 	    if (arg == NULL)
 		Py_ErrorWithArg(PyExc_TypeError,
-				"tag table entry %i: "
+				"tag table entry %d: "
 				"conversion from string to "
-				"Unicode failed", tableposition);
+				"Unicode failed", (unsigned int)tableposition);
 	}
 	else
 	    Py_ErrorWithArg(PyExc_TypeError,
-			    "tag table entry %i: "
+			    "tag table entry %d: "
 			    "command argument must be a "
-			    "string or unicode", tableposition);
+			    "string or unicode", (unsigned int)tableposition);
     }
 #endif
 
@@ -2237,7 +2237,7 @@ PyObject *tc_convert_string_arg(PyObject *arg,
 static
 int tc_cleanup(mxTagTableObject *tagtable)
 {
-    int i;
+    Py_ssize_t i;
     for (i = 0; i < tagtable->ob_size; i++) {
 	mxTagTableEntry *tagtableentry = &tagtable->entry[i];
 
@@ -2254,13 +2254,13 @@ int tc_cleanup(mxTagTableObject *tagtable)
 static
 int init_tag_table(mxTagTableObject *tagtable,
 		   PyObject *table,
-		   int size,
+		   Py_ssize_t size,
 		   int tabletype,
 		   int cacheable)
 {
-    int i;
+    Py_ssize_t i;
     PyObject *entry;
-    int entry_len;
+    Py_ssize_t entry_len;
     PyObject *tagobj, *command, *args = 0, *je, *jne;
     PyObject *jumpdict, *v;
     int secondpass, own_args = 0;
@@ -2281,8 +2281,8 @@ int init_tag_table(mxTagTableObject *tagtable,
 	entry = tc_get_item(table, i);
 	if (entry == NULL) {
 	    Py_ErrorWithArg(PyExc_TypeError,
-			    "tag table entry %i: "
-			    "not found or not a supported entry type", i);
+			    "tag table entry %d: "
+			    "not found or not a supported entry type", (unsigned int)i);
 	}
 
 	/* Special handling for jump marks (args is set to the jump
@@ -2304,9 +2304,9 @@ int init_tag_table(mxTagTableObject *tagtable,
 	entry_len = tc_length(entry);
 	if (entry_len < 3) {
 	    Py_ErrorWithArg(PyExc_TypeError,
-			    "tag table entry %i: "
+			    "tag table entry %d: "
 			    "expected an entry of the form "
-			    "(tagobj,command,arg[,jne[,je]])", i);
+			    "(tagobj,command,arg[,jne[,je]])", (unsigned int)i);
 	}
 
 	/* Decode entry parts: (tagobj, command, args[, jne[, je]]) */
@@ -2328,9 +2328,9 @@ int init_tag_table(mxTagTableObject *tagtable,
 	    (entry_len >= 4 && jne == NULL) ||
 	    (entry_len >= 5 && je == NULL)) {
 	    Py_ErrorWithArg(PyExc_TypeError,
-			    "tag table entry %i: "
+			    "tag table entry %d: "
 			    "expected an entry of the form "
-			    "(tagobj,command,arg[,jne[,je]])", i);
+			    "(tagobj,command,arg[,jne[,je]])",(unsigned int) i);
 	}
 
 	/* Store tagobj, None gets converted to NULL */
@@ -2343,8 +2343,8 @@ int init_tag_table(mxTagTableObject *tagtable,
 	/* Decode command and flags */
 	Py_AssertWithArg(PyInt_Check(command),
 			 PyExc_TypeError,
-			 "tag table entry %i: "
-			 "command must be an integer",i);
+			 "tag table entry %d: "
+			 "command must be an integer",(unsigned int)i);
 	tagtableentry->cmd = PyInt_AS_LONG(command) & 0xFF;
 	tagtableentry->flags = PyInt_AS_LONG(command) - tagtableentry->cmd;
 
@@ -2365,16 +2365,16 @@ int init_tag_table(mxTagTableObject *tagtable,
 	case MATCH_LOOPCONTROL:
 	    Py_AssertWithArg(PyInt_Check(args),
 			     PyExc_TypeError,
-			     "tag table entry %i: "
+			     "tag table entry %d: "
 			     "Skip|Move|LoopControl command argument "
-			     "must be an integer", i);
+			     "must be an integer", (unsigned int)i);
 	    break;
 	
 	case MATCH_JUMPTARGET:
 	    Py_AssertWithArg(PyString_Check(args),
 			     PyExc_TypeError,
-			     "tag table entry %i: "
-			     "JumpMark command argument must be a string",i);
+			     "tag table entry %d: "
+			     "JumpMark command argument must be a string",(unsigned int)i);
 	    if (tc_add_jumptarget(jumpdict, args, i + 1))
 		goto onError;
 	    break;
@@ -2397,18 +2397,18 @@ int init_tag_table(mxTagTableObject *tagtable,
 	    Py_AssertWithArg(PyString_Check(args) && 
 			     PyString_GET_SIZE(args) == 32,
 			     PyExc_TypeError,
-			     "tag table entry %i: "
+			     "tag table entry %d: "
 			     "AllInSet|IsInSet command argument must "
-			     "be a set() string",i);
+			     "be a set() string",(unsigned int)i);
 	    break;
 
 	case MATCH_ALLINCHARSET:
 	case MATCH_ISINCHARSET:
 	    Py_AssertWithArg(mxCharSet_Check(args),
 			     PyExc_TypeError,
-			     "tag table entry %i: "
+			     "tag table entry %d: "
 			     "AllInCharSet|IsInCharSet command argument must "
-			     "be a CharSet instance",i);
+			     "be a CharSet instance",(unsigned int)i);
 	    break;
 
 	case MATCH_SWORDSTART: /* == MATCH_NOWORD */
@@ -2416,10 +2416,10 @@ int init_tag_table(mxTagTableObject *tagtable,
 	case MATCH_SFINDWORD:
 	    Py_AssertWithArg(mxTextSearch_Check(args),
 			     PyExc_TypeError,
-			     "tag table entry %i: "
+			     "tag table entry %d: "
 			     "sWordStart|sWordEnd|sFindWord command "
 			     "argument must be a TextSearch search "
-			     "object",i);
+			     "object",(unsigned int)i);
 	    break;
 	
 	case MATCH_TABLE:
@@ -2430,10 +2430,10 @@ int init_tag_table(mxTagTableObject *tagtable,
 			     (PyInt_Check(args) && 
 			      PyInt_AS_LONG(args) == MATCH_THISTABLE),
 			     PyExc_TypeError,
-			     "tag table entry %i: "
+			     "tag table entry %d: "
 			     "Table|SubTable command argument "
 			     "must be a tag table tuple/object or "
-			     "ThisTable", i);
+			     "ThisTable", (unsigned int)i);
 	    /* XXX We shouldn't recursively compile tag table tuples here
 		   because this will slow down the compile process
 		   too much and it's not clear whether this particular
@@ -2454,19 +2454,19 @@ int init_tag_table(mxTagTableObject *tagtable,
 			     PyList_Check(PyTuple_GET_ITEM(args, 0)) &&
 			     PyInt_Check(PyTuple_GET_ITEM(args, 1)),
 			     PyExc_TypeError,
-			     "tag table entry %i: "
+			     "tag table entry %d: "
 			     "TableInList|SubTableInList command argument "
 			     "must be a 2-tuple (list, integer)",
-			     i);
+			     (unsigned int)i);
 	    break;
 
 	case MATCH_CALL:
 	    Py_AssertWithArg(PyCallable_Check(args),
 			     PyExc_TypeError,
-			     "tag table entry %i: "
+			     "tag table entry %d: "
 			     "Call command argument "
 			     "must be a callable object",
-			     i);
+			     (unsigned int)i);
 	    break;
 
 	case MATCH_CALLARG:
@@ -2474,17 +2474,17 @@ int init_tag_table(mxTagTableObject *tagtable,
 			     PyTuple_GET_SIZE(args) > 0 &&
 			     PyCallable_Check(PyTuple_GET_ITEM(args, 0)),
 			     PyExc_TypeError,
-			     "tag table entry %i: "
+			     "tag table entry %d: "
 			     "CallArg command argument "
 			     "must be a tuple (fct,[arg0,arg1,...])",
-			     i);
+			     (unsigned int)i);
 	    break;
 	    
 	default:
 	    Py_ErrorWith2Args(PyExc_TypeError,
-			      "tag table entry %i: "
+			      "tag table entry %d: "
 			      "unknown command integer: %i", 
-			      i, tagtableentry->cmd);
+			      (unsigned int)i, tagtableentry->cmd);
 	
 	}
 
@@ -2503,8 +2503,8 @@ int init_tag_table(mxTagTableObject *tagtable,
 	    }
 	    else
 		Py_ErrorWithArg(PyExc_TypeError,
-				"tag table entry %i: "
-				"jne must be an integer or string", i);
+				"tag table entry %d: "
+				"jne must be an integer or string", (unsigned int)i);
 	}
 	else
 	    tagtableentry->jne = 0;
@@ -2519,8 +2519,8 @@ int init_tag_table(mxTagTableObject *tagtable,
 	    }
 	    else
 		Py_ErrorWithArg(PyExc_TypeError,
-				"tag table entry %i: "
-				"je must be an integer or string", i);
+				"tag table entry %d: "
+				"je must be an integer or string", (unsigned int)i);
 	}
 	else
 	    tagtableentry->je = 1;
@@ -2539,16 +2539,16 @@ int init_tag_table(mxTagTableObject *tagtable,
 	    entry = tc_get_item(table, i);
 	    if (entry == NULL) {
 		Py_ErrorWithArg(PyExc_TypeError,
-				"tag table entry %i: "
-				"unexpected error (not found)", i);
+				"tag table entry %d: "
+				"unexpected error (not found)", (unsigned int)i);
 	    }
 
 	    /* Get entry length */
 	    entry_len = tc_length(entry);
 	    if (entry_len < 0) {
 		Py_ErrorWithArg(PyExc_TypeError,
-				"tag table entry %i: "
-				"unexpected error (no length)", i);
+				"tag table entry %d: "
+				"unexpected error (no length)", (unsigned int)i);
 	    }
 
 	    /* Decode jump offsets */
@@ -2566,18 +2566,18 @@ int init_tag_table(mxTagTableObject *tagtable,
 		v = PyDict_GetItem(jumpdict, jne);
 		if (v == NULL || !PyInt_Check(v))
 		    Py_ErrorWith2Args(PyExc_TypeError,
-				      "tag table entry %i: "
+				      "tag table entry %d: "
 				      "jne jump target '%s' not found", 
-				      i, PyString_AS_STRING(jne));
+				      (unsigned int)i, PyString_AS_STRING(jne));
 		tagtableentry->jne = PyInt_AS_LONG(v) - i;
 	    }
 	    if (je && PyString_Check(je)) {
 		v = PyDict_GetItem(jumpdict, je);
 		if (v == NULL || !PyInt_Check(v))
 		    Py_ErrorWith2Args(PyExc_TypeError,
-				      "tag table entry %i: "
+				      "tag table entry %d: "
 				      "je jump target '%s' not found", 
-				      i, PyString_AS_STRING(je));
+				      (unsigned int)i, PyString_AS_STRING(je));
 		tagtableentry->je = PyInt_AS_LONG(v) - i;
 	    }
 	}
@@ -2679,7 +2679,7 @@ PyObject *mxTagTable_New(PyObject *definition,
 {
     mxTagTableObject *tagtable = 0;
     PyObject *v;
-    int size;
+    Py_ssize_t size;
 
     /* First, consult the TagTable cache */
     v = consult_tagtable_cache(definition, tabletype, cacheable);
@@ -2767,8 +2767,8 @@ static
 PyObject *mxTagTable_CompiledDefinition(PyObject *self)
 {
     PyObject *tuple = 0, *v, *w;
-    int i;
-    int size;
+    Py_ssize_t i;
+    Py_ssize_t size;
 
     if (!mxTagTable_Check(self)) {
 	PyErr_BadInternalCall();
@@ -2934,16 +2934,16 @@ PyMethodDef mxTagTable_Methods[] =
 
 static
 PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
-				  int start,
-				  int stop,
+				  Py_ssize_t start,
+				  Py_ssize_t stop,
 				  PyObject *separator)
 {
     PyObject *newstring = 0, *tempstr = 0;
-    int newstring_len,current_len = 0;
+    Py_ssize_t newstring_len,current_len = 0;
     Py_UNICODE *p;
-    int i;
+    Py_ssize_t i;
     Py_UNICODE *sep;
-    int sep_len;
+    Py_ssize_t sep_len;
     
     if (separator) {
 	separator = PyUnicode_FromObject(separator);
@@ -2968,13 +2968,13 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
     for (i = start; i < stop; i++) {
 	register PyObject *o;
 	Py_UNICODE *st;
-	int len_st;
+	Py_ssize_t len_st;
 
 	o = PySequence_GetItem(seq, i);
 
 	if PyTuple_Check(o) {
 	    /* Tuple entry: (string,l,r,[...]) */
-	    register int l,r;
+	    register Py_ssize_t l,r;
 
 	    /* parse tuple */
 	    Py_Assert((PyTuple_GET_SIZE(o) >= 3) &&
@@ -3075,16 +3075,16 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
 
 static
 PyObject *mxTextTools_Join(PyObject *seq,
-			   int start,
-			   int stop,
+			   Py_ssize_t start,
+			   Py_ssize_t stop,
 			   PyObject *separator)
 {
     PyObject *newstring = 0;
-    int newstring_len, current_len = 0;
+    Py_ssize_t newstring_len, current_len = 0;
     char *p;
-    int i;
+    Py_ssize_t i;
     char *sep;
-    int sep_len;
+    Py_ssize_t sep_len;
 
     if (separator) {
 #ifdef HAVE_UNICODE
@@ -3113,13 +3113,13 @@ PyObject *mxTextTools_Join(PyObject *seq,
     for (i = start; i < stop; i++) {
 	register PyObject *o;
 	char *st;
-	int len_st;
+	Py_ssize_t len_st;
 
 	o = PySequence_GetItem(seq, i);
 
 	if PyTuple_Check(o) {
 	    /* Tuple entry: (string,l,r,[...]) */
-	    register int l,r;
+	    register Py_ssize_t l,r;
 
 	    /* parse tuple */
 	    Py_Assert((PyTuple_GET_SIZE(o) >= 3) &&
@@ -3224,10 +3224,10 @@ PyObject *mxTextTools_Join(PyObject *seq,
 
 static
 PyObject *mxTextTools_HexStringFromString(char *str,
-					  int len) 
+					  Py_ssize_t len) 
 {
     PyObject *w = 0;
-    int i;
+    Py_ssize_t i;
     char *hex;
     static const char hexdigits[] = "0123456789abcdef";
 
@@ -3252,10 +3252,10 @@ PyObject *mxTextTools_HexStringFromString(char *str,
 
 static
 PyObject *mxTextTools_StringFromHexString(char *hex,
-					  int len)
+					  Py_ssize_t len)
 {
     PyObject *w = 0;
-    int i;
+    Py_ssize_t i;
     char *str;
     static const char hexdigits[] = "0123456789abcdef";
 
@@ -3270,10 +3270,10 @@ PyObject *mxTextTools_StringFromHexString(char *hex,
     str = PyString_AS_STRING(w);
     for (i = 0; i < len; i++,str++) {
 	register char c;
-	register int j;
+	register Py_ssize_t j;
 
 	c = tolower(*hex++);
-	for (j = 0; j < (int)sizeof(hexdigits); j++)
+	for (j = 0; j < (Py_ssize_t)sizeof(hexdigits); j++)
 	  if (c == hexdigits[j]) {
 	    *str = j << 4;
 	    break;
@@ -3285,7 +3285,7 @@ PyObject *mxTextTools_StringFromHexString(char *hex,
 	}
 
 	c = tolower(*hex++);
-	for (j = 0; j < (int)sizeof(hexdigits); j++)
+	for (j = 0; j < (Py_ssize_t)sizeof(hexdigits); j++)
 	  if (c == hexdigits[j]) {
 	    *str += j;
 	    break;
@@ -3305,12 +3305,12 @@ PyObject *mxTextTools_StringFromHexString(char *hex,
 
 static 
 int mxTextTools_IsASCII(PyObject *text,
-			int left,
-			int right)
+			Py_ssize_t left,
+			Py_ssize_t right)
 {
     if (PyString_Check(text)) {
-	int len;
-	register int i;
+	Py_ssize_t len;
+	register Py_ssize_t i;
 	register unsigned char *str = (unsigned char *)PyString_AS_STRING(text);
 
 	len = PyString_GET_SIZE(text);
@@ -3323,8 +3323,8 @@ int mxTextTools_IsASCII(PyObject *text,
 
 #ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
-	int len;
-	register int i;
+	Py_ssize_t len;
+	register Py_ssize_t i;
 	register Py_UNICODE *str = PyUnicode_AS_UNICODE(text);
 
 	len = PyUnicode_GET_SIZE(text);
@@ -3353,14 +3353,14 @@ int mxTextTools_IsASCII(PyObject *text,
 static 
 PyObject *mxTextTools_Joinlist(PyObject *text,
 			       PyObject *list,
-			       int pos,
-			       int text_len)
+			       Py_ssize_t pos,
+			       Py_ssize_t text_len)
 {
     PyObject *joinlist = 0;
-    int list_len;
-    int i;
-    int listitem = 0;
-    int listsize = INITIAL_LIST_SIZE;
+    Py_ssize_t list_len;
+    Py_ssize_t i;
+    Py_ssize_t listitem = 0;
+    Py_ssize_t listsize = INITIAL_LIST_SIZE;
     
     if (PyString_Check(text)) {
 	Py_CheckStringSlice(text, pos, text_len);
@@ -3385,7 +3385,7 @@ PyObject *mxTextTools_Joinlist(PyObject *text,
 
     for (i = 0; i < list_len; i++) {
 	register PyObject *t;
-	register int left, right;
+	register Py_ssize_t left, right;
 	
 	t = PyList_GET_ITEM(list, i);
 	Py_Assert(PyTuple_Check(t) && 
@@ -3491,13 +3491,13 @@ PyObject *mxTextTools_Joinlist(PyObject *text,
 static 
 PyObject *mxTextTools_UnicodeCharSplit(PyObject *text,
 				       PyObject *separator,
-				       int start,
-				       int text_len)
+				       Py_ssize_t start,
+				       Py_ssize_t text_len)
 {
     PyObject *list = NULL;
-    register int x;
-    int listitem = 0;
-    int listsize = INITIAL_LIST_SIZE;
+    register Py_ssize_t x;
+    Py_ssize_t listitem = 0;
+    Py_ssize_t listsize = INITIAL_LIST_SIZE;
     Py_UNICODE *tx;
     Py_UNICODE sep;
 
@@ -3526,7 +3526,7 @@ PyObject *mxTextTools_UnicodeCharSplit(PyObject *text,
     x = start;
     while (1) {
 	PyObject *s;
-	register int z;
+	register Py_ssize_t z;
 
 	/* Skip to next separator */
 	z = x;
@@ -3572,13 +3572,13 @@ PyObject *mxTextTools_UnicodeCharSplit(PyObject *text,
 static 
 PyObject *mxTextTools_CharSplit(PyObject *text,
 				PyObject *separator,
-				int start,
-				int text_len)
+				Py_ssize_t start,
+				Py_ssize_t text_len)
 {
     PyObject *list = 0;
-    register int x;
-    int listitem = 0;
-    int listsize = INITIAL_LIST_SIZE;
+    register Py_ssize_t x;
+    Py_ssize_t listitem = 0;
+    Py_ssize_t listsize = INITIAL_LIST_SIZE;
     char *tx;
     char sep;
 
@@ -3609,7 +3609,7 @@ PyObject *mxTextTools_CharSplit(PyObject *text,
     x = start;
     while (1) {
 	PyObject *s;
-	register int z;
+	register Py_ssize_t z;
 
 	/* Skip to next separator */
 	z = x;
@@ -3651,12 +3651,12 @@ PyObject *mxTextTools_CharSplit(PyObject *text,
 static 
 PyObject *mxTextTools_UnicodeSplitAt(PyObject *text,
 				     PyObject *separator,
-				     int nth,
-				     int start,
-				     int text_len)
+				     Py_ssize_t nth,
+				     Py_ssize_t start,
+				     Py_ssize_t text_len)
 {
     PyObject *tuple = 0;
-    register int x;
+    register Py_ssize_t x;
     PyObject *s;
     Py_UNICODE *tx;
     Py_UNICODE sep;
@@ -3746,12 +3746,12 @@ PyObject *mxTextTools_UnicodeSplitAt(PyObject *text,
 static 
 PyObject *mxTextTools_SplitAt(PyObject *text,
 			      PyObject *separator,
-			      int nth,
-			      int start,
-			      int text_len)
+			      Py_ssize_t nth,
+			      Py_ssize_t start,
+			      Py_ssize_t text_len)
 {
     PyObject *tuple = 0;
-    register int x;
+    register Py_ssize_t x;
     PyObject *s;
     char *tx;
     char sep;
@@ -3839,11 +3839,11 @@ PyObject *mxTextTools_SplitAt(PyObject *text,
 static 
 PyObject *mxTextTools_UnicodeSuffix(PyObject *text,
 				    PyObject *suffixes,
-				    int start,
-				    int text_len,
+				    Py_ssize_t start,
+				    Py_ssize_t text_len,
 				    PyObject *translate)
 {
-    int i;
+    Py_ssize_t i;
     Py_UNICODE *tx;
 
     text = PyUnicode_FromObject(text);
@@ -3869,7 +3869,7 @@ PyObject *mxTextTools_UnicodeSuffix(PyObject *text,
 
     for (i = 0; i < PyTuple_GET_SIZE(suffixes); i++) {
 	PyObject *suffix = PyTuple_GET_ITEM(suffixes,i);
-	int start_cmp;
+	Py_ssize_t start_cmp;
 
 	suffix = PyUnicode_FromObject(suffix);
 	if (suffix == NULL) 
@@ -3900,11 +3900,11 @@ PyObject *mxTextTools_UnicodeSuffix(PyObject *text,
 static 
 PyObject *mxTextTools_Suffix(PyObject *text,
 			     PyObject *suffixes,
-			     int start,
-			     int text_len,
+			     Py_ssize_t start,
+			     Py_ssize_t text_len,
 			     PyObject *translate)
 {
-    int i;
+    Py_ssize_t i;
     char *tx;
 
 #ifdef HAVE_UNICODE
@@ -3936,14 +3936,14 @@ PyObject *mxTextTools_Suffix(PyObject *text,
 
 	for (i = 0; i < PyTuple_GET_SIZE(suffixes); i++) {
 	    PyObject *suffix = PyTuple_GET_ITEM(suffixes, i);
-	    int start_cmp;
+	    Py_ssize_t start_cmp;
 	    register char *s;
 	    register char *t;
-	    register int j;
+	    register Py_ssize_t j;
 
 	    Py_AssertWithArg(PyString_Check(suffix),
 			     PyExc_TypeError,
-			     "tuple entry %i is not a string",i);
+			     "tuple entry %d is not a string",(unsigned int)i);
 	    start_cmp = text_len - PyString_GET_SIZE(suffix);
 	    if (start_cmp < start)
 		continue;
@@ -3964,11 +3964,11 @@ PyObject *mxTextTools_Suffix(PyObject *text,
     else
 	for (i = 0; i < PyTuple_GET_SIZE(suffixes); i++) {
 	    PyObject *suffix = PyTuple_GET_ITEM(suffixes,i);
-	    int start_cmp;
+	    Py_ssize_t start_cmp;
 
 	    Py_AssertWithArg(PyString_Check(suffix),
 			     PyExc_TypeError,
-			     "tuple entry %i is not a string",i);
+			     "tuple entry %d is not a string",(unsigned int)i);
 	    start_cmp = text_len - PyString_GET_SIZE(suffix);
 	    if (start_cmp < start)
 		continue;
@@ -3994,11 +3994,11 @@ PyObject *mxTextTools_Suffix(PyObject *text,
 static 
 PyObject *mxTextTools_UnicodePrefix(PyObject *text,
 				    PyObject *prefixes,
-				    int start,
-				    int text_len,
+				    Py_ssize_t start,
+				    Py_ssize_t text_len,
 				    PyObject *translate)
 {
-    int i;
+    Py_ssize_t i;
     Py_UNICODE *tx;
 
     text = PyUnicode_FromObject(text);
@@ -4054,11 +4054,11 @@ PyObject *mxTextTools_UnicodePrefix(PyObject *text,
 static 
 PyObject *mxTextTools_Prefix(PyObject *text,
 			     PyObject *prefixes,
-			     int start,
-			     int text_len,
+			     Py_ssize_t start,
+			     Py_ssize_t text_len,
 			     PyObject *translate)
 {
-    int i;
+    Py_ssize_t i;
     char *tx;
 
 #ifdef HAVE_UNICODE
@@ -4090,14 +4090,14 @@ PyObject *mxTextTools_Prefix(PyObject *text,
 
 	for (i = 0; i < PyTuple_GET_SIZE(prefixes); i++) {
 	    PyObject *prefix = PyTuple_GET_ITEM(prefixes,i);
-	    int cmp_len;
+	    Py_ssize_t cmp_len;
 	    register char *s;
 	    register char *t;
-	    register int j;
+	    register Py_ssize_t j;
 
 	    Py_AssertWithArg(PyString_Check(prefix),
 			     PyExc_TypeError,
-			     "tuple entry %i is not a string",i);
+			     "tuple entry %d is not a string",(unsigned int)i);
 	    cmp_len = PyString_GET_SIZE(prefix);
 	    if (start + cmp_len > text_len)
 		continue;
@@ -4121,7 +4121,7 @@ PyObject *mxTextTools_Prefix(PyObject *text,
 
 	    Py_AssertWithArg(PyString_Check(prefix),
 			     PyExc_TypeError,
-			     "tuple entry %i is not a string",i);
+			     "tuple entry %d is not a string",(unsigned int)i);
 	    if (start + PyString_GET_SIZE(prefix) > text_len)
 		continue;
 
@@ -4152,14 +4152,14 @@ PyObject *mxTextTools_Prefix(PyObject *text,
 */
 static
 PyObject *mxTextTools_SetStrip(char *tx,
-			       int tx_len,
+			       Py_ssize_t tx_len,
 			       char *setstr,
-			       int setstr_len,
-			       int start,
-			       int stop,
-			       int where)
+			       Py_ssize_t setstr_len,
+			       Py_ssize_t start,
+			       Py_ssize_t stop,
+			       Py_ssize_t where)
 {
-    int left, right;
+    Py_ssize_t left, right;
 
     Py_Assert(setstr_len == 32,
 	      PyExc_TypeError,
@@ -4168,7 +4168,7 @@ PyObject *mxTextTools_SetStrip(char *tx,
 
     /* Strip left */
     if (where <= 0) {
-	register int x;
+	register Py_ssize_t x;
 	for (x = start; x < stop; x++) 
 	    if (!Py_CharInSet(tx[x], setstr))
 		break;
@@ -4179,7 +4179,7 @@ PyObject *mxTextTools_SetStrip(char *tx,
 
     /* Strip right */
     if (where >= 0) {
-	register int x;
+	register Py_ssize_t x;
 	for (x = stop - 1; x >= start; x--) 
 	    if (!Py_CharInSet(tx[x], setstr))
 		break;
@@ -4196,16 +4196,16 @@ PyObject *mxTextTools_SetStrip(char *tx,
 
 static 
 PyObject *mxTextTools_SetSplit(char *tx,
-			       int tx_len,
+			       Py_ssize_t tx_len,
 			       char *setstr,
-			       int setstr_len,
-			       int start,
-			       int text_len)
+			       Py_ssize_t setstr_len,
+			       Py_ssize_t start,
+			       Py_ssize_t text_len)
 {
     PyObject *list = NULL;
-    register int x;
-    int listitem = 0;
-    int listsize = INITIAL_LIST_SIZE;
+    register Py_ssize_t x;
+    Py_ssize_t listitem = 0;
+    Py_ssize_t listsize = INITIAL_LIST_SIZE;
 
     Py_Assert(setstr_len == 32,
 	      PyExc_TypeError,
@@ -4218,12 +4218,12 @@ PyObject *mxTextTools_SetSplit(char *tx,
 
     x = start;
     while (x < text_len) {
-	int z;
+	Py_ssize_t z;
 
 	/* Skip all text in set */
 	for (;x < text_len; x++) {
-	    register unsigned int c = (unsigned char)tx[x];
-	    register unsigned int block = (unsigned char)setstr[c >> 3];
+	    register Py_ssize_t c = (unsigned char)tx[x];
+	    register Py_ssize_t block = (unsigned char)setstr[c >> 3];
 	    if (!block || ((block & (1 << (c & 7))) == 0))
 		break;
 	}
@@ -4231,8 +4231,8 @@ PyObject *mxTextTools_SetSplit(char *tx,
 	/* Skip all text not in set */
 	z = x;
 	for (;x < text_len; x++) {
-	    register unsigned int c = (unsigned char)tx[x];
-	    register unsigned int block = (unsigned char)setstr[c >> 3];
+	    register Py_ssize_t c = (unsigned char)tx[x];
+	    register Py_ssize_t block = (unsigned char)setstr[c >> 3];
 	    if (block && ((block & (1 << (c & 7))) != 0))
 		break;
 	}
@@ -4266,16 +4266,16 @@ PyObject *mxTextTools_SetSplit(char *tx,
 
 static 
 PyObject *mxTextTools_SetSplitX(char *tx,
-				int tx_len,
+				Py_ssize_t tx_len,
 				char *setstr,
-				int setstr_len,
-				int start,
-				int text_len)
+				Py_ssize_t setstr_len,
+				Py_ssize_t start,
+				Py_ssize_t text_len)
 {
     PyObject *list = NULL;
-    register int x;
-    int listitem = 0;
-    int listsize = INITIAL_LIST_SIZE;
+    register Py_ssize_t x;
+    Py_ssize_t listitem = 0;
+    Py_ssize_t listsize = INITIAL_LIST_SIZE;
 
     Py_Assert(setstr_len == 32,
 	      PyExc_TypeError,
@@ -4289,7 +4289,7 @@ PyObject *mxTextTools_SetSplitX(char *tx,
     x = start;
     while (x < text_len) {
 	PyObject *s;
-	register int z;
+	register Py_ssize_t z;
 
 	/* Skip all text not in set */
 	z = x;
@@ -4354,9 +4354,9 @@ PyObject *mxTextTools_Upper(PyObject *text)
     PyObject *ntext;
     register unsigned char *s;
     register unsigned char *orig;
-    register int i;
+    register Py_ssize_t i;
     unsigned char *tr;
-    int	len;
+    Py_ssize_t len;
     
     Py_Assert(PyString_Check(text),
 	      PyExc_TypeError,
@@ -4387,8 +4387,8 @@ PyObject *mxTextTools_UnicodeUpper(PyObject *text)
     PyObject *ntext;
     register Py_UNICODE *s;
     register Py_UNICODE *orig;
-    register int i;
-    int	len;
+    register Py_ssize_t i;
+    Py_ssize_t	len;
     
     text = PyUnicode_FromObject(text);
     if (text == NULL)
@@ -4420,9 +4420,9 @@ PyObject *mxTextTools_Lower(PyObject *text)
     PyObject *ntext;
     register unsigned char *s;
     register unsigned char *orig;
-    register int i;
+    register Py_ssize_t i;
     unsigned char *tr;
-    int len;
+    Py_ssize_t len;
     
     Py_Assert(PyString_Check(text),
 	      PyExc_TypeError,
@@ -4453,8 +4453,8 @@ PyObject *mxTextTools_UnicodeLower(PyObject *text)
     PyObject *ntext;
     register Py_UNICODE *s;
     register Py_UNICODE *orig;
-    register int i;
-    int	len;
+    register Py_ssize_t i;
+    Py_ssize_t	len;
     
     text = PyUnicode_FromObject(text);
     if (text == NULL)
@@ -4494,12 +4494,12 @@ Py_C_Function_WithKeywords(
 {
     PyObject *text;
     PyObject *tagtable;
-    int sliceright = INT_MAX;
-    int sliceleft = 0;
+    Py_ssize_t sliceright = INT_MAX;
+    Py_ssize_t sliceleft = 0;
     PyObject *taglist = 0;
-    int taglist_len;
+    Py_ssize_t taglist_len;
     PyObject *context = 0;
-    int next, result;
+    Py_ssize_t next, result;
     PyObject *res;
     
     Py_KeywordsGet6Args("OO|iiOO:tag",
@@ -4648,9 +4648,9 @@ Py_C_Function( mxTextTools_join,
 	       )
 {
     PyObject *joinlist = NULL;
-    int joinlist_len;
+    Py_ssize_t joinlist_len;
     PyObject *separator = NULL;
-    int start=0, stop=INT_MAX;
+    Py_ssize_t start=0, stop=INT_MAX;
 
     Py_Get4Args("O|Oii:join",
 		joinlist,separator,start,stop);
@@ -4728,8 +4728,8 @@ Py_C_Function( mxTextTools_joinlist,
 {
     PyObject *list;
     PyObject *text;
-    int text_len = INT_MAX;
-    int pos = 0;
+    Py_ssize_t text_len = INT_MAX;
+    Py_ssize_t pos = 0;
     
     Py_Get4Args("OO|ii:joinlist",text,list,pos,text_len);
 
@@ -4746,8 +4746,8 @@ Py_C_Function( mxTextTools_charsplit,
 )
 {
     PyObject *text, *separator;
-    int text_len = INT_MAX;
-    int start = 0;
+    Py_ssize_t text_len = INT_MAX;
+    Py_ssize_t start = 0;
 
     Py_Get4Args("OO|ii:charsplit",
 		text,separator,start,text_len);
@@ -4769,9 +4769,9 @@ Py_C_Function( mxTextTools_splitat,
 )
 {
     PyObject *text, *separator;
-    int text_len = INT_MAX;
-    int start = 0;
-    int nth = 1;
+    Py_ssize_t text_len = INT_MAX;
+    Py_ssize_t start = 0;
+    Py_ssize_t nth = 1;
 
     Py_Get5Args("OO|iii:splitat",
 		text,separator,nth,start,text_len);
@@ -4792,8 +4792,8 @@ Py_C_Function( mxTextTools_suffix,
 	       )
 {
     PyObject *text, *suffixes, *translate = NULL;
-    int text_len = INT_MAX;
-    int start = 0;
+    Py_ssize_t text_len = INT_MAX;
+    Py_ssize_t start = 0;
 
     Py_Get5Args("OO|iiO:suffix",
 		text,suffixes,start,text_len,translate);
@@ -4816,8 +4816,8 @@ Py_C_Function( mxTextTools_prefix,
 )
 {
     PyObject *text, *prefixes, *translate = NULL;
-    int text_len = INT_MAX;
-    int start = 0;
+    Py_ssize_t text_len = INT_MAX;
+    Py_ssize_t start = 0;
 
     Py_Get5Args("OO|iiO:prefix",
 		text,prefixes,start,text_len,translate);
@@ -4839,9 +4839,9 @@ Py_C_Function( mxTextTools_set,
 {
     PyObject *sto;
     char *s,*st;
-    int len_s;
+    Py_ssize_t len_s;
     int logic = 1;
-    int i;
+    Py_ssize_t i;
 
     Py_Get3Args("s#|i:set",
 		s,len_s,logic);
@@ -4883,9 +4883,9 @@ Py_C_Function( mxTextTools_setfind,
 {
     PyObject *text;
     PyObject *set;
-    int text_len = INT_MAX;
-    int start = 0;
-    register int x;
+    Py_ssize_t text_len = INT_MAX;
+    Py_ssize_t start = 0;
+    register Py_ssize_t x;
     register char *tx;
     register unsigned char *setstr;
     
@@ -4926,11 +4926,11 @@ Py_C_Function( mxTextTools_setstrip,
 	       )
 {
     char *tx;
-    int tx_len;
+    Py_ssize_t tx_len;
     char *setstr;
-    int setstr_len;
-    int start = 0;
-    int stop = INT_MAX;
+    Py_ssize_t setstr_len;
+    Py_ssize_t start = 0;
+    Py_ssize_t stop = INT_MAX;
     int mode = 0;
     
     Py_Get7Args("s#s#|iii:setstip",
@@ -4954,11 +4954,11 @@ Py_C_Function( mxTextTools_setsplit,
 	       )
 {
     char *tx;
-    int tx_len;
+    Py_ssize_t tx_len;
     char *setstr;
-    int setstr_len;
-    int start = 0;
-    int stop = INT_MAX;
+    Py_ssize_t setstr_len;
+    Py_ssize_t start = 0;
+    Py_ssize_t stop = INT_MAX;
 
     Py_Get6Args("s#s#|ii:setsplit",
 		tx,tx_len,setstr,setstr_len,start,stop);
@@ -4978,12 +4978,12 @@ Py_C_Function( mxTextTools_setsplitx,
 	       "DEPRECATED: use CharSet().splitx() instead."
 	       )
 {
-    int text_len = INT_MAX;
-    int start = 0;
+    Py_ssize_t text_len = INT_MAX;
+    Py_ssize_t start = 0;
     char *tx;
-    int tx_len;
+    Py_ssize_t tx_len;
     char *setstr;
-    int setstr_len;
+    Py_ssize_t setstr_len;
 
     Py_Get6Args("s#s#|ii:setsplitx",
 		tx,tx_len,setstr,setstr_len,start,text_len);
@@ -5043,7 +5043,7 @@ Py_C_Function( mxTextTools_str2hex,
 	       "HEX values.")
 {
     char *str;
-    int len;
+    Py_ssize_t len;
     
     Py_Get2Args("s#",str,len);
 
@@ -5059,7 +5059,7 @@ Py_C_Function( mxTextTools_hex2str,
 	       "to a string.")
 {
     char *str;
-    int len;
+    Py_ssize_t len;
     
     Py_Get2Args("s#",str,len);
 
@@ -5076,7 +5076,7 @@ Py_C_Function( mxTextTools_isascii,
 	       )
 {
     PyObject *text;
-    int start=0, stop = INT_MAX;
+    Py_ssize_t start=0, stop = INT_MAX;
     int rc;
     
     Py_GetArgObject(text);

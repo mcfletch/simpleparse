@@ -167,7 +167,7 @@ def word_in_list(l):
 # Extra stuff useful in combination with the C functions
 #
 
-def replace(text,what,with,start=0,stop=None,
+def replace(text,what,with_what,start=0,stop=None,
 
             SearchObject=TextSearch,join=join,joinlist=joinlist,tag=tag,
             string_replace=string.replace,type=type,
@@ -188,11 +188,11 @@ def replace(text,what,with,start=0,stop=None,
         what = so.match
     if stop is None:
         if start == 0 and len(what) < 2:
-            return string_replace(text,what,with)
+            return string_replace(text,what,with_what)
         stop = len(text)
     t = ((text,sWordStart,so,+2),
          # Found something, replace and continue searching
-         (with,Skip+AppendTagobj,len(what),-1,-1),
+         (with_what,Skip+AppendTagobj,len(what),-1,-1),
          # Rest of text
          (text,Move,ToEOF)
          )
@@ -203,13 +203,13 @@ def replace(text,what,with,start=0,stop=None,
 
 # Alternative (usually slower) versions using different techniques:
 
-def _replace2(text,what,with,start=0,stop=None,
+def _replace2(text,what,with_what,start=0,stop=None,
 
               join=join,joinlist=joinlist,tag=tag,
               TextSearchType=TextSearchType,TextSearch=TextSearch):
 
-    """Analogon to string.replace; returns a string with all occurences
-       of what in text[start:stop] replaced by with.
+    """Analogon to string.replace; returns a string with_what all occurences
+       of what in text[start:stop] replaced by with_what.
        
        This version uses a one entry tag-table and a
        Boyer-Moore-Search-object.  what can be a string or a
@@ -226,13 +226,13 @@ def _replace2(text,what,with,start=0,stop=None,
         stop = len(text)
     if type(what) is not TextSearchType:
         what=TextSearch(what)
-    t = ((with,sFindWord,what,+1,+0),)
+    t = ((with_what,sFindWord,what,+1,+0),)
     found,taglist,last = tag(text,t,start,stop)
     if not found: 
         return text
     return join(joinlist(text,taglist))
 
-def _replace3(text,what,with,
+def _replace3(text,what,with_what,
 
               join=string.join,TextSearch=TextSearch,
               TextSearchType=TextSearchType):
@@ -245,12 +245,12 @@ def _replace3(text,what,with,
     l = []
     x = 0
     for left,right in slices:
-        l.append(text[x:left] + with)
+        l.append(text[x:left] + with_what)
         x = right
     l.append(text[x:])
     return join(l,'')
 
-def _replace4(text,what,with,
+def _replace4(text,what,with_what,
 
               join=join,joinlist=joinlist,tag=tag,TextSearch=TextSearch,
               TextSearchType=TextSearchType):
@@ -262,7 +262,7 @@ def _replace4(text,what,with,
         return text
     repl = [None]*len(slices)
     for i in range(len(slices)):
-        repl[i] = (with,)+slices[i]
+        repl[i] = (with_what,)+slices[i]
     return join(joinlist(text,repl))
 
 def multireplace(text,replacements,start=0,stop=None,
@@ -272,7 +272,7 @@ def multireplace(text,replacements,start=0,stop=None,
     """ Apply multiple replacement to a text at once.
 
         replacements must be list of tuples (replacement, left,
-        right).  It is used to replace the slice text[left:right] with
+        right).  It is used to replace the slice text[left:right] with_what
         the string replacement.
 
         Note that the replacements do not affect one another.  Indices
@@ -370,7 +370,7 @@ def tagdict(text,*args):
         tag() this funtion *does* make copies of the found stings,
         though.
 
-        Returns a tuple (rc,tagdict,next) with the same meaning of rc
+        Returns a tuple (rc,tagdict,next) with_what the same meaning of rc
         and next as tag(); tagdict is the new dictionary or None in
         case rc is 0.
           
@@ -389,7 +389,7 @@ def tagdict(text,*args):
 
 def invset(chars):
     
-    """ Return a set with all characters *except* the ones in chars.
+    """ Return a set with_what all characters *except* the ones in chars.
     """
     return set(chars,0)
 
@@ -413,7 +413,7 @@ def collapse(text,separator=' ',
         characters into one space.
 
         The result is a one line text string. Tim Peters will like
-        this function called with '-' separator ;-)
+        this function called with_what '-' separator ;-)
         
     """
     return join(charset.split(text), separator)
@@ -569,16 +569,16 @@ def _bench(file='mxTextTools/mxTextTools.c'):
         print 'Replacing strings'
         print '-'*72
         print
-        for what,with in (('m','M'),('mx','MX'),('mxText','MXTEXT'),
+        for what,with_what in (('m','M'),('mx','MX'),('mxText','MXTEXT'),
                           ('hmm','HMM'),('hmmm','HMM'),('hmhmm','HMM')):
-            print 'Replace "%s" with "%s"' % (what,with)
+            print 'Replace "%s" with "%s"' % (what,with_what)
             t.start()
             for i in range(100):
-                rtext = string.replace(text,what,with)
+                rtext = string.replace(text,what,with_what)
             print 'with string.replace:',t.stop(),'sec.'
             t.start()
             for i in range(100):
-                ttext = replace(text,what,with)
+                ttext = replace(text,what,with_what)
             print 'with tag.replace:',t.stop(),'sec.'
             if ttext != rtext:
                 print 'results are NOT ok !'
@@ -586,7 +586,7 @@ def _bench(file='mxTextTools/mxTextTools.c'):
                 mismatch(rtext,ttext)
             t.start()
             for i in range(100):
-                ttext = _replace2(text,what,with)
+                ttext = _replace2(text,what,with_what)
             print 'with tag._replace2:',t.stop(),'sec.'
             if ttext != rtext:
                 print 'results are NOT ok !'
@@ -594,7 +594,7 @@ def _bench(file='mxTextTools/mxTextTools.c'):
                 print rtext
             t.start()
             for i in range(100):
-                ttext = _replace3(text,what,with)
+                ttext = _replace3(text,what,with_what)
             print 'with tag._replace3:',t.stop(),'sec.'
             if ttext != rtext:
                 print 'results are NOT ok !'
@@ -602,7 +602,7 @@ def _bench(file='mxTextTools/mxTextTools.c'):
                 print rtext
             t.start()
             for i in range(100):
-                ttext = _replace4(text,what,with)
+                ttext = _replace4(text,what,with_what)
             print 'with tag._replace4:',t.stop(),'sec.'
             if ttext != rtext:
                 print 'results are NOT ok !'

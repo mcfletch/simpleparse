@@ -56,8 +56,8 @@ case MATCH_SUBTABLEINLIST:
 							childReturnCode = ERROR_CODE;
 							errorType = PyExc_TypeError;
 							errorMessage = PyString_FromFormat(
-								"Tag table entry %i: Could not find target table in list of tables",
-								index
+								"Tag table entry %d: Could not find target table in list of tables",
+								(unsigned int)index
 							);
 						} else {
 							if (mxTagTable_Check(newTable)) {
@@ -74,8 +74,8 @@ case MATCH_SUBTABLEINLIST:
 									childReturnCode = ERROR_CODE;
 									errorType = PyExc_TypeError;
 									errorMessage = PyString_FromFormat(
-										"Tag table entry %i: Could not compile target table",
-										index
+										"Tag table entry %d: Could not compile target table",
+										(unsigned int)index
 									);
 								}
 							}

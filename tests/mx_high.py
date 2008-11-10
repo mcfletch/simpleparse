@@ -106,6 +106,8 @@ class MXHighTests(unittest.TestCase):
 
 		def testsFindWord1( self ):
 			"""Test simple sWordFind command"""
+#			import pdb
+#			pdb.set_trace()
 			for algo in [BOYERMOORE, TRIVIAL]:
 				self.doBasicTest(
 					(

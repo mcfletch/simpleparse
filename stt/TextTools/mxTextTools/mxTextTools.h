@@ -52,24 +52,24 @@ MXTEXTTOOLS_EXTERNALIZE(PyTypeObject) mxTextSearch_Type;
 /* Exporting these APIs for mxTextTools internal use only ! */
 
 extern 
-int mxTextSearch_MatchLength(PyObject *self);
+Py_ssize_t mxTextSearch_MatchLength(PyObject *self);
 
 extern
-int mxTextSearch_SearchBuffer(PyObject *self,
+Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 			      char *text,
-			      int start,
-			      int stop,
-			      int *sliceleft,
-			      int *sliceright);
+			      Py_ssize_t start,
+			      Py_ssize_t stop,
+			      Py_ssize_t *sliceleft,
+			      Py_ssize_t *sliceright);
 
 #ifdef HAVE_UNICODE
 extern
-int mxTextSearch_SearchUnicode(PyObject *self,
+Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
 			       Py_UNICODE *text,
-			       int start,
-			       int stop,
-			       int *sliceleft,
-			       int *sliceright);
+			       Py_ssize_t start,
+			       Py_ssize_t stop,
+			       Py_ssize_t *sliceleft,
+			       Py_ssize_t *sliceright);
 #endif
 
 /* --- Character Set Object -------------------------------------*/
@@ -109,10 +109,10 @@ int mxCharSet_ContainsUnicodeChar(PyObject *self,
 #endif
 
 extern
-int mxCharSet_Match(PyObject *self,
+Py_ssize_t mxCharSet_Match(PyObject *self,
 		    PyObject *text,
-		    int start,
-		    int stop,
+		    Py_ssize_t start,
+		    Py_ssize_t stop,
 		    int direction);
 
 /* --- Tag Table Object -----------------------------------------*/
@@ -173,21 +173,21 @@ PyObject *mxTagTable_New(PyObject *definition,
 
 extern 
 int mxTextTools_TaggingEngine(PyObject *textobj,
-			      int text_start,	
-			      int text_stop,	
+			      Py_ssize_t text_start,	
+			      Py_ssize_t text_stop,	
 			      mxTagTableObject *table,
 			      PyObject *taglist,
 			      PyObject *context,
-			      int *next);
+			      Py_ssize_t *next);
 
 extern 
 int mxTextTools_UnicodeTaggingEngine(PyObject *textobj,
-				     int text_start,	
-				     int text_stop,	
+				     Py_ssize_t text_start,	
+				     Py_ssize_t text_stop,	
 				     mxTagTableObject *table,
 				     PyObject *taglist,
 				     PyObject *context,
-				     int *next);
+				     Py_ssize_t *next);
 
 /* Command integers for cmd; see Constants/TagTable.py for details */
 

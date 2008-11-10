@@ -15,7 +15,7 @@
 			only exception being that MATCH_SFINDWORD will change childStart
 		*/
 	    {
-			int wordstart, wordend;
+			Py_ssize_t wordstart, wordend;
 			int returnCode;
 
 			DPRINTF("\nsWordStart/End/sFindWord :\n"
@@ -77,8 +77,8 @@
 				childReturnCode = ERROR_CODE;
 				errorType = PyExc_TypeError;
 				errorMessage = PyString_FromFormat(
-					 "Tag Table entry %i: expected an integer (command=Loop) got a %.50s",
-					 index,
+					 "Tag Table entry %d: expected an integer (command=Loop) got a %.50s",
+					 (unsigned int)index,
 					 match->ob_type->tp_name
 				);
 			}
@@ -131,10 +131,10 @@
 					childReturnCode = ERROR_CODE;
 					errorType = PyExc_TypeError;
 					errorMessage = PyString_FromFormat(
-						"Tag Table entry %i: "
+						"Tag Table entry %d: "
 						"expected a tuple (fct,arg0,arg1,...)"
 						"(command=CallArg)",
-						index
+						(unsigned int)index
 					);
 				} else {
 					fct = PyTuple_GET_ITEM(match,0);
@@ -144,7 +144,7 @@
 			if (childReturnCode == NULL_CODE && PyCallable_Check(fct)) {
 				PyObject *args;
 				register PyObject *w;
-				register int argIndex;
+				register Py_ssize_t argIndex;
 
 				DPRINTF("\nCall[Arg] :\n");
 			
@@ -156,8 +156,8 @@
 					childReturnCode = ERROR_CODE;
 					errorType = PyExc_SystemError;
 					errorMessage = PyString_FromFormat(
-						 "Unable to create argument tuple for CallArgs command at index %i",
-						 index
+						 "Unable to create argument tuple for CallArgs command at index %d",
+						 (unsigned int)index
 					);
 				} else {
 					Py_INCREF(textobj);
@@ -167,8 +167,8 @@
 						childReturnCode = ERROR_CODE;
 						errorType = PyExc_SystemError;
 						errorMessage = PyString_FromFormat(
-							 "Unable to convert an integer %i to a Python Integer",
-							 childStart
+							 "Unable to convert an integer %d to a Python Integer",
+							 (unsigned int)childStart
 						);
 					} else {
 						PyTuple_SET_ITEM(args,1,w);
@@ -177,8 +177,8 @@
 							childReturnCode = ERROR_CODE;
 							errorType = PyExc_SystemError;
 							errorMessage = PyString_FromFormat(
-								 "Unable to convert an integer %i to a Python Integer",
-								 sliceright
+								 "Unable to convert an integer %d to a Python Integer",
+								 (unsigned int)sliceright
 							);
 						} else {
 							PyTuple_SET_ITEM(args,2,w);
@@ -197,8 +197,8 @@
 								childReturnCode = ERROR_CODE;
 								errorType = PyExc_TypeError;
 								errorMessage = PyString_FromFormat(
-									 "Tag Table entry %i: matching function has to return an integer, returned a %.50s",
-									 index,
+									 "Tag Table entry %d: matching function has to return an integer, returned a %.50s",
+									 (unsigned int)index,
 									 w->ob_type->tp_name
 								);
 							} else {
@@ -218,10 +218,10 @@
 				childReturnCode = ERROR_CODE;
 				errorType = PyExc_TypeError;
 				errorMessage = PyString_FromFormat(
-					"Tag Table entry %i: "
+					"Tag Table entry %d: "
 					"expected a callable object, got a %.50s"
 					"(command=Call[Arg])",
-					index,
+					(unsigned int)index,
 					fct->ob_type->tp_name
 				);
 			}

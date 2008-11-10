@@ -18,9 +18,9 @@ if (m == NULL) {
 	childReturnCode = ERROR_CODE;
 	errorType = PyExc_TypeError;
 	errorMessage = PyString_FromFormat(
-		 "Low-level command (%i) argument in entry %i couldn't be converted to a string object, is a %.50s",
+		 "Low-level command (%i) argument in entry %d couldn't be converted to a string object, is a %.50s",
 		 command,
-		 index,
+		 (unsigned int)index,
 		 textobj->ob_type->tp_name
 
 	);
@@ -31,7 +31,7 @@ switch (command) {
 	case MATCH_ALLIN:
 
 		{
-			register int ml = TE_STRING_GET_SIZE(match);
+			register Py_ssize_t ml = TE_STRING_GET_SIZE(match);
 			register TE_CHAR *tx = &text[childPosition];
 
 			DPRINTF("\nAllIn :\n"
@@ -40,7 +40,7 @@ switch (command) {
 
 			if (ml > 1) {
 				for (; childPosition < sliceright; tx++, childPosition++) {
-					register int j;
+					register Py_ssize_t j;
 					register TE_CHAR *mj = m;
 					register TE_CHAR ctx = *tx;
 					for (j=0; j < ml && ctx != *mj; mj++, j++) ;
@@ -56,7 +56,7 @@ switch (command) {
 	case MATCH_ALLNOTIN:
 
 		{
-			register int ml = TE_STRING_GET_SIZE(match);
+			register Py_ssize_t ml = TE_STRING_GET_SIZE(match);
 			register TE_CHAR *tx = &text[childPosition];
 
 			DPRINTF("\nAllNotIn :\n"
@@ -65,7 +65,7 @@ switch (command) {
 
 			if (ml != 1) {
 				for (; childPosition < sliceright; tx++, childPosition++) {
-					register int j;
+					register Py_ssize_t j;
 					register TE_CHAR *mj = m;
 					register TE_CHAR ctx = *tx;
 					for (j=0; j < ml && ctx != *mj; mj++, j++) ;
@@ -94,7 +94,7 @@ switch (command) {
 	case MATCH_ISIN:
 
 	{
-		register int ml = TE_STRING_GET_SIZE(match);
+		register Py_ssize_t ml = TE_STRING_GET_SIZE(match);
 		register TE_CHAR ctx = text[childPosition];
 
 		DPRINTF("\nIsIn :\n"
@@ -102,7 +102,7 @@ switch (command) {
 			" in string     = '%.40s'\n",m,text+childPosition);
 
 		if (ml > 0 && childPosition < sliceright) {
-		register int j;
+		register Py_ssize_t j;
 		register TE_CHAR *mj = m;
 		for (j=0; j < ml && ctx != *mj; mj++, j++) ;
 		if (j != ml) childPosition++;
@@ -114,7 +114,7 @@ switch (command) {
 	case MATCH_ISNOTIN:
 
 	{
-		register int ml = TE_STRING_GET_SIZE(match);
+		register Py_ssize_t ml = TE_STRING_GET_SIZE(match);
 		register TE_CHAR ctx = text[childPosition];
 
 		DPRINTF("\nIsNotIn :\n"
@@ -122,7 +122,7 @@ switch (command) {
 			" not in string = '%.40s'\n",m,text+childPosition);
 
 		if (ml > 0 && childPosition < sliceright) {
-		register int j;
+		register Py_ssize_t j;
 		register TE_CHAR *mj = m;
 		for (j=0; j < ml && ctx != *mj; mj++, j++) ;
 		if (j == ml) childPosition++;
@@ -136,9 +136,9 @@ switch (command) {
 	case MATCH_WORD:
 
 	{
-		int ml1 = TE_STRING_GET_SIZE(match) - 1;
+		Py_ssize_t ml1 = TE_STRING_GET_SIZE(match) - 1;
 		register TE_CHAR *tx = &text[childPosition + ml1];
-		register int j = ml1;
+		register Py_ssize_t j = ml1;
 		register TE_CHAR *mj = &m[j];
 
 		DPRINTF("\nWord :\n"
@@ -162,7 +162,7 @@ switch (command) {
 	case MATCH_WORDEND:
 
 	{
-		int ml1 = TE_STRING_GET_SIZE(match) - 1;
+		Py_ssize_t ml1 = TE_STRING_GET_SIZE(match) - 1;
 
 		if (ml1 >= 0) {
 		register TE_CHAR *tx = &text[childPosition];
@@ -173,7 +173,7 @@ switch (command) {
 
 		/* Brute-force method; from right to left */
 		for (;;) {
-			register int j = ml1;
+			register Py_ssize_t j = ml1;
 			register TE_CHAR *mj = &m[j];
 
 			if (childPosition+j >= sliceright) {
@@ -211,7 +211,7 @@ switch (command) {
 
 	{
 		register TE_CHAR *tx = &text[childPosition];
-		unsigned char *m = PyString_AS_STRING(match);
+		unsigned char *m = (unsigned char *)PyString_AS_STRING(match);
 
 		DPRINTF("\nAllInSet :\n"
 			" looking for   = set at 0x%lx\n"
@@ -230,7 +230,7 @@ switch (command) {
 
 	{
 		register TE_CHAR *tx = &text[childPosition];
-		unsigned char *m = PyString_AS_STRING(match);
+		unsigned char *m = (unsigned char *)PyString_AS_STRING(match);
 
 		DPRINTF("\nIsInSet :\n"
 			" looking for   = set at 0x%lx\n"
@@ -249,7 +249,7 @@ switch (command) {
 	case MATCH_ALLINCHARSET:
 
 	{
-		int matching;
+		Py_ssize_t matching;
 
 		DPRINTF("\nAllInCharSet :\n"
 			" looking for   = CharSet at 0x%lx\n"
@@ -265,8 +265,8 @@ switch (command) {
 			childReturnCode = ERROR_CODE;
 			errorType = PyExc_SystemError;
 			errorMessage = PyString_FromFormat(
-				 "Character set match returned value < 0 (%i): probable bug in text processing engine",
-				 matching
+				 "Character set match returned value < 0 (%d): probable bug in text processing engine",
+				 (unsigned int)matching
 			);
 		} else {
 			childPosition += matching;
