@@ -21,7 +21,7 @@ if __name__ == "__main__":
 		'simpleparse.stt.TextTools.mxTextTools',
 		'simpleparse.examples',
 		'simpleparse.tests',
-		'simpleparse.xml',
+		'simpleparse.xmlparser',
 		'__builtin__',
 	]	
 	pydoc2.PackageDocumentationGenerator(

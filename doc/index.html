@@ -1,15 +1,13 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
+<html><head>
   <meta content="en-us" http-equiv="Content-Language">
-  <meta content="text/html; charset=windows-1252"
- http-equiv="Content-Type">
+  <meta content="text/html; charset=windows-1252" http-equiv="Content-Type">
   <meta content="Microsoft FrontPage 4.0" name="GENERATOR">
   <meta content="FrontPage.Editor.Document" name="ProgId">
-  <title>SimpleParse 2.1</title>
-  <link href="sitestyle.css" type="text/css" rel="stylesheet">
-  <meta content="Mike C. Fletcher" name="author">
-</head>
+  
+  <title>SimpleParse 2.1</title><link href="sitestyle.css" type="text/css" rel="stylesheet">
+  <meta content="Mike C. Fletcher" name="author"></head>
+
 <body>
 <h1>SimpleParse <font size="-2">A Parser Generator for mxTextTools
 v2.1.0</font></h1>
@@ -53,8 +51,7 @@ the features available for processing (and altering) those results</li>
   <li><a href="common_problems.html">Common Problems</a> -- description
 of a number of common bugs, errors, pitfalls and anti-patterns when
 using the engine.</li>
-  <li><a
- href="http://www.ibm.com/developerworks/linux/library/l-simple.html">IBM
+  <li><a href="http://www.ibm.com/developerworks/linux/library/l-simple.html">IBM
 DeveloperWorks Article</a> by Dr. David Mertz -- discusses (and teaches
 the use of) SimpleParse 1.0, contrasting the EBNF-based parser with
 tools such as regexen for text-processing tasks. &nbsp;Watch also
@@ -73,13 +70,11 @@ which is the primary interface for the parsing system.<br>
   </li>
 </ul>
 <h2>Acquisition and Installation</h2>
-<p> You will need a copy of Python with <a
- href="http://www.python.org/sigs/distutils-sig/download.html">distutils</a>
+<p> You will need a copy of Python with <a href="http://www.python.org/sigs/distutils-sig/download.html">distutils</a>
 support (Python versions 2.0 and above include this). You'll also need
 a C
 compiler compatible with your Python build and understood by distutils.</p>
-<p>To install the base SimpleParse engine, <a
- href="http://sourceforge.net/project/showfiles.php?group_id=55673">download
+<p>To install the base SimpleParse engine, <a href="http://sourceforge.net/project/showfiles.php?group_id=55673">download
 the latest version</a> in your preferred format. If you are using the
 Win32 installer, simply run the executable. If you are using one of the
 source distributions, unpack the distribution into a
@@ -92,7 +87,7 @@ of the simpleparse package and will then install the whole package to
 your system.<br>
 </p>
 <h2>Features/Changelog</h2>
-<p>New in 2.1.0a1:</p>
+<p>New in 2.1.1a1:</p><ul><li>Fixes to build under Python 2.6</li><li>Rename of simpleparse.xml to simpleparse.xmlparser to avoid conflicts with standard library "xml"</li><li>Eliminate use of .message on exceptions, as this has been deprecated in Python 2.6</li></ul><p>New in 2.1.0a1:</p>
 <ul>
   <li>Includes (patched) mxTextTools extension as part of SimpleParse,
 no longer uses stand-alone mxTextTools installations<br>
@@ -139,8 +134,7 @@ mechanism (<a href="pydoc/simpleparse.dispatchprocessor.html">simpleparse.dispat
 children are reported as if the enclosing production did not exist
 (allows you to use productions for organisational as well as
 reporting purposes)</li>
-  <li>Exposure of <a
- href="processing_result_trees.html#nonstandardresulttrees">callout
+  <li>Exposure of <a href="processing_result_trees.html#nonstandardresulttrees">callout
 mechanism</a> in mxTextTools</li>
   <li>Exposure of "LookAhead" mechanism in mxTextTools (allows you to
 spell "is followed by", "is not followed by", or "matches x but
@@ -157,8 +151,7 @@ that must match, or include it as a stand-alone token in a sequential
 group to specify that all subsequent items must succeed. &nbsp;You can
 specify an error message format by using a string literal after the !
 character.</li>
-  <li>Library of common constructs (<a
- href="pydoc/simpleparse.common.html">simpleparse.common</a> package)
+  <li>Library of common constructs (<a href="pydoc/simpleparse.common.html">simpleparse.common</a> package)
 which are easily included in your grammars<br>
   </li>
   <li>Hexidecimal escapes for string and character ranges</li>
@@ -227,8 +220,7 @@ cross-references</li>
   <li>The library of common patterns is extremely sparse</li>
   <li>Unicode support</li>
   <li>There is no analysis and only minimal reduction done on the
-grammar. &nbsp;Having now read most of <a
- href="http://www.cs.vu.nl/%7Edick/PTAPG.html">Parsing Techniques - A
+grammar. &nbsp;Having now read most of <a href="http://www.cs.vu.nl/%7Edick/PTAPG.html">Parsing Techniques - A
 Practical Guide</a>, I can see how some fairly significant changes will
 be required to support such operations (and thereby the more common
 parsing techniques).<br>
@@ -263,7 +255,7 @@ SGML parsers</li>
 this may seem silly, but it would be nice to implement a more advanced
 parsing algorithm directly in C, without going through the
 assembly-like
-interface of mxTextTools. &nbsp;Given that Marc-Andr&eacute; isn't
+interface of mxTextTools. &nbsp;Given that Marc-André isn't
 interested
 in adopting the non-recursive codebase, there's not much point
 retaining compatability with mxTextTools, so moving to a more
@@ -291,23 +283,18 @@ does
 argue for using the non-recursive rewrite.</p>
 <p>To build the non-recursive TextTools engine, you'll need to
 get the source distribution for the non-recursive implementation from
-the <a
- href="http://sourceforge.net/project/showfiles.php?group_id=55673">SimpleParse
+the <a href="http://sourceforge.net/project/showfiles.php?group_id=55673">SimpleParse
 file repository</a>.&nbsp; Note,
 there are incompatabilities in the mxBase 2.1 versions that make it
 necessary to use the versions specified below to build the
 non-recursive versions.<br>
 </p>
 <ul>
-  <li>Python 2.2.x, <a
- href="http://lists.egenix.com/mailman-archives/egenix-users/2002-August/000078.html">mxBase
-2.1b5</a>, non-recursive <a
- href="https://sourceforge.net/project/showfiles.php?group_id=55673&amp;package_id=53017&amp;release_id=108636">1.0.0b4</a><br>
+  <li>Python 2.2.x, <a href="http://lists.egenix.com/mailman-archives/egenix-users/2002-August/000078.html">mxBase
+2.1b5</a>, non-recursive <a href="https://sourceforge.net/project/showfiles.php?group_id=55673&amp;package_id=53017&amp;release_id=108636">1.0.0b4</a><br>
   </li>
-  <li>Python 2.3.x, <a
- href="http://lists.egenix.com/mailman-archives/egenix-users/2003-August/000262.html">mxBase
-2.1</a> August 2003 Shapshot, non-recursive <a
- href="https://sourceforge.net/project/showfiles.php?group_id=55673&amp;package_id=53017">1.0.0b5+</a></li>
+  <li>Python 2.3.x, <a href="http://lists.egenix.com/mailman-archives/egenix-users/2003-August/000262.html">mxBase
+2.1</a> August 2003 Shapshot, non-recursive <a href="https://sourceforge.net/project/showfiles.php?group_id=55673&amp;package_id=53017">1.0.0b5+</a></li>
 </ul>
 <p>This archive is intended to be expanded over the
 mxBase source archive from the top-level directory, replacing one file
@@ -332,9 +319,9 @@ licensing terms for the original library, the eGenix extensions are:<br>
 <p>Extensions to the eGenix extensions (most significantly the rewrite
 of the core loop) are copyright Mike Fletcher and released under the
 SimpleParse License below:</p>
-<p>&nbsp;&nbsp;&nbsp; Copyright &copy; 2003-2006, Mike Fletcher</p>
+<p>&nbsp;&nbsp;&nbsp; Copyright © 2003-2006, Mike Fletcher</p>
 <p>SimpleParse License:</p>
-<p style="margin-left: 80px;">Copyright &copy; 1998-2006, Copyright by
+<p style="margin-left: 80px;">Copyright © 1998-2006, Copyright by
 Mike C. Fletcher; All Rights Reserved.<br>
 mailto: <a href="mailto:mcfletch@users.sourceforge.net">mcfletch@users.sourceforge.net</a>
 </p>
@@ -354,11 +341,7 @@ OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
 WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE!</p>
-<p align="center">A <a href="http://sourceforge.net"> <img
- alt="SourceForge Logo"
- src="http://sourceforge.net/sflogo.php?group_id=55673&amp;type=5"
- border="0" height="62" width="210"></a><br>
+<p align="center">A <a href="http://sourceforge.net"> <img alt="SourceForge Logo" src="http://sourceforge.net/sflogo.php?group_id=55673&amp;type=5" border="0" height="62" width="210"></a><br>
 Open Source <a href="http://simpleparse.sourceforge.net/">project</a><br>
 </p>
-</body>
-</html>
+</body></html>

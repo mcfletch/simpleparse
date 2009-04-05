@@ -94,7 +94,7 @@ class ErrorOnFailTests( unittest.TestCase ):
 				'acbdba',
 			)
 		except ParserSyntaxError, err:
-			assert err.args[0] == "Blargh!", """Error message was %r, should have been "Blargh!"."""%(err.message,)
+			assert err.args[0] == "Blargh!", """Error message was %r, should have been "Blargh!"."""%(err.args[0],)
 	def testErrorOnFail12( self ):
 		"""Test proper setting of err message text from !"message" syntax"""
 		try:

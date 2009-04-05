@@ -8,6 +8,11 @@ to install the packages from the source archive.
 from setuptools import setup, Extension
 import os, sys, string
 
+def findVersion( ):
+	a = {}
+	exec( open( '__init__.py' ).read(), a, a )
+	return a['__version__']
+
 def isPackage( filename ):
 	"""Is the given filename a Python package"""
 	return (
@@ -66,7 +71,7 @@ largely deterministic grammars.""",
 		}
 	setup (
 		name = "SimpleParse",
-		version = "2.1.0a2",
+		version = findVersion(),
 		description = "A Parser Generator for Python (w/mxTextTools derivative)",
 		author = "Mike C. Fletcher",
 		author_email = "mcfletch@users.sourceforge.net",

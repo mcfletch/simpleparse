@@ -1,4 +1,4 @@
-from simpleparse.xml import xml_parser
+from simpleparse.xmlparser import xml_parser
 from simpleparse.parser import Parser
 import unittest, string
 

@@ -527,7 +527,7 @@ class ErrorOnFail(ElementToken):
 	def __call__( self, text, position, end ):
 		"""Method called by mxTextTools iff the base production fails"""
 		error = ParserSyntaxError( self.message )
-		error.error_message = error.message = self.message
+		error.error_message = self.message
 		error.production = self.production
 		error.expected= self.expected
 		error.buffer = text
