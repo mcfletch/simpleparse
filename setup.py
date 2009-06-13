@@ -91,7 +91,8 @@ largely deterministic grammars.""",
 					'stt/TextTools/mxTextTools/mxte.c',
 					'stt/TextTools/mxTextTools/mxbmse.c',
 				],
-				include_dirs=['stt/TextTools/mxTextTools']
+				include_dirs=['stt/TextTools/mxTextTools'],
+				define_macros=[ ('MX_BUILDING_MXTEXTTOOLS',1) ],
 			),
 		],
 		**extraArguments
