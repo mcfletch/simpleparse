@@ -147,52 +147,6 @@
 static
 int mxDebugPrintf(const char *format, ...)
 {
-    va_list args;
-    static FILE *mxDebugPrintf_file;
-
-    if (!mxDebugPrintf_file) {
-	time_t now;
-	char *filename,*fileprefix;
-
-	now = time(NULL);
-	filename = getenv(MAL_DEBUG_OUTPUTFILE_ENV_VARIABLE);
-	if (!filename)
-	    filename = MAL_DEBUG_OUTPUTFILE;
-	fileprefix = getenv(MAL_DEBUG_OUTPUTFILEPREFIX_ENV_VARIABLE);
-	if (!fileprefix)
-	    fileprefix = MAL_DEBUG_OUTPUTFILEPREFIX;
-	if (strcmp(filename,"stdout") == 0)
-	    mxDebugPrintf_file = stdout;
-	else if (strcmp(filename,"stderr") == 0)
-	    mxDebugPrintf_file = stderr;
-	else {
-	    char logfile[512];
-
-	    strncpy(logfile,fileprefix,sizeof(logfile));
-	    strncat(logfile,filename,sizeof(logfile));
-	    mxDebugPrintf_file = fopen(logfile,"ab");
-	    if (!mxDebugPrintf_file) {
-		/* Hack to shut up "cc -Wall" warning that this
-		   function is not used... */
-		static void *mxDebugPrintf_used;
-		mxDebugPrintf_used = (void *)mxDebugPrintf;
-		/* Default to stderr in case the log file cannot be
-                   opened */
-		mxDebugPrintf_file = stderr;
-		fprintf(mxDebugPrintf_file,
-			"\n*** Failed to open log file '%s'; "
-			"using stderr\n",logfile);
-	    }
-	}
-	fprintf(mxDebugPrintf_file,
-		"\n--- "MAL_DEBUG_LOGID" --- %s\n",
-		ctime(&now));
-    }
-
-    va_start(args,format);
-    vfprintf(mxDebugPrintf_file,format,args);
-    fflush(mxDebugPrintf_file);
-    va_end(args);
     return 1;
 }
 
