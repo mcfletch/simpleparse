@@ -5,7 +5,8 @@ Run:
 	python setup.py install
 to install the packages from the source archive.
 """
-from setuptools import setup, Extension
+#from setuptools import setup, Extension
+from distutils.core import setup, Extension
 import os, sys, string
 
 def findVersion( ):
@@ -81,8 +82,8 @@ largely deterministic grammars.""",
 		options = options,
 
 		packages = packages.keys(),
-		include_package_data = True,
-		zip_safe = False,
+#		include_package_data = True,
+#		zip_safe = False,
 		ext_modules=[
 			Extension(
 				"simpleparse.stt.TextTools.mxTextTools.mxTextTools", 
