@@ -20,17 +20,6 @@ null      := 'null'
 <comment> := slashslash_comment/c_nest_comment
 <sep>     := (','?,ts)
 '''
-testData = """/* Bayeux protocol definition version 1.01, in language-        */
-{"test": {
-        'nums': [ 1,2.0,2e23,-2e-23,-2.3e+23 ],
-        'strings': [ "first", "second" ],
-        'string': "first",
-        'object': { },
-    },}
-"""
-biggertest = """
-
-"""
 from simpleparse.parser import Parser
 from simpleparse.dispatchprocessor import *
 import pprint
@@ -64,4 +53,7 @@ class Processor( DispatchProcessor ):
 
 parser = Parser( declaration, "object" )
 if __name__ =="__main__":
-    pprint.pprint( parser.parse( testData, processor=Processor()))
+    import sys,json
+    print json.dumps(
+        parser.parse( open(sys.argv[1]).read(), processor=Processor())
+    )
