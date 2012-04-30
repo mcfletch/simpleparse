@@ -5,13 +5,15 @@ Run:
 	python setup.py install
 to install the packages from the source archive.
 """
-#from setuptools import setup, Extension
-from distutils.core import setup, Extension
+try:
+    from setuptools import setup, Extension
+except ImportError, err:
+    from distutils.core import setup, Extension
 import os, sys, string
 
 def findVersion( ):
 	a = {}
-	exec( open( '__init__.py' ).read(), a, a )
+	exec( open( os.path.join( 'simpleparse', '__init__.py') ).read(), a, a )
 	return a['__version__']
 
 def isPackage( filename ):
@@ -34,8 +36,8 @@ def packagesFor( filename, basePackage="" ):
 			set.update( packagesFor( dir, moduleName))
 	return set
 
-packages = packagesFor( ".", 'simpleparse' )
-packages.update( {'simpleparse':'.'} )
+packages = packagesFor( "simpleparse", 'simpleparse' )
+packages.update( {'simpleparse':'simpleparse'} )
 
 options = {
 	'sdist': { 'force_manifest':1,'formats':['gztar','zip'] },
@@ -88,11 +90,11 @@ largely deterministic grammars.""",
 			Extension(
 				"simpleparse.stt.TextTools.mxTextTools.mxTextTools", 
 				[
-					'stt/TextTools/mxTextTools/mxTextTools.c',
-					'stt/TextTools/mxTextTools/mxte.c',
-					'stt/TextTools/mxTextTools/mxbmse.c',
+					'simpleparse/stt/TextTools/mxTextTools/mxTextTools.c',
+					'simpleparse/stt/TextTools/mxTextTools/mxte.c',
+					'simpleparse/stt/TextTools/mxTextTools/mxbmse.c',
 				],
-				include_dirs=['stt/TextTools/mxTextTools'],
+				include_dirs=['simpleparse/stt/TextTools/mxTextTools'],
 				define_macros=[ ('MX_BUILDING_MXTEXTTOOLS',1) ],
 			),
 		],
