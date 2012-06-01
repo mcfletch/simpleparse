@@ -50,8 +50,8 @@ class Generator:
             self.rootObjects.append( rootElement )
             return self.getNameIndex( name )
 
-    def buildParser( self, methodSource=None ):
-        '''Build the given parser definition, returning a Builder instance'''
+    def getBuilder( self, methodSource=None ):
+        '''Return a Builder instance for building parsers.'''
         builder = Builder(self, methodSource)
         builder.fill_terminals(self.rootObjects)
         return builder
@@ -89,7 +89,7 @@ class Builder(object):
                 raise
         assert None not in self.parserList, str(self.parserList)
 
-    def tt_tuple(self, name):
+    def getParser(self, name):
         """Return a TextTools parsing tuple for the given name."""
         return self.parserList [self.generator.getNameIndex(name)]
 

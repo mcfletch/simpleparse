@@ -599,7 +599,7 @@ class LibraryElement( ElementToken ):
             b = builder
         else:
             b = self.builder
-        basetable = b.tt_tuple(self.production)
+        basetable = b.getParser(self.production)
         try:
             if type(basetable[0]) == type(()):
                 if len(basetable) == 1 and len(basetable[0]) == 3:

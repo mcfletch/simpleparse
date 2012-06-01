@@ -85,7 +85,7 @@ string_special_escapes     := [\\\\abfnrtv"]
 for name, partial in _stringTypeData:
     _p = Parser( stringDeclaration + partial )
     c[ name ] = objectgenerator.LibraryElement(
-        builder = _p._generator.buildParser(),
+        builder = _p._generator.getBuilder(),
         production = "str",
     )
 common.share( c )
@@ -93,7 +93,7 @@ _p = Parser( """
 string :=  string_triple_double/string_triple_single/string_double_quote/string_single_quote
 """ )
 c[ "string"] = objectgenerator.LibraryElement(
-    builder = _p._generator.buildParser(),
+    builder = _p._generator.getBuilder(),
     production = "string",
 )
 

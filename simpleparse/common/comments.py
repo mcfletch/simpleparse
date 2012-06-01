@@ -39,7 +39,7 @@ comment   := -'\012'*
 _p = Parser( eolcomments )
 for name in ["hash_comment", "semicolon_comment", "slashslash_comment"]:
     c[ name ] = objectgenerator.LibraryElement(
-        builder = _p._generator.buildParser(),
+        builder = _p._generator.getBuilder(),
         production = name,
     )
 
@@ -51,7 +51,7 @@ comment := -"*/"*
 _p = Parser( ccomments )
 for name in ["c_comment","slashbang_comment"]:
     c[ name ] = objectgenerator.LibraryElement(
-        builder = _p._generator.buildParser(),
+        builder = _p._generator.getBuilder(),
         production = "slashbang_comment",
     )
 
@@ -65,7 +65,7 @@ comment                  := (-(comment_stop/comment_start)+/slashbang_nest_comme
 _p = Parser( nccomments )
 for name in ["c_nest_comment","slashbang_nest_comment"]:
     c[ name ] = objectgenerator.LibraryElement(
-        builder = _p._generator.buildParser(),
+        builder = _p._generator.getBuilder(),
         production = "slashbang_nest_comment",
     )
 

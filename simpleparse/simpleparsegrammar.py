@@ -485,7 +485,7 @@ Unparsed:\n%s..."""%(lineNumber, next, len(ebnf), ebnf[next:next+100])
         self.generator = processor.generator
     def buildTagger( self, name=None, processor = None ):
         """Build the tag-table for parsing the EBNF for this parser"""
-        return SPGenerator.buildParser( processor ).tt_tuple( name )
+        return SPGenerator.getBuilder( processor ).getParser( name )
 
 class SPGrammarProcessor( DispatchProcessor ):
     """Processing object for post-processing an EBNF into a new generator"""

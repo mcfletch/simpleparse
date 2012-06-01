@@ -26,7 +26,7 @@ expectedResult = (1, [
 ], 4)
 
 
-parser = Parser( declaration ).generator.buildParser().tt_tuple( 'testparser' )
+parser = Parser( declaration ).generator.getBuilder().getParser( 'testparser' )
 print("About to attempt the deep-nesting test")
 print("If python goes into an infinite loop, then the test failed ;) ")
 print()
