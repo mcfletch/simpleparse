@@ -19,7 +19,7 @@ class Parser:
     '''
     def buildTagger( self, name=None, processor = None ):
         '''Build the tag-table for parsing the EBNF for this parser'''
-        return GENERATOR.buildParser( name, processor )
+        return GENERATOR.buildParser( processor ).tt_tuple(name)
 
 """
     ITEM = """GENERATOR.addDefinition(

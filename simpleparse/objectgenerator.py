@@ -76,10 +76,10 @@ class ElementToken:
         updates the object's dictionary with them
         """
         self.__dict__.update( namedarguments )
-    def toParser( self, generator, noReport=0 ):
+    def toParser( self, builder, noReport=0 ):
         """Abstract interface for implementing the conversion to a text-tools table
 
-        generator -- an instance of generator.Generator
+        builder -- an instance of generator.Builder
             which provides various facilities for discovering
             other productions.
         noReport -- if true, we're being called recursively
@@ -198,12 +198,12 @@ class Literal( ElementToken ):
         CILiteral -- case-insensitive Literal values
     """
     value = ""
-    def toParser( self, generator=None, noReport=0 ):
+    def toParser( self, builder=None, noReport=0 ):
         """Create the parser for the element token"""
         flags = 0
         if self.lookahead:
             flags = flags + LookAhead
-        base = self.baseToParser( generator )
+        base = self.baseToParser( builder )
         if flags or self.errorOnFail:
             if self.errorOnFail:
                 return [(None, SubTable+flags, tuple(base),1,2),(None, Call, self.errorOnFail)]
@@ -211,7 +211,7 @@ class Literal( ElementToken ):
                 return [(None, SubTable+flags, tuple(base))]
         else:
             return base
-    def baseToParser( self, generator=None ):
+    def baseToParser( self, builder=None ):
         """Parser generation without considering flag settings"""
         svalue = self.value
         if self.negative:
@@ -302,12 +302,12 @@ class _Range( ElementToken ):
     """
     value = ""
     requiresExpandedSet = 1
-    def toParser( self, generator=None, noReport=0 ):
+    def toParser( self, builder=None, noReport=0 ):
         """Create the parser for the element token"""
         flags = 0
         if self.lookahead:
             flags = flags + LookAhead
-        base = self.baseToParser( generator )
+        base = self.baseToParser( builder )
         if flags or self.errorOnFail:
             if self.errorOnFail:
                 return [(None, SubTable+flags, tuple(base),1,2),(None, Call, self.errorOnFail)]
@@ -332,7 +332,7 @@ class _Range( ElementToken ):
 ##      in the SimpleParse grammar, of course.
 ##      """
 ##      requiresExpandedSet = 0
-##      def baseToParser( self, generator=None ):
+##      def baseToParser( self, builder=None ):
 ##          """Parser generation without considering flag settings"""
 ##          svalue = self.value
 ##          print 'generating range for ', repr(svalue)
@@ -363,7 +363,7 @@ class Range( _Range ):
     is unable to handle unicode character sets.  However, it will work with
     TextTools 2.0.3, which may be needed in some cases.
     """
-    def baseToParser( self, generator=None ):
+    def baseToParser( self, builder=None ):
         """Parser generation without considering flag settings"""
         svalue = self.value
         if not svalue:
@@ -433,10 +433,10 @@ class SequentialGroup( Group ):
         ("a", b, c, "d")
     i.e. a series of comma-separated element token definitions.
     """
-    def toParser( self, generator=None, noReport=0 ):
+    def toParser( self, builder=None, noReport=0 ):
         elset = []
         for child in self.children:
-            elset.extend( child.toParser( generator, noReport ) )
+            elset.extend( child.toParser( builder, noReport ) )
         basic = self.permute( (None, SubTable, tuple( elset)) )
         if len(basic) == 1:
             first = basic[0]
@@ -469,7 +469,7 @@ class CILiteral( SequentialGroup ):
         regular literal or character range
     """
     value = ""
-    def toParser( self, generator=None, noReport=0 ):
+    def toParser( self, builder=None, noReport=0 ):
         elset = self.ciParse( self.value )
         if len(elset) == 1:
             # XXX should be compressing these out during optimisation...
@@ -554,7 +554,7 @@ class FirstOfGroup( Group ):
         ("a" / b / c / "d")
     i.e. a series of slash-separated element token definitions.
     """
-    def toParser( self, generator=None, noReport=0 ):
+    def toParser( self, builder=None, noReport=0 ):
         elset = []
         # should catch condition where a child is optional
         # and we are repeating (which causes a crash during
@@ -562,7 +562,7 @@ class FirstOfGroup( Group ):
         # requires analysis of the whole grammar.
         for el in self.children:
             assert not el.optional, """Optional child of a FirstOf group created, this would cause an infinite recursion in the engine, child was %s"""%el
-            dataset = el.toParser( generator, noReport )
+            dataset = el.toParser( builder, noReport )
             if len( dataset) == 1:# and len(dataset[0]) == 3: # we can alter the jump states with impunity
                 elset.append( dataset[0] )
             else: # for now I'm eating the inefficiency and doing an extra SubTable for all elements to allow for easy calculation of jumps within the FO group
@@ -586,19 +586,20 @@ class Prebuilt( ElementToken ):
     by the other element tokens in your grammar.
     """
     value = ()
-    def toParser( self, generator=None, noReport=0 ):
+    def toParser( self, builder=None, noReport=0 ):
         return self.value
+
 class LibraryElement( ElementToken ):
-    """Holder for a prebuilt item with it's own generator"""
-    generator = None
+    """Holder for a prebuilt item with it's own builder"""
+    builder = None
     production = ""
-    methodSource = None
-    def toParser( self, generator=None, noReport=0 ):
-        if self.methodSource is None:
-            source = generator.methodSource
+
+    def toParser( self, builder=None, noReport=0 ):
+        if self.builder is None:
+            b = builder
         else:
-            source = self.methodSource
-        basetable = self.generator.buildParser( self.production, source )
+            b = self.builder
+        basetable = b.tt_tuple(self.production)
         try:
             if type(basetable[0]) == type(()):
                 if len(basetable) == 1 and len(basetable[0]) == 3:
@@ -631,10 +632,10 @@ class Name( ElementToken ):
 
     finally:
         if the target is not expanded and the Name token
-        should report something, the generator object is
+        should report something, the builder object is
         asked to supply the tag object and flags for
         processing the results of the target.  See the
-        generator.MethodSource documentation for details.
+        builder.MethodSource documentation for details.
 
     Notes:
         expanded and un-reported productions won't get any
@@ -649,15 +650,15 @@ class Name( ElementToken ):
     value = ""
     # following two flags are new ideas in the rewrite...
     report = 1
-    def toParser( self, generator, noReport=0 ):
+    def toParser( self, builder, noReport=0 ):
         """Create the table for parsing a name-reference
 
         Note that currently most of the "compression" optimisations
         occur here.
         """
-        sindex = generator.getNameIndex( self.value )
+        sindex = builder.generator.getNameIndex( self.value )
         command = TableInList
-        target = generator.getRootObjects()[sindex]
+        target = builder.generator.getRootObjects()[sindex]
 
         reportSelf = (
             (not noReport) and # parent hasn't suppressed reporting
@@ -688,45 +689,45 @@ class Name( ElementToken ):
         elif not reportSelf:
             tagobject = svalue
         else:
-            flags, tagobject = generator.getObjectForName( svalue )
+            flags, tagobject = builder.getObjectForName( svalue )
             if flags:
                 command = command | flags
         if tagobject is None and not flags:
-            if self.terminal(generator):
+            if self.terminal(builder.generator):
                 if extractFlags(self,reportChildren) != extractFlags(target):
                     composite = compositeFlags(self,target, reportChildren)
-                    partial = generator.getCustomTerminalParser( sindex,composite)
+                    partial = builder.generator.getCustomTerminalParser( sindex,composite)
                     if partial is not None:
                         return partial
                     partial = tuple(copyToNewFlags(target, composite).toParser(
-                        generator,
+                        builder,
                         not reportChildren
                     ))
-                    generator.cacheCustomTerminalParser( sindex,composite, partial)
+                    builder.generator.cacheCustomTerminalParser( sindex,composite, partial)
                     return partial
                 else:
-                    partial = generator.getTerminalParser( sindex )
+                    partial = builder.getTerminalParser( sindex )
                     if partial is not None:
                         return partial
                     partial = tuple(target.toParser(
-                        generator,
+                        builder,
                         not reportChildren
                     ))
-                    generator.setTerminalParser( sindex, partial)
+                    builder.setTerminalParser( sindex, partial)
                     return partial
         # base, required, positive table...
         if (
-            self.terminal( generator ) and
+            self.terminal( builder.generator ) and
             (not flags) and
             isinstance(target, (SequentialGroup,Literal,Name,Range))
         ):
-            partial = generator.getTerminalParser( sindex )
+            partial = builder.getTerminalParser( sindex )
             if partial is None:
                 partial = tuple(target.toParser(
-                    generator,
+                    builder,
                     #not reportChildren
                 ))
-                generator.setTerminalParser( sindex, partial)
+                builder.setTerminalParser( sindex, partial)
             if len(partial) == 1 and len(partial[0]) == 3 and (
                 partial[0][0] is None or tagobject is None
             ):
@@ -739,7 +740,7 @@ class Name( ElementToken ):
         basetable = (
             tagobject,
             command, (
-                generator.getParserList (),
+                builder.getParserList (),
                 sindex,
             )
         )

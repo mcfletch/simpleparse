@@ -8,16 +8,17 @@ from .genericvalues import NullResult, AnyInt
 
 from simpleparse.stt.TextTools import print_tagtable
 print_tagtable(
-    SPGenerator.buildParser( 'range' )
+    SPGenerator.buildParser().tt_tuple('range')
 )
 
 
 class SimpleParseGrammarTests(unittest.TestCase):
     """Test parsing of the the simpleparse grammar elements"""
     def doBasicTest(self, parserName, testValue, expected, ):
-        parser = SPGenerator.buildParser( parserName )
+        parser = SPGenerator.buildParser().tt_tuple(parserName)
         result = TextTools.tag( testValue, parser )
         assert result == expected, '''\nexpected:%s\n     got:%s\n'''%( pprint.pformat(expected), pprint.pformat(result))
+
     def testChar1( self ):
         self.doBasicTest(
             "CHARNODBLQUOTE",
@@ -844,7 +845,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
         )
     def testDeclarationSet2( self ):
         '''Just tries to parse and sees that everything was parsed, doesn't predict the result'''
-        parser = SPGenerator.buildParser( "declarationset" )
+        parser = SPGenerator.buildParser().tt_tuple( "declarationset" )
         result = TextTools.tag( declaration, parser )
         assert result[-1] == len(declaration), '''Didn't complete parse of the simpleparse declaration, only got %s chars, should have %s'''%(result[-1], len(declaration))
 

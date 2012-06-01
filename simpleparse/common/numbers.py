@@ -87,7 +87,7 @@ number_full         := binary_number/imaginary_number/hex/float/int
 _p = Parser( declaration )
 for name in ["int","hex", "int_unsigned", "number", "float", "binary_number", "float_floatexp", "imaginary_number", "number_full"]:
     c[ name ] = objectgenerator.LibraryElement(
-        generator = _p._generator,
+        builder = _p._generator.buildParser(),
         production = name,
     )
 

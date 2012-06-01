@@ -42,8 +42,6 @@ class Parser( baseparser.BaseParser ):
             production = self._rootProduction
         if processor is None:
             processor = self.buildProcessor()
-        return self._generator.buildParser(
-            production,
-            methodSource=processor,
-        )
+        builder = self._generator.buildParser(methodSource=processor)
+        return builder.tt_tuple(production)
 
