@@ -13,7 +13,7 @@ parameter in its initialiser.
 """
 
 def share( dictionary ):
-	SOURCES.append( dictionary)
+    SOURCES.append( dictionary)
 
 SOURCES = [
 ]

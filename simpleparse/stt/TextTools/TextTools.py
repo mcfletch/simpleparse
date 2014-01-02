@@ -803,4 +803,3 @@ def _bench(file='mxTextTools/mxTextTools.c'):
 
 if __name__=='__main__':
     _bench()
-
