@@ -8,11 +8,7 @@ from simpleparse.objectgenerator import *
 from simpleparse import generator, baseparser
 import string
 from simpleparse.dispatchprocessor import *
-try:
-    unicode
-    HAVE_UNICODE = 1
-except NameError:
-    HAVE_UNICODE = 0
+HAVE_UNICODE = 1
 
 # note that whitespace is slightly different
 # due to a bug with NULL-matching repeating groups
@@ -329,7 +325,7 @@ SPGenerator.addDefinition (
 )
 
 SPGenerator.addDefinition (
-    "ESCAPEDCHAR",   # '\\',( SPECIALESCAPEDCHAR / ('x',HEXESCAPEDCHAR) / OCTALESCAPEDCHAR  )
+    "ESCAPEDCHAR",   # '\\',( SPECIALESCAPEDCHAR / ('x',HEXESCAPEDCHAR) / UNICODEESCAPEDCHAR_16 / OCTALESCAPEDCHAR /   )
     SequentialGroup (
         children =[
             Literal (value ="\\"),
@@ -343,6 +339,12 @@ SPGenerator.addDefinition (
                         ]
                     ),
                     Name (value ="OCTALESCAPEDCHAR"),
+                    SequentialGroup(
+                        children = [
+                            Range( value='uU'),
+                            Name( value='UNICODEESCAPEDCHAR' ),
+                        ],
+                    ),
                 ],
             ),
         ],
@@ -373,7 +375,26 @@ SPGenerator.addDefinition (
         ],
     )
 )
-
+SPGenerator.addDefinition(
+    "UNICODEESCAPEDCHAR",
+    SequentialGroup(
+        children=[
+            Range (value ="0123456789abcdefABCDEF"),
+            Range (value ="0123456789abcdefABCDEF"),
+            Range (value ="0123456789abcdefABCDEF"),
+            Range (value ="0123456789abcdefABCDEF"),
+            SequentialGroup(
+                children = [
+                    Range (value ="0123456789abcdefABCDEF"),
+                    Range (value ="0123456789abcdefABCDEF"),
+                    Range (value ="0123456789abcdefABCDEF"),
+                    Range (value ="0123456789abcdefABCDEF"),
+                ],
+                optional = True,
+            )
+        ]
+    )
+)
 
 SPGenerator.addDefinition (
     "CHARNODBLQUOTE",
@@ -424,14 +445,13 @@ CHARDASH            :=  '-'
 CHARRANGE           :=  CHARNOBRACE, '-', CHARNOBRACE
 CHARNOBRACE         :=  ESCAPEDCHAR/CHAR
 CHAR                :=  -[]]
-ESCAPEDCHAR         :=  '\\',( SPECIALESCAPEDCHAR / ('x',HEXESCAPEDCHAR) / ("u",UNICODEESCAPEDCHAR_16) /("U",UNICODEESCAPEDCHAR_32)/OCTALESCAPEDCHAR  )
+ESCAPEDCHAR         :=  '\\',( SPECIALESCAPEDCHAR / ('x',HEXESCAPEDCHAR) / ([uU],UNICODEESCAPEDCHAR) / OCTALESCAPEDCHAR  )
 SPECIALESCAPEDCHAR  :=  [\\abfnrtv"']
 OCTALESCAPEDCHAR    :=  [0-7],[0-7]?,[0-7]?
 HEXESCAPEDCHAR      :=  [0-9a-fA-F],[0-9a-fA-F]
 CHARNODBLQUOTE      :=  -[\\"]+
 CHARNOSNGLQUOTE     :=  -[\\']+
-UNICODEESCAPEDCHAR_16 := [0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F]
-UNICODEESCAPEDCHAR_32 := [0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F]
+UNICODEESCAPEDCHAR  := [0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],([0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F])?
 """
 
 ### Now the interpreter objects...
@@ -668,34 +688,25 @@ class SPGrammarProcessor( DispatchProcessor ):
     def CHARRANGE( self, (tag, left, right, sublist), buffer):
         '''Create a string from first to second item'''
         # following should never raise an error, as there's only one possible format...
-        try:
-            first, second = map( ord, dispatchList( self, sublist, buffer))
-        except TypeError:
-            import pdb
-            pdb.set_trace ()
+        first,second = dispatchList( self, sublist, buffer)
         if second < first:
             second, first = first, second
-        return string.join(map( chr, range(first, second+1),), '')
+        if isinstance( first, unicode ) or isinstance( second,unicode ):
+            _chr = unichr
+            _join = u''
+            if not (isinstance( second, unicode ) and isinstance( first, unicode )):
+                raise ValueError( 'Range %s uses one unicode and one string escape, cannot mix'%(buffer[left:right]) )
+        else:
+            _chr = chr 
+            _join = ''
+        first, second = map( ord, (first,second) )
+        return u''.join([_chr(u) for u in range(first,second+1)])
     def CHARDASH( self, tup , buffer):
         return '-'
     def CHARBRACE( self, tup , buffer):
         return ']'
 
-    if HAVE_UNICODE:
-        def UNICODEESCAPEDCHAR_16( self, (tag, left, right, sublist), buffer):
-            """Only available in unicode-aware Python versions"""
-            char = unichr(int( buffer[left:right], 16 ))
-            return char
-        ### Only available in wide-unicode Python versions (rare)
-        UNICODEESCAPEDCHAR_32 = UNICODEESCAPEDCHAR_16
-    else:
-        # ignore unicode-specific characters, though this isn't a particularly
-        # useful approach, I don't see a better option at the moment...
-        def UNICODEESCAPEDCHAR_16( self, (tag, left, right, sublist), buffer):
-            """Only available in unicode-aware Python versions"""
-            return ""
-            
-        def UNICODEESCAPEDCHAR_32( self, (tag, left, right, sublist), buffer):
-            """Only available in wide-unicode Python versions (rare)"""
-            return ""
-    
+    def UNICODEESCAPEDCHAR( self, (tag, left, right, sublist), buffer):
+        """Decode a unicode-escaped hex character into a character value"""
+        char = unichr(int( buffer[left:right], 16 ))
+        return char
