@@ -1,18 +1,16 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
-<html>
-<head>
-  <meta content="text/html; charset=windows-1252"
- http-equiv="CONTENT-TYPE">
-  <title>SimpleParse Grammars</title>
+<html><head>
+
+
+  <meta content="text/html; charset=windows-1252" http-equiv="CONTENT-TYPE"><title>SimpleParse Grammars</title>
+  
   <meta content="OpenOffice.org 641  (Win32)" name="GENERATOR">
   <meta content="Mike Fletcher" name="AUTHOR">
   <meta content="20020705;1503600" name="CREATED">
   <meta content="Mike Fletcher" name="CHANGEDBY">
   <meta content="20020706;20433000" name="CHANGED">
   <link href="sitestyle.css" type="text/css" rel="stylesheet">
-  <meta content="Mike C. Fletcher" name="author">
-</head>
-<body lang="en-US">
+  <meta content="Mike C. Fletcher" name="author"></head><body lang="en-US">
 <h1>SimpleParse Grammars</h1>
 <p>SimpleParse uses a particular EBNF grammar which reflects the
 current
@@ -46,7 +44,7 @@ concrete implementation of the various tokens is the module
 simpleparse.objectgenerator, their syntax is defined in the module
 simpleparse.simpleparsegrammar. You can read a formal definition of the
 grammar used to define them at the end of this document.</p>
-<table cellspacing="8" cellpadding="2" border="0" width="100%">
+<table border="0" cellpadding="2" cellspacing="8" width="100%">
   <tbody>
     <tr>
       <th>
@@ -170,13 +168,23 @@ below for more details of the semantics surrounding this token.<br>
 </table>
 <h3>Character Classes, Strings and Escape Characters</h3>
 <p>Both character classes and strings in simpleparse may use octal
-escaping (of 1 to 3 octal digits), hexadecimal escaping (2 digits) or
-standard Python character escapes ( \a\b\f\n\r\t\v (Note that “u” and
-“U” are missing and that “\n” is interpreted according to the local
+escaping (of 1 to 3 octal digits), hexadecimal escaping (2 digits), or Unicode escaping (4 or 8 digits) or
+standard Python character escapes (\a\b\f\n\r\t\v)</p>
+<ul>
+  <li>“\n” is interpreted according to the local
 machine, and thus may be non-portable, so an explicit declaration using
 hexadecimal code might be more suitable in cases where differentiation
-is required)). Strings may be either single or double quoted (but not
+is required).</li>
+  <li>the number of digits is fixed for Hexadecimal and Unicode escaping</li>
+  <li>you MUST use \u or \U escape codes to define Unicode characters,
+using actual Unicode characters will not work (it will likely cause
+seg-faults during parser generation) (Unicode support should be
+considered experimental as well)<br>
+  </li>
+</ul>
+<p>Strings may be either single or double quoted (but not
 triple quoted).</p>
+
 <p>To include a "]" character in a character class, make it the first
 character of the class. Similarly, a literal "-" character must be
 either the first (after the optional "]" character) or the last
@@ -192,7 +200,7 @@ include not matching '-' or matching characters that were not expected.<br>
 <p>Each element token can have a prefix and/or a postfix modifier
 applied to it to alter how the engine treats a match of the “base”
 element token.</p>
-<table cellspacing="8" cellpadding="2" border="0" width="100%">
+<table border="0" cellpadding="2" cellspacing="8" width="100%">
   <tbody>
     <tr>
       <th align="center">
@@ -367,7 +375,7 @@ else can happen).</p>
 <h3>Default Result Tree Generation</h3>
 <p>Here are some examples showing sample productions and the result
 trees they would generate.</p>
-<table cellspacing="8" cellpadding="2" border="0" width="100%">
+<table border="0" cellpadding="2" cellspacing="8" width="100%">
   <tbody>
     <tr>
       <td> s := "this" </td>
@@ -404,10 +412,9 @@ patterns and allowing them to be included in multiple productions
 without
 generating extraneous result-tuples in the results tree. Both of these
 methods still produce standard results trees so no special work is
-required to process the results tree. (There are methods described in <a
- href="processing_result_trees.html">Processing Results Trees</a> which
+required to process the results tree. (There are methods described in <a href="processing_result_trees.html">Processing Results Trees</a> which
 can generate non-standard result trees for special purposes).</p>
-<table cellspacing="8" cellpadding="2" border="0" width="100%">
+<table border="0" cellpadding="2" cellspacing="8" width="100%">
   <tbody>
     <tr>
       <th>
@@ -495,18 +502,7 @@ the grammar used during parser generation is a manually generated
 version found in the simpleparse.simpleparsegrammar module.</p>
 <pre>declaration = r"""declarationset      :=  declaration+<br>declaration         :=  ts, (unreportedname/expandedname/name) ,ts,':',':'?,'=',seq_group<br><br>element_token       :=  lookahead_indicator?, ts, negpos_indicator?,ts, (literal/range/group/name),ts, occurence_indicator?, ts, error_on_fail?<br><br>negpos_indicator    :=  [-+]<br>lookahead_indicator :=  "?"<br>occurence_indicator :=  [+*?]<br>error_on_fail       :=  "!", (ts,literal)?<br><br>&gt;group&lt;             :=  '(',seq_group, ')'<br>seq_group           :=  ts,(error_on_fail/fo_group/element_token),<br>                          (ts, seq_indicator, ts,<br>                              (error_on_fail/fo_group/element_token)<br>                          )*, ts<br><br>fo_group            :=  element_token, (ts, fo_indicator, ts, element_token)+<br><br><br># following two are likely something peoples might want to<br># replace in many instances...<br>&lt;fo_indicator&gt;      :=  "/"<br>&lt;seq_indicator&gt;     :=  ','<br><br>unreportedname      :=  '&lt;', name, '&gt;'<br>expandedname        :=  '&gt;', name, '&lt;'<br>name                :=  [a-zA-Z_],[a-zA-Z0-9_]*<br>&lt;ts&gt;                :=  ( [ \011-\015]+ / comment )*<br>comment             :=  '#',-'\n'*,'\n'<br>literal             :=  literalDecorator?,("'",(CHARNOSNGLQUOTE/ESCAPEDCHAR)*,"'")  /  ('"',(CHARNODBLQUOTE/ESCAPEDCHAR)*,'"')<br>literalDecorator    :=  [c]<br><br><br><br>range               :=  '[',CHARBRACE?,CHARDASH?, (CHARRANGE/CHARNOBRACE)*, CHARDASH?,']'<br>CHARBRACE           :=  ']'<br>CHARDASH            :=  '-'<br>CHARRANGE           :=  CHARNOBRACE, '-', CHARNOBRACE<br>CHARNOBRACE         :=  ESCAPEDCHAR/CHAR<br>CHAR                :=  -[]]<br>ESCAPEDCHAR         :=  '\\',( SPECIALESCAPEDCHAR / ('x',HEXESCAPEDCHAR) / ("u",UNICODEESCAPEDCHAR_16) /("U",UNICODEESCAPEDCHAR_32)/OCTALESCAPEDCHAR  )<br>SPECIALESCAPEDCHAR  :=  [\\abfnrtv"']<br>OCTALESCAPEDCHAR    :=  [0-7],[0-7]?,[0-7]?<br>HEXESCAPEDCHAR      :=  [0-9a-fA-F],[0-9a-fA-F]<br>CHARNODBLQUOTE      :=  -[\\"]+<br>CHARNOSNGLQUOTE     :=  -[\\']+<br>UNICODEESCAPEDCHAR_16 := [0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F]<br>UNICODEESCAPEDCHAR_32 := [0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F],[0-9a-fA-F]<br>"""<br></pre>
 <a href="index.html">Up to index...</a><br>
-<p align="center">A <a href="http://sourceforge.net"> <img
- alt="SourceForge Logo" border="0" height="62" width="210"
- src="http://sourceforge.net/sflogo.php?group_id=55673&amp;type=5"> </a><br>
+<p align="center">A <a href="http://sourceforge.net"> <img alt="SourceForge Logo" src="http://sourceforge.net/sflogo.php?group_id=55673&amp;type=5" border="0" height="62" width="210"> </a><br>
 Open Source <a href="http://simpleparse.sourceforge.net/">project</a><br>
 </p>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-</body>
-</html>
+</body></html>
