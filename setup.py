@@ -84,8 +84,8 @@ largely deterministic grammars.""",
 		options = options,
 
 		packages = packages.keys(),
-#		include_package_data = True,
-#		zip_safe = False,
+		include_package_data = True,
+		zip_safe = False,
 		ext_modules=[
 			Extension(
 				"simpleparse.stt.TextTools.mxTextTools.mxTextTools", 
@@ -95,7 +95,10 @@ largely deterministic grammars.""",
 					'simpleparse/stt/TextTools/mxTextTools/mxbmse.c',
 				],
 				include_dirs=['simpleparse/stt/TextTools/mxTextTools'],
-				define_macros=[ ('MX_BUILDING_MXTEXTTOOLS',1) ],
+				define_macros=[ 
+					('MX_BUILDING_MXTEXTTOOLS',1),
+					('PY_SSIZE_T_CLEAN',1),
+				],
 			),
 		],
 		**extraArguments
