@@ -13,7 +13,6 @@ import pprint
 parser = Parser( declaration ).generator.buildParser('testparser' )
 result = TextTools.tag( testdata, parser )
 if result != expectedResult:
-	print 'backup-on-subtable-test failed'
-	print '\texpected', pprint.pprint( expectedResult )
-	print '\tgot', pprint.pprint( result )
-
+    print 'backup-on-subtable-test failed'
+    print '\texpected', pprint.pprint( expectedResult )
+    print '\tgot', pprint.pprint( result )

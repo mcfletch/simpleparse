@@ -20,9 +20,8 @@ ts             :=  [ \t]*
 '''
 
 testdata = '''[test1]
-	val=23
+    val=23
 '''
 if __name__ == "__main__":
-	from simpleparse.parser import Parser
-	parser = Parser( declaration, "file" ) # will raise ValueError
-
+    from simpleparse.parser import Parser
+    parser = Parser( declaration, "file" ) # will raise ValueError

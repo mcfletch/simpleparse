@@ -57,4 +57,3 @@ if __name__ == "__main__":
     success, results, next = p.parse( testData, "sets")
     print 'finished parse', time.clock()-t
     print 'number of results', len(results)
-

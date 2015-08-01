@@ -13,12 +13,12 @@ identified     :=  string/number/identifier
 ts             :=  [ \t]*
 '''
 testData = """[test1]
-	val=23
-	val2="23"
-	val3 = "23\t\nskidoo\xee"
-	wherefore="art thou"
-	; why not
-	log = heavy_wood
+    val=23
+    val2="23"
+    val3 = "23\t\nskidoo\xee"
+    wherefore="art thou"
+    ; why not
+    log = heavy_wood
 
 [test2]
 loose=lips
@@ -28,4 +28,4 @@ import pprint
 
 parser = Parser( declaration, "file" )
 if __name__ =="__main__":
-	pprint.pprint( parser.parse( testData))
+    pprint.pprint( parser.parse( testData))

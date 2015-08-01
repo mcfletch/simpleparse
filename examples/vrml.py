@@ -45,16 +45,16 @@ ESCAPEDCHAR    := '\\"'/'\134\134'
 <ts>           :=  ( [ \011-\015,]+ / ('#',-'\012'*,'\n')+ )*
 '''
 def buildVRMLParser( declaration = VRMLPARSERDEF ):
-	return Parser( declaration, "vrmlScene" )
+    return Parser( declaration, "vrmlScene" )
 
 if __name__ == "__main__":
-	import os, sys, time
-	if sys.argv[1:]:
-		filename = sys.argv[1]
-		data = open(filename).read()
-		parser = buildVRMLParser()
-		t = time.time()
-		success, tags, next = parser.parse( data)
-		d = time.time()-t
-		print "parsed %s characters of %s in %s seconds (%scps)"%( next, len(data), d, next/(d or 0.000000001) )
-	
+    import os, sys, time
+    if sys.argv[1:]:
+        filename = sys.argv[1]
+        data = open(filename).read()
+        parser = buildVRMLParser()
+        t = time.time()
+        success, tags, next = parser.parse( data)
+        d = time.time()-t
+        print "parsed %s characters of %s in %s seconds (%scps)"%( next, len(data), d, next/(d or 0.000000001) )
+    

@@ -15,11 +15,11 @@ string         :=  (char/escapedchar)*
 escapedchar    :=  '\134"' / '\134\134'
 '''
 testdata = '''[test1]
-	val=23
-	val2="23"
-	wherefore="art thou"
-	; why not
-	log = heavy_wood
+    val=23
+    val2="23"
+    wherefore="art thou"
+    ; why not
+    log = heavy_wood
 
 [test2]
 loose=lips
@@ -30,4 +30,4 @@ import pprint
 
 parser = Parser( declaration, "file" )
 if __name__ =="__main__":
-	pprint.pprint( parser.parse( testdata))
+    pprint.pprint( parser.parse( testdata))

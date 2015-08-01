@@ -59,39 +59,39 @@ ESCAPEDCHAR    := '\\"'/'\134\134'
 '''
 
 def buildVRMLParser( declaration = VRMLPARSERDEF ):
-	return Parser( declaration, "vrmlFile" )
+    return Parser( declaration, "vrmlFile" )
 
 if __name__ == "__main__":
-	import os, sys, time
-	parser = buildVRMLParser()
-	if sys.argv[1:]:
-		filename = sys.argv[1]
-		data = open(filename).read()
-		t = time.time()
-		success, tags, next = parser.parse( data)
-		d = time.time()-t
-		print "parsed %s characters of %s in %s seconds (%scps)"%( next, len(data), d, next/(d or 0.000000001) )
-	# now show the error-generation
-	print '''About to parse badly formatted VRML data'''
-	badData = [
-		'''#whatever\nX{ { } }''',
-		'''#whatever\nX{ S }''',
-		'''#whatever\nPROTO ]{ S }''',
-		'''#whatever\nPROTO []{ S ''',
-		'''#whatever\nPROTO R [
-		field SFBool A
+    import os, sys, time
+    parser = buildVRMLParser()
+    if sys.argv[1:]:
+        filename = sys.argv[1]
+        data = open(filename).read()
+        t = time.time()
+        success, tags, next = parser.parse( data)
+        d = time.time()-t
+        print "parsed %s characters of %s in %s seconds (%scps)"%( next, len(data), d, next/(d or 0.000000001) )
+    # now show the error-generation
+    print '''About to parse badly formatted VRML data'''
+    badData = [
+        '''#whatever\nX{ { } }''',
+        '''#whatever\nX{ S }''',
+        '''#whatever\nPROTO ]{ S }''',
+        '''#whatever\nPROTO []{ S ''',
+        '''#whatever\nPROTO R [
+        field SFBool A
 ]{   }''',
-		'''#whatever\nPROTO R [
-		field SFBool
+        '''#whatever\nPROTO R [
+        field SFBool
 ]{   }''',
-		'''#whatever\nPROTO R [
-		field SFBool A "
+        '''#whatever\nPROTO R [
+        field SFBool A "
 ]{   ''',
-	]
-		
-	for bad in badData:
-		try:
-			parser.parse( bad )
-			print """\nWARNING: didn't get a syntax error for item %s\n"""%(repr(bad))
-		except SyntaxError, err:
-			print err
+    ]
+        
+    for bad in badData:
+        try:
+            parser.parse( bad )
+            print """\nWARNING: didn't get a syntax error for item %s\n"""%(repr(bad))
+        except SyntaxError, err:
+            print err

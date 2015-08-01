@@ -10,18 +10,18 @@ a := 'a'
 '''
 testdata = 'aaaa'
 expectedResult = (1, [
-	('as', 0, 4, [
-		('a', 0, 1, NullResult),
-		('as', 1, 4, [
-			('a', 1, 2, NullResult),
-			('as', 2, 4, [
-				('a', 2, 3, NullResult),
-				('as', 3, 4, [
-					('a', 3, 4, NullResult)
-				])
-			])
-		])
-	])
+    ('as', 0, 4, [
+        ('a', 0, 1, NullResult),
+        ('as', 1, 4, [
+            ('a', 1, 2, NullResult),
+            ('as', 2, 4, [
+                ('a', 2, 3, NullResult),
+                ('as', 3, 4, [
+                    ('a', 3, 4, NullResult)
+                ])
+            ])
+        ])
+    ])
 ], 4)
 
 
@@ -31,8 +31,8 @@ print "If python goes into an infinite loop, then the test failed ;) "
 print
 result = TextTools.tag( testdata, parser )
 if result != expectedResult:
-	print 'test-deep-nesting failed'
-	print '\texpected', expectedResult
-	print '\tgot', result 
+    print 'test-deep-nesting failed'
+    print '\texpected', expectedResult
+    print '\tgot', result 
 else:
-	print "test-deep-nesting succeeded!\nYou're probably using the non-recursive mx.TextTools rewrite"
+    print "test-deep-nesting succeeded!\nYou're probably using the non-recursive mx.TextTools rewrite"
