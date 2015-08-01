@@ -1,6 +1,6 @@
 """Definitions of the MethodSource and Processor APIs"""
 
-class MethodSource:
+class MethodSource(object):
     """Base class for MethodSource objects (including Processors and Parsers)
     Most applications will use either Processor or Parser objects, rather
     than directly using a MethodSource object.
