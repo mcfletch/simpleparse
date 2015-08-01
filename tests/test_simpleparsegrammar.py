@@ -283,6 +283,23 @@ class ParserGenerationTests(unittest.TestCase):
             ' thi',
             (1,[],4)
         )
+    def testGenUnicodeRange( self ):
+        self.doBasicTest(
+            '''s := [\u0600-\u06ff]+''',
+            's',
+            u'\u0600\u06ff',
+            (1,[],2)
+        )
+    def testGenUnicodeRangeBroken( self ):
+        self.assertRaises(
+            ValueError,
+            self.doBasicTest,
+                '''s := [a-\u06ff]+''',
+                's',
+                u'\u0600\u06ff',
+                (1,[],2)
+        )
+                
 
 class NameTests(unittest.TestCase):
     def doBasicTest(self, definition, parserName, testValue, expected, ):

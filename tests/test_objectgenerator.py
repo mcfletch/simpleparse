@@ -117,6 +117,13 @@ class ElementTokenTests(unittest.TestCase):
             'defc',
             (1, [],1),
         )
+    def testUnicodeRange10( self ):
+        urange = Range( value = u''.join([unichr(x) for x in range( 0x600, 0x6FF+1 )]), repeating=True )
+        self.doBasicTest(
+            urange,
+            u'\u0600\u06FF',
+            (1,[],2),
+        )
     def testSequential1( self ):
         self.doBasicTest(
             SequentialGroup(
