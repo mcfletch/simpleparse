@@ -878,26 +878,26 @@ PyObject *mxTextSearch_GetAttr(mxTextSearchObject *self,
 /* Python Type Table */
 
 PyTypeObject mxTextSearch_Type = {
-        PyObject_HEAD_INIT(0)		/* init at startup ! */
-	0,			  	/*ob_size*/
-	"TextSearch",		  	/*tp_name*/
-	sizeof(mxTextSearchObject),	/*tp_basicsize*/
-	0,			  	/*tp_itemsize*/
-	/* methods */
-	(destructor)mxTextSearch_Free,	/*tp_dealloc*/
-	(printfunc)0,			/*tp_print*/
-	(getattrfunc)mxTextSearch_GetAttr,  	/*tp_getattr*/
-	(setattrfunc)0,		  	/*tp_setattr*/
-	(cmpfunc)0,		  	/*tp_compare*/
-	(reprfunc)mxTextSearch_Repr,  	/*tp_repr*/
-        0,			  	/*tp_as_number*/
-	0,				/*tp_as_number*/
-	0,				/*tp_as_mapping*/
-	(hashfunc)0,			/*tp_hash*/
-	(ternaryfunc)0,			/*tp_call*/
-	(reprfunc)0,			/*tp_str*/
-	(getattrofunc)0, 		/*tp_getattro*/
-	(setattrofunc)0, 		/*tp_setattro*/
+    PyObject_HEAD_INIT(NULL)            /* init at startup ! */
+    0,                                  /*ob_size*/
+    "TextSearch",                       /*tp_name*/
+    sizeof(mxTextSearchObject),         /*tp_basicsize*/
+    0,                                  /*tp_itemsize*/
+    /* methods */
+    (destructor)mxTextSearch_Free,      /*tp_dealloc*/
+    (printfunc)0,                       /*tp_print*/
+    (getattrfunc)mxTextSearch_GetAttr,  /*tp_getattr*/
+    (setattrfunc)0,                     /*tp_setattr*/
+    (cmpfunc)0,                         /*tp_compare*/
+    (reprfunc)mxTextSearch_Repr,        /*tp_repr*/
+    0,                                  /*tp_as_number*/
+    0,                                  /*tp_as_number*/
+    0,                                  /*tp_as_mapping*/
+    (hashfunc)0,                        /*tp_hash*/
+    (ternaryfunc)0,                     /*tp_call*/
+    (reprfunc)0,                        /*tp_str*/
+    (getattrofunc)0,                    /*tp_getattro*/
+    (setattrofunc)0,                    /*tp_setattro*/
 };
 
 /* Python Method Table */
@@ -2042,42 +2042,40 @@ PyObject *mxCharSet_GetAttr(mxCharSetObject *self,
 
 static
 PySequenceMethods mxCharSet_TypeAsSequence = {
-    (lenfunc)0,				/*sq_length*/
-    (binaryfunc)0,			/*sq_concat*/
-    (ssizeargfunc)0,			/*sq_repeat*/
-    (ssizeargfunc)0,			/*sq_item*/
-    (ssizessizeargfunc)0,			/*sq_slice*/
-    (ssizeobjargproc)0,			/*sq_ass_item*/
-    (ssizessizeobjargproc)0,		/*sq_ass_slice*/
-#if PY_VERSION_HEX >= 0x02000000
+    (lenfunc)0,                         /*sq_length*/
+    (binaryfunc)0,                      /*sq_concat*/
+    (ssizeargfunc)0,                    /*sq_repeat*/
+    (ssizeargfunc)0,                    /*sq_item*/
+    (ssizessizeargfunc)0,               /*sq_slice*/
+    (ssizeobjargproc)0,                 /*sq_ass_item*/
+    (ssizessizeobjargproc)0,            /*sq_ass_slice*/
     (objobjproc)mxCharSet_Contains,     /*sq_contains*/
-#endif
 };
 
 PyTypeObject mxCharSet_Type = {
-        PyObject_HEAD_INIT(0)		/* init at startup ! */
-	0,			  	/* ob_size */
-	"Character Set",	  	/* tp_name */
-	sizeof(mxCharSetObject),	/* tp_basicsize */
-	0,			  	/* tp_itemsize */
-	/* methods */
-	(destructor)mxCharSet_Free,	/* tp_dealloc */
-	(printfunc)0,			/* tp_print */
-	(getattrfunc)mxCharSet_GetAttr, /* tp_getattr */
-	(setattrfunc)0,		  	/* tp_setattr */
-	(cmpfunc)0,		  	/* tp_compare */
-	(reprfunc)mxCharSet_Repr,  	/* tp_repr */
-        0,			  	/* tp_as_number */
-        &mxCharSet_TypeAsSequence,	/* tp_as_sequence */
-	0,				/* tp_as_mapping */
-	(hashfunc)0,			/* tp_hash */
-	(ternaryfunc)0,			/* tp_call */
-	(reprfunc)0,			/* tp_str */
-	(getattrofunc)0, 		/* tp_getattro */
-	(setattrofunc)0, 		/* tp_setattro */
-        0,				/* tp_as_buffer */
-        Py_TPFLAGS_DEFAULT,		/* tp_flags */
-        (char*) 0,			/* tp_doc */
+    PyObject_HEAD_INIT(NULL)            /* init at startup ! */
+    0,                                  /*ob_size*/
+    "Character Set",                    /* tp_name */
+    sizeof(mxCharSetObject),            /* tp_basicsize */
+    0,                                  /* tp_itemsize */
+    /* methods */
+    (destructor)mxCharSet_Free,         /* tp_dealloc */
+    (printfunc)0,                       /* tp_print */
+    (getattrfunc)mxCharSet_GetAttr,     /* tp_getattr */
+    (setattrfunc)0,                     /* tp_setattr */
+    (cmpfunc)0,                         /* tp_compare */
+    (reprfunc)mxCharSet_Repr,           /* tp_repr */
+    0,                                  /* tp_as_number */
+    &mxCharSet_TypeAsSequence,          /* tp_as_sequence */
+    0,                                  /* tp_as_mapping */
+    (hashfunc)0,                        /* tp_hash */
+    (ternaryfunc)0,                     /* tp_call */
+    (reprfunc)0,                        /* tp_str */
+    (getattrofunc)0,                    /* tp_getattro */
+    (setattrofunc)0,                    /* tp_setattro */
+    0,                                  /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                 /* tp_flags */
+    (char*) 0,                          /* tp_doc */
 };
 
 /* Python Method Table */
@@ -2888,29 +2886,28 @@ PyObject *mxTagTable_GetAttr(mxTagTableObject *self,
 /* Python Type Tables */
 
 PyTypeObject mxTagTable_Type = {
-        PyObject_HEAD_INIT(0)		/* init at startup ! */
-	0,			  	/* ob_size */
-	"Tag Table",		  	/* tp_name */
-	sizeof(mxTagTableObject),	/* tp_basicsize */
-	sizeof(mxTagTableEntry),  	/* tp_itemsize */
-	/* methods */
-	(destructor)mxTagTable_Free,	/* tp_dealloc */
-	(printfunc)0,			/* tp_print */
-	(getattrfunc)mxTagTable_GetAttr, /* tp_getattr */
-	(setattrfunc)0,		  	/* tp_setattr */
-	(cmpfunc)0,		  	/* tp_compare */
-	(reprfunc)mxTagTable_Repr,  	/* tp_repr */
-        0,			  	/* tp_as_number */
-        0,				/* tp_as_sequence */
-	0,				/* tp_as_mapping */
-	(hashfunc)0,			/* tp_hash */
-	(ternaryfunc)0,			/* tp_call */
-	(reprfunc)0,			/* tp_str */
-	(getattrofunc)0, 		/* tp_getattro */
-	(setattrofunc)0, 		/* tp_setattro */
-        0,				/* tp_as_buffer */
-        Py_TPFLAGS_DEFAULT,		/* tp_flags */
-        (char*) 0,			/* tp_doc */
+    PyVarObject_HEAD_INIT(NULL, 0)          /* init at startup ! */
+    "Tag Table",                            /* tp_name */
+    sizeof(mxTagTableObject),               /* tp_basicsize */
+    sizeof(mxTagTableEntry),                /* tp_itemsize */
+    /* methods */
+    (destructor)mxTagTable_Free,            /* tp_dealloc */
+    (printfunc)0,                           /* tp_print */
+    (getattrfunc)mxTagTable_GetAttr,        /* tp_getattr */
+    (setattrfunc)0,                         /* tp_setattr */
+    (cmpfunc)0,                             /* tp_compare */
+    (reprfunc)mxTagTable_Repr,              /* tp_repr */
+    0,                                      /* tp_as_number */
+    0,                                      /* tp_as_sequence */
+    0,                                      /* tp_as_mapping */
+    (hashfunc)0,                            /* tp_hash */
+    (ternaryfunc)0,                         /* tp_call */
+    (reprfunc)0,                            /* tp_str */
+    (getattrofunc)0,                        /* tp_getattro */
+    (setattrofunc)0,                        /* tp_setattro */
+    0,                                      /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                     /* tp_flags */
+    (char*) 0,                              /* tp_doc */
 };
 
 /* Python Method Table */
@@ -5142,12 +5139,12 @@ MX_EXPORT(void)
 		 "can't initialize "MXTEXTTOOLS_MODULE" more than once");
 
     /* Init type objects */
-    PyType_Init(mxTextSearch_Type);
-#ifdef MXFASTSEARCH
-    PyType_Init(mxFS_Type);
-#endif
-    PyType_Init(mxCharSet_Type);
-    PyType_Init(mxTagTable_Type);
+    if (PyType_Ready(&mxTextSearch_Type) < 0)
+        return;
+    if (PyType_Ready(&mxCharSet_Type) < 0)
+        return;
+    if (PyType_Ready(&mxTagTable_Type) < 0)
+        return;
 
     /* create module */
     module = Py_InitModule4(MXTEXTTOOLS_MODULE, /* Module name */

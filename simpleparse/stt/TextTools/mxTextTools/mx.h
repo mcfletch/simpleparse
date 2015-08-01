@@ -495,16 +495,6 @@ static void mx_Py_PRINT_REFCOUNT(PyObject *v,
 
 /* --- Module init helpers ------------------------------------------------ */
 
-/* Helper for startup type object initialization */
-
-#define PyType_Init(x)						\
-{								\
-    x.ob_type = &PyType_Type; 					\
-    Py_Assert(x.tp_basicsize >= (int)sizeof(PyObject),	        \
-	      PyExc_SystemError,				\
-	      "Internal error: tp_basicsize of "#x" too small");\
-}
-
 /* Error reporting for module init functions */
 
 #define Py_ReportModuleInitError(modname) {			\
