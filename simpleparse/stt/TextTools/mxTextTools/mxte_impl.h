@@ -8,6 +8,7 @@
   Copyright (c) 2000-2002, eGenix.com Software GmbH; mailto:info@egenix.com
   Copyright (c) 2003-2006, Mike Fletcher; mailto:mcfletch@vrplumber.com
 */
+#include "mcfpyapi.h"
 
 
 #ifndef TE_STRING_CHECK 
@@ -32,7 +33,6 @@
 # define TE_ENGINE_API mxTextTools_TaggingEngine
 #endif
 
-#include "mcfpyapi.h"
 
 /* --- Tagging Engine ----------------------------------------------------- */
 /*  Non-recursive restructuring by Mike Fletcher to support SimpleParse
@@ -284,7 +284,7 @@ int TE_ENGINE_API(
 		errorType = PyExc_TypeError;
 		errorMessage = PyString_FromFormat(
 		     "Expected a string or unicode object to parse: found %.50s",
-		     textobj->ob_type->tp_name
+		     Py_TYPE(textobj)->tp_name
 		);
 	} else {
 	    text = TE_STRING_AS_STRING(textobj);
@@ -349,7 +349,7 @@ int TE_ENGINE_API(
 				errorType = PyExc_TypeError;
 				errorMessage = PyString_FromFormat(
 					 "tagobj (type %.50s) table entry %d moved/skipped beyond start of text (to position %d)",
-					 tagobj->ob_type->tp_name,
+					 Py_TYPE(tagobj)->tp_name,
 					 (unsigned int)index,
 					 (unsigned int)childPosition
 				);
@@ -425,7 +425,7 @@ int TE_ENGINE_API(
 									errorType = PyExc_AttributeError;
 									errorMessage = PyString_FromFormat(
 										 "tagobj (type %.50s) for table entry %d (flags include AppendTag) doesn't have an append method",
-										 tagobj->ob_type->tp_name,
+										 Py_TYPE(tagobj)->tp_name,
 										 (unsigned int)index
 									);
 								} else {
@@ -446,7 +446,7 @@ int TE_ENGINE_API(
 								errorType = PyExc_TypeError;
 								errorMessage = PyString_FromFormat(
 									 "The object to call type(%.50s) for table entry %d isn't callable",
-									 objectToCall->ob_type->tp_name,
+									 Py_TYPE(objectToCall)->tp_name,
 									 (unsigned int)index
 								);
 							}
@@ -699,7 +699,7 @@ int TE_ENGINE_API(
 				returnCode = ERROR_CODE;
 				errorMessage = PyString_FromFormat(
 					 "Unable to truncate list object (likely tagging engine error) type(%.50s)",
-					 taglist->ob_type->tp_name
+					 Py_TYPE(taglist)->tp_name
 				);
 			}
 			/* reset position */

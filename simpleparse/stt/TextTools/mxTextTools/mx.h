@@ -39,7 +39,7 @@
 
 /* Some more tweaks for various platforms. */
 
-/* VMS needs this define. Thanks to Jean-François PIÉRONNE */
+/* VMS needs this define. Thanks to Jean-FranÃ§ois PIÃ‰RONNE */
 #if defined(__VMS)
 # define __SC__
 #endif
@@ -125,7 +125,7 @@ static void mx_Py_INCREF(PyObject *v,
 	Py_INCREF(v);;
 	mxDebugPrintf("[%s:%5i] Py_XINCREF( %-8s at 0x%x [%s]); "
 		      "new refcount = %i\n",
-		      filename,lineno,name,(int)v,v->ob_type->tp_name,
+		      filename,lineno,name,(int)v,Py_TYPE(v)->tp_name,
 		      v->ob_refcnt);
     }
 }
@@ -148,11 +148,11 @@ static void mx_Py_DECREF(PyObject *v,
 	if (refcnt <= 1)
 	    mxDebugPrintf("[%s:%5i] Py_XDECREF( %-8s at 0x%x [%s]); "
 			  "object deleted\n",
-			  filename,lineno,name,(int)v,v->ob_type->tp_name);
+			  filename,lineno,name,(int)v,Py_TYPE(v)->tp_name);
 	else
 	    mxDebugPrintf("[%s:%5i] Py_XDECREF( %-8s at 0x%x [%s]); "
 			  "new refcount = %i\n",
-			  filename,lineno,name,(int)v,v->ob_type->tp_name,
+			  filename,lineno,name,(int)v,Py_TYPE(v)->tp_name,
 			  v->ob_refcnt);
     }
 }
@@ -167,7 +167,7 @@ static void mx_Py_PRINT_REFCOUNT(PyObject *v,
 		      filename,lineno,name);
     else {
 	mxDebugPrintf("[%s:%5i] Py_PRINT_REFCOUNT( %-8s at 0x%x [%s]) = %i;\n",
-		      filename,lineno,name,(int)v,v->ob_type->tp_name,
+		      filename,lineno,name,(int)v,Py_TYPE(v)->tp_name,
 		      v->ob_refcnt);
     }
 }
@@ -394,12 +394,6 @@ static void mx_Py_PRINT_REFCOUNT(PyObject *v,
 	    if (stop < start)			\
 		start = stop;			\
 	}
-
-/* --- Number macros ------------------------------------------------------ */
-
-/* Test for PyFloat_AsDouble() compatible object */
-#define PyFloat_Compatible(obj) \
-        (obj->ob_type->tp_as_number->nb_float != NULL)
 
 /* --- Text macros -------------------------------------------------------- */
 

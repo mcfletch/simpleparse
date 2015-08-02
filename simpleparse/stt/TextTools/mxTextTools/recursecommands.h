@@ -32,7 +32,7 @@ case MATCH_SUBTABLEINLIST:
 							errorType = PyExc_TypeError;
 							errorMessage = PyString_FromFormat(
 								 "Match argument must be compiled TagTable: was a %.50s",
-								 newTable->ob_type->tp_name
+								 Py_TYPE(newTable)->tp_name
 							);
 						} else {
 							/* we decref in POP */
