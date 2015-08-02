@@ -17,6 +17,7 @@
 
 #include "mx.h"
 #include "mxTextTools.h"
+#include "structmember.h"
 #include <ctype.h>
 
 #define VERSION "2.1.0"
@@ -147,8 +148,6 @@ void insint(PyObject *dict,
 /* --- module interface --------------------------------------------------- */
 
 /* --- Text Search Object ----------------------------------------------*/
-
-staticforward PyMethodDef mxTextSearch_Methods[];
 
 /* allocation */
 
@@ -790,32 +789,27 @@ PyObject *mxTextSearch_Repr(mxTextSearchObject *self)
     return PyString_FromString(t);
 }
 
-static 
-PyObject *mxTextSearch_GetAttr(mxTextSearchObject *self,
-			char *name)
+/* Python Method Table */
+
+static
+PyMethodDef mxTextSearch_Methods[] =
 {
-    PyObject *v;
-    
-    if (Py_WantAttr(name,"match")) {
-	v = self->match;
-	Py_INCREF(v);
-	return v;
-    }
-    else if (Py_WantAttr(name,"translate")) {
-        v = self->translate;
-	if (v == NULL)
-	    v = Py_None;
-	Py_INCREF(v);
-	return v;
-    }
-    else if (Py_WantAttr(name,"algorithm"))
-        return PyInt_FromLong(self->algorithm);
-    else if (Py_WantAttr(name,"__members__"))
-	return Py_BuildValue("[sss]",
-			     "match", "translate", "algorithm");
-    
-    return Py_FindMethod(mxTextSearch_Methods, (PyObject *)self, (char *)name);
-}
+    Py_MethodListEntry("search",mxTextSearch_search),
+    Py_MethodListEntry("find",mxTextSearch_find),
+    Py_MethodListEntry("findall",mxTextSearch_findall),
+#ifdef COPY_PROTOCOL
+    Py_MethodListEntry("__deepcopy__",mxTextSearch_copy),
+    Py_MethodListEntry("__copy__",mxTextSearch_copy),
+#endif
+    {NULL,NULL} /* end of list */
+};
+
+static PyMemberDef mxTextSearch_members[] = {
+    {"match",T_OBJECT_EX,offsetof(mxTextSearchObject,match),READONLY,"Text that this search matches"},
+    {"translate",T_OBJECT,offsetof(mxTextSearchObject,translate),READONLY,"Translated search term"},
+    {"algorithm",T_INT,offsetof(mxTextSearchObject,algorithm),READONLY,"Algorithm in use by the text search"},
+    {NULL}
+};
 
 /* Python Type Table */
 
@@ -827,7 +821,7 @@ PyTypeObject mxTextSearch_Type = {
     /* methods */
     (destructor)mxTextSearch_Free,      /*tp_dealloc*/
     (printfunc)0,                       /*tp_print*/
-    (getattrfunc)mxTextSearch_GetAttr,  /*tp_getattr*/
+    (getattrfunc)0,                     /*tp_getattr*/
     (setattrfunc)0,                     /*tp_setattr*/
     (cmpfunc)0,                         /*tp_compare*/
     (reprfunc)mxTextSearch_Repr,        /*tp_repr*/
@@ -839,21 +833,17 @@ PyTypeObject mxTextSearch_Type = {
     (reprfunc)0,                        /*tp_str*/
     (getattrofunc)0,                    /*tp_getattro*/
     (setattrofunc)0,                    /*tp_setattro*/
-};
-
-/* Python Method Table */
-
-statichere
-PyMethodDef mxTextSearch_Methods[] =
-{   
-    Py_MethodListEntry("search",mxTextSearch_search),
-    Py_MethodListEntry("find",mxTextSearch_find),
-    Py_MethodListEntry("findall",mxTextSearch_findall),
-#ifdef COPY_PROTOCOL
-    Py_MethodListEntry("__deepcopy__",mxTextSearch_copy),
-    Py_MethodListEntry("__copy__",mxTextSearch_copy),
-#endif
-    {NULL,NULL} /* end of list */
+    0,                                  /*tp_asbuffer*/
+    Py_TPFLAGS_DEFAULT,                 /*tp_flags*/
+    "mxTextTools text-search object",   /*tp_doc*/
+    0,                                  /*tp_traverse*/
+    0,                                  /*tp_clear*/
+    0,                                  /*tp_richcompare*/
+    0,                                  /*tp_weaklistoffset*/
+    0,                                  /*tp_iter*/
+    0,                                  /*tp_iternext*/
+    mxTextSearch_Methods,               /*tp_methods*/
+    mxTextSearch_members,               /*tp_members*/
 };
 
 /* --- Character Set Object --------------------------------------------*/
