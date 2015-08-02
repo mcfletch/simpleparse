@@ -6,7 +6,9 @@
 */
 
 /* We want all our symbols to be exported */
+#ifndef MX_BUILDING_MXTEXTTOOLS
 #define MX_BUILDING_MXTEXTTOOLS
+#endif
 
 /* Logging file used by debugging facility */
 #ifndef MAL_DEBUG_OUTPUTFILE
