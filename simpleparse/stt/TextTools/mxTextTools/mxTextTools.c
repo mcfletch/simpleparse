@@ -195,19 +195,6 @@ PyObject *mxTextSearch_New(PyObject *match,
 		  "error initializing the search object");
 	break;
 
-#ifdef MXFASTSEARCH	
-    case MXTEXTSEARCH_FASTSEARCH:
-	Py_Assert(PyString_Check(match),
-		  PyExc_TypeError,
-		  "match must be a string for FastSearch");
-	so->data = fs_init(PyString_AS_STRING(match),
-			   PyString_GET_SIZE(match));
-	Py_Assert(so->data != NULL,
-		  PyExc_TypeError,
-		  "error initializing the search object");
-	break;
-#endif	
-
     case MXTEXTSEARCH_TRIVIAL:
 	Py_Assert(PyString_Check(match) || PyUnicode_Check(match),
 		  PyExc_TypeError,
@@ -247,11 +234,7 @@ Py_C_Function_WithKeywords(
 	if (PyUnicode_Check(match))
 	    algorithm = MXTEXTSEARCH_TRIVIAL;
 	else
-#ifdef MXFASTSEARCH
 	    algorithm = MXTEXTSEARCH_BOYERMOORE;
-#else
-	    algorithm = MXTEXTSEARCH_BOYERMOORE;
-#endif
     }
     return mxTextSearch_New(match, translate, algorithm);
 
@@ -269,11 +252,6 @@ void mxTextSearch_Free(mxTextSearchObject *so)
 	    bm_free(so->data);
 	    break;
 
-#ifdef MXFASTSEARCH	
-	case MXTEXTSEARCH_FASTSEARCH:
-	    fs_free(so->data);
-	    break;
-#endif
 	case MXTEXTSEARCH_TRIVIAL:
 	    break;
 	    
@@ -302,12 +280,6 @@ Py_ssize_t mxTextSearch_MatchLength(PyObject *self)
     case MXTEXTSEARCH_BOYERMOORE:
 	return BM_MATCH_LEN(so->data);
 	break;
-
-#ifdef MXFASTSEARCH	
-    case MXTEXTSEARCH_FASTSEARCH:
-	return FS_MATCH_LEN(so->data);
-	break;
-#endif		
 
     case MXTEXTSEARCH_TRIVIAL:
 	if (PyString_Check(so->match))
@@ -451,27 +423,6 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 	match_len = BM_MATCH_LEN(so->data);
 	break;
 
-#ifdef MXFASTSEARCH
-    case MXTEXTSEARCH_FASTSEARCH:
-	if (so->translate) {
-	    /* search with translate table */
-	    nextpos = fs_tr_search((mxfse_data *)so->data,
-				   text,
-				   start,
-				   stop,
-				   PyString_AS_STRING(so->translate));
-	}
-	else {
-	    /* exact search */
-	    nextpos = fs_search((mxfse_data *)so->data,
-				text,
-				start,
-				stop);
-	}
-	match_len = FS_MATCH_LEN(so->data);
-	break;
-#endif
-	
     case MXTEXTSEARCH_TRIVIAL:
 	{
 	    const char *match;
@@ -532,12 +483,6 @@ Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
 		 "Boyer-Moore search algorithm does not support Unicode");
 	break;
 
-#ifdef MXFASTSEARCH
-    case MXTEXTSEARCH_FASTSEARCH:
-	Py_Error(PyExc_TypeError,
-		 "FastSearch search algorithm does not support Unicode");
-#endif
-	
     case MXTEXTSEARCH_TRIVIAL:
 	{
 	    PyObject *u;
@@ -830,11 +775,6 @@ PyObject *mxTextSearch_Repr(mxTextSearchObject *self)
     case MXTEXTSEARCH_BOYERMOORE:
 	algoname = "Boyer-Moore";
 	break;
-#ifdef MXFASTSEARCH	
-    case MXTEXTSEARCH_FASTSEARCH:
-	algoname = "FastSearch";
-	break;
-#endif		
     case MXTEXTSEARCH_TRIVIAL:
 	algoname = "Trivial";
 	break;
