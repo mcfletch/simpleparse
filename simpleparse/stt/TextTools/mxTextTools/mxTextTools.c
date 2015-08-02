@@ -820,8 +820,7 @@ PyObject *mxTextSearch_GetAttr(mxTextSearchObject *self,
 /* Python Type Table */
 
 PyTypeObject mxTextSearch_Type = {
-    PyObject_HEAD_INIT(NULL)            /* init at startup ! */
-    0,                                  /*ob_size*/
+    PyVarObject_HEAD_INIT(NULL, 0)      /* init at startup ! */
     "TextSearch",                       /*tp_name*/
     sizeof(mxTextSearchObject),         /*tp_basicsize*/
     0,                                  /*tp_itemsize*/
@@ -1995,8 +1994,7 @@ PySequenceMethods mxCharSet_TypeAsSequence = {
 };
 
 PyTypeObject mxCharSet_Type = {
-    PyObject_HEAD_INIT(NULL)            /* init at startup ! */
-    0,                                  /*ob_size*/
+    PyVarObject_HEAD_INIT(NULL, 0)      /* init at startup ! */
     "Character Set",                    /* tp_name */
     sizeof(mxCharSetObject),            /* tp_basicsize */
     0,                                  /* tp_itemsize */
