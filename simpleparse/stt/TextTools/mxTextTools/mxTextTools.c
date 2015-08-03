@@ -848,8 +848,6 @@ PyTypeObject mxTextSearch_Type = {
 
 /* --- Character Set Object --------------------------------------------*/
 
-staticforward PyMethodDef mxCharSet_Methods[];
-
 /* internal */
 
 /* 8-bit character sets are implemented using a simple 32-byte
@@ -1950,25 +1948,6 @@ PyObject *mxCharSet_Repr(mxCharSetObject *self)
     return PyString_FromString(t);
 }
 
-static 
-PyObject *mxCharSet_GetAttr(mxCharSetObject *self,
-			    char *name)
-{
-    PyObject *v;
-    
-    if (Py_WantAttr(name,"definition")) {
-	v = self->definition;
-	Py_INCREF(v);
-	return v;
-    }
-
-    else if (Py_WantAttr(name,"__members__"))
-	return Py_BuildValue("[s]",
-			     "definition");
-    
-    return Py_FindMethod(mxCharSet_Methods, (PyObject *)self, (char *)name);
-}
-
 /* Python Type Tables */
 
 static
@@ -1983,34 +1962,13 @@ PySequenceMethods mxCharSet_TypeAsSequence = {
     (objobjproc)mxCharSet_Contains,     /*sq_contains*/
 };
 
-PyTypeObject mxCharSet_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)      /* init at startup ! */
-    "Character Set",                    /* tp_name */
-    sizeof(mxCharSetObject),            /* tp_basicsize */
-    0,                                  /* tp_itemsize */
-    /* methods */
-    (destructor)mxCharSet_Free,         /* tp_dealloc */
-    (printfunc)0,                       /* tp_print */
-    (getattrfunc)mxCharSet_GetAttr,     /* tp_getattr */
-    (setattrfunc)0,                     /* tp_setattr */
-    (cmpfunc)0,                         /* tp_compare */
-    (reprfunc)mxCharSet_Repr,           /* tp_repr */
-    0,                                  /* tp_as_number */
-    &mxCharSet_TypeAsSequence,          /* tp_as_sequence */
-    0,                                  /* tp_as_mapping */
-    (hashfunc)0,                        /* tp_hash */
-    (ternaryfunc)0,                     /* tp_call */
-    (reprfunc)0,                        /* tp_str */
-    (getattrofunc)0,                    /* tp_getattro */
-    (setattrofunc)0,                    /* tp_setattro */
-    0,                                  /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    (char*) 0,                          /* tp_doc */
+static
+PyMemberDef mxCharSet_Members[] = {
+    {"definition",T_OBJECT_EX,offsetof(mxCharSetObject,definition),READONLY,"Definition"},
+    {NULL}
 };
 
-/* Python Method Table */
-
-statichere
+static
 PyMethodDef mxCharSet_Methods[] =
 {   
     Py_MethodListEntry("contains",mxCharSet_contains),
@@ -2026,9 +1984,40 @@ PyMethodDef mxCharSet_Methods[] =
     {NULL,NULL} /* end of list */
 };
 
-/* --- Tag Table Object ------------------------------------------------*/
+PyTypeObject mxCharSet_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)      /* init at startup ! */
+    "Character Set",                    /* tp_name */
+    sizeof(mxCharSetObject),            /* tp_basicsize */
+    0,                                  /* tp_itemsize */
+    /* methods */
+    (destructor)mxCharSet_Free,         /* tp_dealloc */
+    (printfunc)0,                       /* tp_print */
+    (getattrfunc)0,                     /* tp_getattr */
+    (setattrfunc)0,                     /* tp_setattr */
+    (cmpfunc)0,                         /* tp_compare */
+    (reprfunc)mxCharSet_Repr,           /* tp_repr */
+    0,                                  /* tp_as_number */
+    &mxCharSet_TypeAsSequence,          /* tp_as_sequence */
+    0,                                  /* tp_as_mapping */
+    (hashfunc)0,                        /* tp_hash */
+    (ternaryfunc)0,                     /* tp_call */
+    (reprfunc)0,                        /* tp_str */
+    (getattrofunc)0,                    /* tp_getattro */
+    (setattrofunc)0,                    /* tp_setattro */
+    0,                                  /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                 /* tp_flags */
+    (char*) 0,                          /* tp_doc */
+    0,                                  /* tp_traverse */
+    0,                                  /* tp_clear */
+    0,                                  /* tp_richcompare */
+    0,                                  /* tp_weaklistoffset */
+    0,                                  /* tp_iter */
+    0,                                  /* tp_iternext */
+    mxCharSet_Methods,                  /* tp_methods */
+    mxCharSet_Members,                  /* tp_members */
+};
 
-staticforward PyMethodDef mxTagTable_Methods[];
+/* --- Tag Table Object ------------------------------------------------*/
 
 PyObject *mxTagTable_New(PyObject *definition,
 			 int tabletype,
@@ -2793,25 +2782,22 @@ PyObject *mxTagTable_Repr(mxTagTableObject *self)
     return PyString_FromString(t);
 }
 
-static 
-PyObject *mxTagTable_GetAttr(mxTagTableObject *self,
-			     char *name)
-{
-    PyObject *v;
-    
-    if (Py_WantAttr(name,"definition")) {
-	v = self->definition;
-	if (v == NULL)
-	    v = Py_None;
-	Py_INCREF(v);
-	return v;
-    }
-    else if (Py_WantAttr(name,"__members__"))
-	return Py_BuildValue("[s]",
-			     "definition");
-    
-    return Py_FindMethod(mxTagTable_Methods, (PyObject *)self, (char *)name);
-}
+static
+PyMethodDef mxTagTable_Methods[] =
+{   
+    Py_MethodListEntryNoArgs("compiled",mxTagTable_compiled),
+#ifdef COPY_PROTOCOL
+    Py_MethodListEntry("__deepcopy__",mxTagTable_copy),
+    Py_MethodListEntry("__copy__",mxTagTable_copy),
+#endif
+    {NULL,NULL} /* end of list */
+};
+
+static
+PyMemberDef mxTagTable_Members[] = {
+    {"definition",T_OBJECT_EX,offsetof(mxTagTableObject,definition),READONLY,"Definition"},
+    {NULL}
+};
 
 /* Python Type Tables */
 
@@ -2823,7 +2809,7 @@ PyTypeObject mxTagTable_Type = {
     /* methods */
     (destructor)mxTagTable_Free,            /* tp_dealloc */
     (printfunc)0,                           /* tp_print */
-    (getattrfunc)mxTagTable_GetAttr,        /* tp_getattr */
+    (getattrfunc)0,                         /* tp_getattr */
     (setattrfunc)0,                         /* tp_setattr */
     (cmpfunc)0,                             /* tp_compare */
     (reprfunc)mxTagTable_Repr,              /* tp_repr */
@@ -2838,19 +2824,14 @@ PyTypeObject mxTagTable_Type = {
     0,                                      /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                     /* tp_flags */
     (char*) 0,                              /* tp_doc */
-};
-
-/* Python Method Table */
-
-statichere
-PyMethodDef mxTagTable_Methods[] =
-{   
-    Py_MethodListEntryNoArgs("compiled",mxTagTable_compiled),
-#ifdef COPY_PROTOCOL
-    Py_MethodListEntry("__deepcopy__",mxTagTable_copy),
-    Py_MethodListEntry("__copy__",mxTagTable_copy),
-#endif
-    {NULL,NULL} /* end of list */
+    0,                                      /* tp_traverse */
+    0,                                      /* tp_clear */
+    0,                                      /* tp_richcompare */
+    0,                                      /* tp_weaklistoffset */
+    0,                                      /* tp_iter */
+    0,                                      /* tp_iternext */
+    mxTagTable_Methods,                     /* tp_methods */
+    mxTagTable_Members,                     /* tp_members */
 };
 
 /* --- Internal functions ----------------------------------------------*/
