@@ -65,9 +65,9 @@ _data = [
             ("-0x0x ", 4,0),
             ("-0x0. ", 4,0),
             ("0xa ", 3, 10),
-            ("0xaaaaaaaaaaaaaaaaa ", 19, 196765270119568550570L),
+            ("0xaaaaaaaaaaaaaaaaa ", 19, 196765270119568550570),
             ("0xA ", 3, 10),
-            ("0xAAAAAAAAAAAAAAAAA ", 19, 196765270119568550570L),
+            ("0xAAAAAAAAAAAAAAAAA ", 19, 196765270119568550570),
         ],
         [ # should not match...
             ".0",

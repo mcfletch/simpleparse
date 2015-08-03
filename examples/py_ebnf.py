@@ -46,6 +46,7 @@ here's the copyright notice:
 You should have a full copy of the Python license in your Python
 distribution.
 """
+from __future__ import print_function
 declaration = r"""
 
 declarationset      :=  declaration+
@@ -78,6 +79,7 @@ comment             :=  '#',-'\n'+,'\n'
 range               :=  string, ts, '...', ts, string
 
 """
+
 from simpleparse.parser import Parser
 from simpleparse.common import strings
 
@@ -86,5 +88,5 @@ if __name__ == "__main__":
     from simpleparse.stt.TextTools import print_tags
     grammar = open("""py_grammar.txt""").read()
     success, result, next = parser.parse( grammar, 'declarationset')
-    print 'success', success, next
+    print('success', success, next)
     print_tags( grammar, result )

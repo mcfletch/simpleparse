@@ -16,6 +16,8 @@ making atom non-reporting gives a 15% speedup on my
 machine.
 """
 
+from __future__ import print_function
+
 declaration = r'''
 set       := (interesting/multset/plusset)+
 multset   := '*',(set/atom), (set/atom)
@@ -78,7 +80,7 @@ class Emitter:
         #print 'interesting'
         #import pdb
         #pdb.set_trace()
-        a,b,c,d = map( self.emit, tuple[3] )
+        a,b,c,d = list(map( self.emit, tuple[3] ))
         #print `(a,b,c,d)`,
         return '++*%s%s*%s%s+*%s%s*%s%s'%( a,c,a,d,b,c,b,d)
 
@@ -98,6 +100,6 @@ if __name__ == "__main__":
         t = time.time()
         a.parse( test )
         t = time.time()-t
-        print 'total time', t, 'length', len(test)
+        print('total time', t, 'length', len(test))
         if t:
-            print '  %s cps' % (len(test)/t)
+            print('  %s cps' % (len(test)/t))

@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import unittest, pprint, traceback
 from simpleparse.parser import Parser
 from simpleparse import printers
@@ -8,7 +10,7 @@ def rcmp( table1, table2 ):
     if len(table1) != len(table2):
         return 0
     else:
-        for x,y in map(None, table1, table2):
+        for x,y in zip(table1, table2):
             if not _rcmp( x,y):
                 return 0
         return 1
@@ -22,15 +24,15 @@ def _rcmp( item1, item2 ):
             if not rcmp( item1[2][0][item1[2][1]], item2[2][0][item2[2][1]]):
                 return 0
         except TypeError:
-            print item1
-            print item2
+            print(item1)
+            print(item2)
     elif item1[1] == 207:
         if cmp(item2[:2], item2[:2]) != 0:
             return 0
         if not rcmp( item1[2], item2[2]):
             return 0
     else:
-        for a,b in map(None, item1, item2):
+        for a,b in zip(item1, item2):
             if hasattr(a,'match') and hasattr(b,'match'):
                 if not (a.match == b.match and a.translate == b.translate):
                     return 0

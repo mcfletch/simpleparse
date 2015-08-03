@@ -104,20 +104,22 @@ def _toInt( s, base ):
         return string.atoi( s, base)
 def _toLong( s, base ):
     try:
-        return long( s, base)
+        return int( s, base)
     except TypeError:
         return string.atol( s, base)
 
 class IntInterpreter(DispatchProcessor):
     """Interpret an integer (or unsigned integer) string as an integer"""
-    def __call__( self, (tag, left, right, children), buffer):
+    def __call__( self, info, buffer):
+        (tag, left, right, children) = info
         try:
             return _toInt( buffer[left:right], 10)
         except ValueError:
             return _toLong( buffer[left:right], 10)
 class HexInterpreter(DispatchProcessor):
     """Interpret a hexidecimal integer string as an integer value"""
-    def __call__( self, (tag, left, right, children), buffer):
+    def __call__( self, info, buffer):
+        (tag, left, right, children) = info
         try:
             return _toInt( buffer[left:right], 16)
         except ValueError:
@@ -128,7 +130,8 @@ class FloatFloatExpInterpreter(DispatchProcessor):
     Note: we're allowing float exponentiation, which
     gives you a nice way to write 2e.5
     """
-    def __call__( self, (tag, left, right, children), buffer):
+    def __call__( self, info, buffer):
+        (tag, left, right, children) = info
         tag, l, r, _ = children[0]
         base = float( buffer[l:r] )
         if len(children) > 1:
@@ -143,20 +146,23 @@ class FloatFloatExpInterpreter(DispatchProcessor):
         return base
 class FloatInterpreter(DispatchProcessor):
     """Interpret a standard float value as a float"""
-    def __call__( self, (tag, left, right, children), buffer):
+    def __call__( self, info, buffer):
+        (tag, left, right, children) = info
         return float( buffer[left:right])
 
 import sys
 if hasattr( sys,'version_info') and sys.version_info[:2] > (2,0):
     class BinaryInterpreter(DispatchProcessor):
-        def __call__( self, (tag, left, right, children), buffer):
+        def __call__( self, info, buffer):
             """Interpret a bitfield set as an integer"""
+            (tag, left, right, children) = info
             return _toInt( buffer[left:right-1], 2)
 else:
     class BinaryInterpreter(DispatchProcessor):
-        def __call__( self, (tag, left, right, children), buffer):
+        def __call__( self, info, buffer):
             """Interpret a bitfield set as an integer, not sure this algo
             is correct, will see I suppose"""
+            (tag, left, right, children) = info
             sign = 1
             if len(children) > 2:
                 s = children[0]
@@ -178,9 +184,10 @@ class ImaginaryInterpreter( DispatchProcessor ):
         "float":FloatInterpreter(),
         "int":IntInterpreter()
     }
-    def __call__( self, (tag, left, right, children), buffer):
+    def __call__( self, info, buffer):
         """Interpret a bitfield set as an integer, not sure this algo
         is correct, will see I suppose"""
+        (tag, left, right, children) = info
         base = children[0]
         base = self.mapSet[base[0]](base, buffer)
         return base * 1j

@@ -1,5 +1,7 @@
 """Example using a parser to format VRML97 code as HTML w/CSS
 """
+from __future__ import print_function
+
 import sys
 import os, string
 from simpleparse.parser import Parser
@@ -188,8 +190,8 @@ Description:
 if __name__ == '__main__':
     import sys
     if len( sys.argv) != 3:
-        print usage
-        raw_input('Press <return> to exit:')
+        print(usage)
+        input('Press <return> to exit:')
     else:
         file = HTMLVRMLFormatter( sys.argv[1] )
         file.format( sys.argv[2] )

@@ -5,7 +5,7 @@ from simpleparse.error import ParserSyntaxError
 class ErrorOnFailTests( unittest.TestCase ):
     """Tests of the error-on failure mechanisms"""
     def shouldRaise(self, definition, parserName, testValue, ):
-        self.failUnlessRaises( ParserSyntaxError,  Parser( definition).parse, testValue, parserName )
+        self.assertRaises( ParserSyntaxError,  Parser( definition).parse, testValue, parserName )
     def shouldNotRaise(self, definition, parserName, testValue, ):
         success,result, next = Parser( definition).parse( testValue, parserName )
         assert success, """Didn't parse %s (error on fail test for definition %s)"""%( repr(testValue), repr(definition))
@@ -93,7 +93,7 @@ class ErrorOnFailTests( unittest.TestCase ):
                 ''', 's' ).parse(
                 'acbdba',
             )
-        except ParserSyntaxError, err:
+        except ParserSyntaxError as err:
             assert err.args[0] == "Blargh!", """Error message was %r, should have been "Blargh!"."""%(err.args[0],)
     def testErrorOnFail12( self ):
         """Test proper setting of err message text from !"message" syntax"""
@@ -102,7 +102,7 @@ class ErrorOnFailTests( unittest.TestCase ):
                 ''', 's' ).parse(
                 'acbdba',
             )
-        except ParserSyntaxError, err:
+        except ParserSyntaxError as err:
             description = str( err )
             assert description == 'ParserSyntaxError: Blargh!', """Didn't get expected error description, got: %s"""%(
                 str(err),

@@ -256,7 +256,7 @@ is classified &security-level;.""",
         ],
     ),
 }
-for production, (should,shouldnot) in testData.items():
+for production, (should,shouldnot) in list(testData.items()):
     setattr( XMLProductionTests, 'test'+production, ProductionTest(production, should, shouldnot))
 
 if __name__ == "__main__":

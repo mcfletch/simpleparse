@@ -25,7 +25,7 @@ class Generator:
         except ValueError:
             
             for source in self.definitionSources:
-                if source.has_key( name ):
+                if name in source:
                     return self.addDefinition( name, source[name])
 ##			import pdb
 ##			pdb.set_trace()
@@ -63,7 +63,7 @@ class Generator:
                 if len(self.parserList) <= i or self.parserList[i] is None:
                     parser = tuple(rootObject.toParser( self ))
                     self.setTerminalParser( i, parser )
-            except NameError,err:
+            except NameError as err:
                 currentRuleName = self.names[i]
                 err.args = err.args + ('current declaration is %s'%(currentRuleName), )
                 raise

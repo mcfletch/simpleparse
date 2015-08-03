@@ -206,7 +206,8 @@ class TimeZoneNameInterpreter:
         """
         self.defaultZone = defaultZone
         self.seconds = seconds
-    def __call__( self, (tag, left, right, children), buffer ):
+    def __call__( self, info, buffer ):
+        (tag, left, right, children) = info
         value = buffer[ left: right ]
         if value:
             try:

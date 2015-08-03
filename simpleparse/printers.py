@@ -30,7 +30,7 @@ class Parser:
 """
     def __call__( self, generator ):
         temp = [self.HEAD]
-        for name,element in map(None, generator.getNames(), generator.getRootObjects()):
+        for name,element in zip(generator.getNames(), generator.getRootObjects()):
             name = repr(name)
             element = self.reprObject(element,1)
             temp.append( self.ITEM%locals())
@@ -39,7 +39,7 @@ class Parser:
         """Return a recognisable version of an objectgenerator element token"""
         argTemplate = (indent*(depth+1))+"%s = %s,"
         temp = ["""%s("""%(obj.__class__.__name__)]
-        for key,value in obj.__dict__.items():
+        for key,value in list(obj.__dict__.items()):
             if key == 'children':
                 childTemplate = (indent*(depth+2)) + '%s,'
                 childTemp = ["["]

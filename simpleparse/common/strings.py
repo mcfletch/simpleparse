@@ -117,33 +117,40 @@ class StringInterpreter(DispatchProcessor):
             # used string in another area.
             string_single_quote = string
     """
-    def string( self, (tag, left, right, sublist), buffer):
+    def string( self, info, buffer):
         """Dispatch any of the string types and return the result"""
+        (tag, left, right, sublist) = info
         return dispatch( self, sublist[0], buffer )
 
-    def string_single_quote( self, (tag, left, right, sublist), buffer):
+    def string_single_quote( self, info, buffer):
+        (tag, left, right, sublist) = info
         return string.join(dispatchList(self, sublist, buffer), "")
     string_double_quote = string_single_quote
     string_triple_single = string_single_quote
     string_triple_double = string_single_quote
         
-    def char_no_quote( self, (tag, left, right, sublist), buffer):
+    def char_no_quote( self, info, buffer):
+        (tag, left, right, sublist) = info
         return buffer[left:right]
     nondelimiter = char_no_quote
 
-    def escaped_char( self, (tag, left, right, sublist), buffer):
+    def escaped_char( self, info, buffer):
+        (tag, left, right, sublist) = info
         return string.join(dispatchList(self,sublist,buffer), "")
     
-    def octal_escaped_char(self, (tag, left, right, sublist), buffer):
+    def octal_escaped_char(self, info, buffer):
+        (tag, left, right, sublist) = info
         return chr(string.atoi( buffer[left:right], 8 ))
-    def hex_escaped_char( self, (tag, left, right, sublist), buffer):
+    def hex_escaped_char( self, info, buffer):
+        (tag, left, right, sublist) = info
         return chr(string.atoi( buffer[left:right], 16 ))
     
-    def backslash_char( self, (tag, left, right, sublist), buffer):
+    def backslash_char( self, info, buffer):
         return "\\"
 
-    def string_special_escapes( self, (tag, left, right, sublist), buffer):
+    def string_special_escapes( self, info, buffer):
         """Maps "special" escapes to the corresponding characters"""
+        (tag, left, right, sublist) = info
         return self.specialescapedmap[ buffer[left:right]]
     specialescapedmap = {
     'a':'\a',

@@ -10,6 +10,13 @@ import string
 from simpleparse.dispatchprocessor import *
 HAVE_UNICODE = 1
 
+try:
+    _unichr = unichr
+    _unicode = unicode
+except NameError:
+    _unichr = chr
+    _unicode = str
+
 # note that whitespace is slightly different
 # due to a bug with NULL-matching repeating groups
 # we make all the ts references ts?
@@ -496,8 +503,9 @@ class SPGrammarProcessor( DispatchProcessor ):
         for source in definitionSources:
             self.generator.addDefinitionSource( source )
     
-    def declaration( self, (tag, left, right, sublist), buffer):
+    def declaration( self, info, buffer):
         '''Base declaration from the grammar, a "production" or "rule"'''
+        (tag, left, right, sublist) = info
         name = sublist[0]
         expanded = 0
         if name[0] == "unreportedname":
@@ -522,8 +530,9 @@ class SPGrammarProcessor( DispatchProcessor ):
         del self.currentProduction
 
     ### element configuration
-    def element_token( self, (tag, left, right, sublist), buffer):
+    def element_token( self, info, buffer):
         '''get the children, then configure'''
+        (tag, left, right, sublist) = info
         base = None
         negative = 0
         optional = 0
@@ -553,12 +562,13 @@ class SPGrammarProcessor( DispatchProcessor ):
         return base
 
     ### generator-node-builders
-    def seq_group( self, (tag, left, right, sublist), buffer):
+    def seq_group( self, info, buffer):
         """Process a sequential-group into a SequentialGroup element token"""
+        (tag, left, right, sublist) = info
         children = dispatchList( self, sublist, buffer )
         errorOnFail = None
         result = []
-        for (item,tup) in map(None,children,sublist):
+        for (item,tup) in zip(children,sublist):
             if isinstance( item, ErrorOnFail ):
                 errorOnFail = item
             else:
@@ -579,8 +589,9 @@ class SPGrammarProcessor( DispatchProcessor ):
             children = result,
         )
         return base
-    def fo_group( self, (tag, left, right, sublist), buffer):
+    def fo_group( self, info, buffer):
         """Process a first-of-group into a FirstOf element token"""
+        (tag, left, right, sublist) = info
         children = dispatchList( self, sublist, buffer )
         if len(children) == 1:
             # this should never happen, but if it does, we can deal with it I suppose...
@@ -590,8 +601,9 @@ class SPGrammarProcessor( DispatchProcessor ):
         )
         return base
         
-    def literal( self, (tag, left, right, sublist), buffer):
+    def literal( self, info, buffer):
         '''Turn a literal result into a literal generator'''
+        (tag, left, right, sublist) = info
         if sublist and sublist[0][0] == 'literalDecorator':
             # right now only have the one decorator...
             sublist = sublist[1:]
@@ -602,8 +614,9 @@ class SPGrammarProcessor( DispatchProcessor ):
         ### Should check for CILiteral with non-CI string or single-character value!
         return classObject( value = string.join(elements, "" ) )
 
-    def range( self, (tag, left, right, sublist), buffer):
+    def range( self, info, buffer):
 ##		if hasattr( Range, 'requiresExpandedSet') and Range.requiresExpandedSet:
+        (tag, left, right, sublist) = info
         return Range(
             value = string.join(dispatchList( self, sublist, buffer),''),
         )
@@ -631,12 +644,13 @@ class SPGrammarProcessor( DispatchProcessor ):
     def lookahead_indicator( self, tup, buffer ):
         """If present, the lookahead indictor just says "yes", so just return 1"""
         return 1
-    def error_on_fail( self, (tag,left,right,children), buffer ):
+    def error_on_fail( self, info, buffer ):
         """If present, we are going to make the current object an errorOnFail type,
 
         If there's a string literal child, then we use it to create the
         "message" attribute of the errorOnFail object.
         """
+        (tag,left,right,children) = info
         err = ErrorOnFail()
         if children:
             (tag,left,right,children) = children[0]
@@ -663,7 +677,8 @@ class SPGrammarProcessor( DispatchProcessor ):
     def CHARNODBLQUOTE( self, tup, buffer):
         return getString(tup, buffer)
     CHAR = CHARNOSNGLQUOTE = CHARNODBLQUOTE
-    def ESCAPEDCHAR( self, (tag, left, right, sublist), buffer):
+    def ESCAPEDCHAR( self, info, buffer):
+        (tag, left, right, sublist) = info
         return string.join(dispatchList( self, sublist, buffer), "")
     specialescapedmap = {
     'a':'\a',
@@ -683,30 +698,30 @@ class SPGrammarProcessor( DispatchProcessor ):
         return chr(string.atoi( getString(tup, buffer), 8 ))
     def HEXESCAPEDCHAR( self, tup , buffer):
         return chr(string.atoi( getString(tup, buffer), 16 ))
-    def CHARNOBRACE( self, (tag, left, right, sublist), buffer):
+    def CHARNOBRACE( self, info, buffer):
+        (tag, left, right, sublist) = info
         return string.join(dispatchList( self, sublist, buffer), "")
-    def CHARRANGE( self, (tag, left, right, sublist), buffer):
+    def CHARRANGE( self, info, buffer):
         '''Create a string from first to second item'''
-        # following should never raise an error, as there's only one possible format...
+        (tag, left, right, sublist) = info
         first,second = dispatchList( self, sublist, buffer)
         if second < first:
             second, first = first, second
-        if isinstance( first, unicode ) or isinstance( second,unicode ):
-            _chr = unichr
-            _join = u''
-            if not (isinstance( second, unicode ) and isinstance( first, unicode )):
+        if isinstance( first, _unicode ) or isinstance( second, _unicode ):
+            _chr = _unichr
+            if not (isinstance( second, _unicode ) and isinstance( first, _unicode )):
                 raise ValueError( 'Range %s uses one unicode and one string escape, cannot mix'%(buffer[left:right]) )
         else:
             _chr = chr 
-            _join = ''
-        first, second = map( ord, (first,second) )
+        first, second = list(map( ord, (first,second) ))
         return u''.join([_chr(u) for u in range(first,second+1)])
     def CHARDASH( self, tup , buffer):
         return '-'
     def CHARBRACE( self, tup , buffer):
         return ']'
 
-    def UNICODEESCAPEDCHAR( self, (tag, left, right, sublist), buffer):
+    def UNICODEESCAPEDCHAR( self, info, buffer):
         """Decode a unicode-escaped hex character into a character value"""
-        char = unichr(int( buffer[left:right], 16 ))
+        (tag, left, right, sublist) = info
+        char = _unichr(int( buffer[left:right], 16 ))
         return char

@@ -8,6 +8,8 @@ function.  This example demonstrates the technique.
 The example also (obviously) demonstrates the use of an
 re object during the parsing process.
 """
+from __future__ import print_function
+
 import re
 from simpleparse.stt.TextTools.TextTools import *
 from simpleparse.parser import Parser
@@ -43,10 +45,10 @@ class WordProcessor( dispatchprocessor.DispatchProcessor ):
     # in our parser.
     def word( self, tup, buffer ):
         """Deal with a "word" production by printing out value"""
-        print "word: ", repr(dispatchprocessor.getString(tup, buffer))
+        print("word: ", repr(dispatchprocessor.getString(tup, buffer)))
     def white( self, tup, buffer ):
         """Deal with a "white" production by printing out value"""
-        print "white:", repr(dispatchprocessor.getString(tup, buffer))
+        print("white:", repr(dispatchprocessor.getString(tup, buffer)))
 
 
 parser = Parser( declaration, "v", prebuilts = [
@@ -55,7 +57,7 @@ parser = Parser( declaration, "v", prebuilts = [
 ])
 
 if __name__ == "__main__":
-    print """Please enter some number of words seperated by whitespace.
-We will attempt to parse them and return the parse results"""
-    data = raw_input( ">>> " )
+    print("""Please enter some number of words seperated by whitespace.
+We will attempt to parse them and return the parse results""")
+    data = input( ">>> " )
     parser.parse( data , processor = WordProcessor())

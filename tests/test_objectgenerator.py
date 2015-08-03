@@ -3,6 +3,11 @@ from simpleparse.objectgenerator import *
 from simpleparse.stt.TextTools import TextTools
 from genericvalues import NullResult, AnyInt
 
+try:
+    _unichr = unichr
+except NameError:
+    _unichr = chr
+
 class ElementTokenTests(unittest.TestCase):
     def doBasicTest(self, instance, testvalue, expected, startPosition=0 ):
         table = tuple(instance.toParser())
@@ -118,7 +123,7 @@ class ElementTokenTests(unittest.TestCase):
             (1, [],1),
         )
     def testUnicodeRange10( self ):
-        urange = Range( value = u''.join([unichr(x) for x in range( 0x600, 0x6FF+1 )]), repeating=True )
+        urange = Range( value = u''.join([_unichr(x) for x in range( 0x600, 0x6FF+1 )]), repeating=True )
         self.doBasicTest(
             urange,
             u'\u0600\u06FF',

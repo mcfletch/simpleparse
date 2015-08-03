@@ -7,7 +7,7 @@ to install the packages from the source archive.
 """
 try:
     from setuptools import setup, Extension
-except ImportError, err:
+except ImportError as err:
     from distutils.core import setup, Extension
 import os, sys, string
 
@@ -83,7 +83,7 @@ largely deterministic grammars.""",
         package_dir = packages,
         options = options,
 
-        packages = packages.keys(),
+        packages = list(packages.keys()),
         ext_modules=[
             Extension(
                 "simpleparse.stt.TextTools.mxTextTools.mxTextTools", 

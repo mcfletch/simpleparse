@@ -56,7 +56,7 @@ def dispatch( source, tag, buffer ):
 def dispatchList( source, taglist, buffer ):
     """Dispatch on source for each tag in taglist with buffer"""
     if taglist:
-        return map( dispatch, [source]*len(taglist), taglist, [buffer]*len(taglist))
+        return list(map( dispatch, [source]*len(taglist), taglist, [buffer]*len(taglist)))
     else:
         return []
 
@@ -104,8 +104,9 @@ def singleMap( taglist, source=None, buffer=None ):
         set[key] = tag
     return set
     
-def getString( (tag, left, right, sublist), buffer):
+def getString(info, buffer):
     """Return the string value of the tag passed"""
+    (tag, left, right, sublist) = info
     return buffer[ left:right ]
 
 try:

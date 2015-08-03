@@ -12,6 +12,8 @@ no speed penalty for the errorOnFail version compared to
 the original version, as the errorOnFail code is not touched
 unless a syntax error is actually found in the input text.
 """
+from __future__ import print_function
+
 from simpleparse.parser import Parser
 from simpleparse.common import chartypes
 
@@ -70,9 +72,9 @@ if __name__ == "__main__":
         t = time.time()
         success, tags, next = parser.parse( data)
         d = time.time()-t
-        print "parsed %s characters of %s in %s seconds (%scps)"%( next, len(data), d, next/(d or 0.000000001) )
+        print("parsed %s characters of %s in %s seconds (%scps)"%( next, len(data), d, next/(d or 0.000000001) ))
     # now show the error-generation
-    print '''About to parse badly formatted VRML data'''
+    print('''About to parse badly formatted VRML data''')
     badData = [
         '''#whatever\nX{ { } }''',
         '''#whatever\nX{ S }''',
@@ -92,6 +94,6 @@ if __name__ == "__main__":
     for bad in badData:
         try:
             parser.parse( bad )
-            print """\nWARNING: didn't get a syntax error for item %s\n"""%(repr(bad))
-        except SyntaxError, err:
-            print err
+            print("""\nWARNING: didn't get a syntax error for item %s\n"""%(repr(bad)))
+        except SyntaxError as err:
+            print(err)

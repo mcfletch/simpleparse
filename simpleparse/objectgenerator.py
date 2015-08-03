@@ -12,6 +12,8 @@ obvious of which is the permute method, which takes care of
 the negative, optional, and repeating flags for the normal
 case (with character ranges and literals being non-normal).
 """
+from __future__ import print_function
+
 from simpleparse.stt.TextTools.TextTools import *
 
 ### Direct use of BMS is deprecated now...
@@ -606,7 +608,7 @@ class LibraryElement( ElementToken ):
                     basetable = (None, SubTable, basetable)
             return self.permute( basetable )
         except:
-            print basetable
+            print(basetable)
             raise
 
 class Name( ElementToken ):
@@ -767,13 +769,13 @@ def extractFlags( item, report=1 ):
 def compositeFlags( first, second, report=1 ):
     """Composite flags from two items into overall flag-set"""
     result = []
-    for a,b in map(None, extractFlags(first, report), extractFlags(second, report)):
+    for a,b in zip(extractFlags(first, report), extractFlags(second, report)):
         result.append( a or b )
     return tuple(result)
 def copyToNewFlags( target, flags ):
     """Copy target using combined flags"""
     new = copy.copy( target )
-    for name,value in map(None,
+    for name,value in zip(
         ("negative","optional","repeating","errorOnFail","lookahead",'report'),
         flags,
     ):

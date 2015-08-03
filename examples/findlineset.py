@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 declaration = r"""
 
 firstLine := "This is first line"
@@ -42,18 +44,18 @@ if __name__ == "__main__":
         p.parse( file2)
     )
     testData = "\n"*30000000 + file1
-    print 'starting parse of file 1 with 1 match at end'
+    print('starting parse of file 1 with 1 match at end')
     t = time.clock()
     success, results, next = p.parse( testData, "sets")
-    print 'finished parse', time.clock()-t
-    print 'number of results', len(results)
+    print('finished parse', time.clock()-t)
+    print('number of results', len(results))
     pprint.pprint(
         results
     )
-    print
+    print()
     testData = file1 * (30000000/len(file1))
-    print 'starting parse of file 1 with ~230,000 matches (slow)'
+    print('starting parse of file 1 with ~230,000 matches (slow)')
     t = time.clock()
     success, results, next = p.parse( testData, "sets")
-    print 'finished parse', time.clock()-t
-    print 'number of results', len(results)
+    print('finished parse', time.clock()-t)
+    print('number of results', len(results))

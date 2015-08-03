@@ -78,8 +78,9 @@ if haveMX:
             self.returnLocal = returnLocal
         dateName = 'ISO_date'
         timeName = 'ISO_time'
-        def ISO_date_time( self, (tag, left, right, sublist), buffer):
+        def ISO_date_time( self, info, buffer):
             """Interpret the loose ISO date + time format"""
+            (tag, left, right, sublist) = info
             set = singleMap( sublist, self, buffer )
             base, time, offset = (
                 set.get(self.dateName),
@@ -105,8 +106,9 @@ if haveMX:
                 return base.gmtime()
             else:
                 return base.localtime()
-        def ISO_date( self, (tag, left, right, sublist), buffer):
+        def ISO_date( self, info, buffer):
             """Interpret the ISO date format"""
+            (tag, left, right, sublist) = info
             set = {}
             for item in sublist:
                 set[ item[0] ] = dispatch( self, item, buffer)
@@ -115,8 +117,9 @@ if haveMX:
                 set.get("month") or 1,
                 set.get("day") or 1,
             )
-        def ISO_time( self, (tag, left, right, sublist), buffer):
+        def ISO_time( self, info, buffer):
             """Interpret the ISO time format"""
+            (tag, left, right, sublist) = info
             set = {}
             for item in sublist:
                 set[ item[0] ] = dispatch( self, item, buffer)
@@ -129,8 +132,9 @@ if haveMX:
         integer = numbers.IntInterpreter()
         second =  offset_minute = offset_hour = year = month = day = hour =minute =integer
         
-        def offset( self, (tag, left, right, sublist), buffer):
+        def offset( self, info, buffer):
             """Calculate the time zone offset as a date-time delta"""
+            (tag, left, right, sublist) = info
             set = singleMap( sublist, self, buffer )
             direction = set.get('offset_sign',1)
             hour = set.get( "hour", 0)
@@ -138,8 +142,9 @@ if haveMX:
             delta = DateTime.DateTimeDelta( 0, hour*direction, minute*direction)
             return delta
             
-        def offset_sign( self , (tag, left, right, sublist), buffer):
+        def offset_sign( self , info, buffer):
             """Interpret the offset sign as a multiplier"""
+            (tag, left, right, sublist) = info
             v = buffer [left: right]
             if v in ' +':
                 return 1

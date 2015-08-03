@@ -58,7 +58,7 @@ class CommonTests(unittest.TestCase):
         assert not success, """EOF matched before end of string"""
     
     def testTZ( self ):
-        names = timezone_names.timezone_mapping.keys()
+        names = list(timezone_names.timezone_mapping.keys())
         names.sort() # tests that the items don't match shorter versions...
         decl = Parser("""this := (timezone_name, ' '?)+""", 'this')
         proc = dispatchprocessor.DispatchProcessor()
@@ -66,7 +66,7 @@ class CommonTests(unittest.TestCase):
         text = string.join( names, ' ')
         success, result, next = decl.parse( text, processor = proc )
         assert success, """Unable to complete parsing the timezone names, stopped parsing at char %s %s"""%(next, text[next:])
-        assert result == map( timezone_names.timezone_mapping.get, names), """Got different results for interpretation than expected (expected first, recieved second)\n%s\n%s"""%(map( timezone_names.timezone_mapping.get, names), result)
+        assert result == list(map( timezone_names.timezone_mapping.get, names)), """Got different results for interpretation than expected (expected first, recieved second)\n%s\n%s"""%(list(map( timezone_names.timezone_mapping.get, names)), result)
         
         
             

@@ -63,10 +63,10 @@ _build( 'locale_day_abbrs', da )
 _build( 'locale_month_names', mn )
 _build( 'locale_month_abbrs', ma )
 
-da = map(string.lower, da )
-dn = map(string.lower, dn )
-ma = map(string.lower, ma )
-mn = map(string.lower, mn )
+da = [s.lower() for s in da]
+dn = [s.lower() for s in dn]
+ma = [s.lower() for s in ma]
+mn = [s.lower() for s in mn]
 
 
 common.share( c )
@@ -75,7 +75,8 @@ class NameInterpreter:
     offset = 1
     def __init__( self, offset = 1 ):
         self.offset = offset
-    def __call__( self, (tag, left, right, children), buffer ):
+    def __call__( self, info, buffer ):
+        (tag, left, right, children) = info
         value = string.lower( buffer[left:right] )
         for table in self.tables:
             try:

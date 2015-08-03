@@ -23,7 +23,7 @@ class PrintersTests(test_grammarparser.SimpleParseGrammarTests):
     def tearDown( self ):
         try:
             os.remove( testModuleFile )
-        except IOError, err:
+        except IOError as err:
             pass
     def doBasicTest(self, parserName, testValue, expected, ):
         result = self.recursiveParser.parse( testValue, production=parserName )

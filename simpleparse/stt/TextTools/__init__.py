@@ -6,8 +6,14 @@
     See the documentation for further information on copyrights,
     or contact the author. All Rights Reserved.
 """
-from TextTools import *
-from TextTools import __version__
+from .TextTools import *
+from .TextTools import __version__
+
+try:
+    import copyreg
+except ImportError:
+    import copy_reg as copyreg
+
 
 ### Make the types pickleable:
 
@@ -28,7 +34,6 @@ def _FS(match,translate):
 class modinit:
 
     ### Register the types
-    import copy_reg
 
     def pickle_CharSet(cs):
         return _CS,(cs.definition,)
@@ -36,13 +41,13 @@ class modinit:
         return _TT,(tt.compiled(),)
     def pickle_TextSearch(ts):
         return _TS,(ts.match, ts.translate, ts.algorithm)
-    copy_reg.pickle(CharSetType,
+    copyreg.pickle(CharSetType,
                     pickle_CharSet,
                     _CS)
-    copy_reg.pickle(TagTableType,
+    copyreg.pickle(TagTableType,
                     pickle_TagTable,
                     _TT)
-    copy_reg.pickle(TextSearchType,
+    copyreg.pickle(TextSearchType,
                     pickle_TextSearch,
                     _TS)
     if 0:
@@ -50,10 +55,10 @@ class modinit:
             return _BMS,(so.match,so.translate)
         def pickle_FS(so):
             return _FS,(so.match,so.translate)
-        copy_reg.pickle(BMSType,
+        copyreg.pickle(BMSType,
                         pickle_BMS,
                         _BMS)
-        copy_reg.pickle(FSType,
+        copyreg.pickle(FSType,
                         pickle_FS,
                         _FS)
         

@@ -54,7 +54,7 @@ class MXSpecialTests(unittest.TestCase):
         Should have a test for what to do when we have AppendMatch
         flag in this case...
         """
-        self.failUnlessRaises( TypeError, 
+        self.assertRaises( TypeError, 
         self.doBasicTest,
             (
                 ( "ab", Skip, -1, 0 ),

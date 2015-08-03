@@ -10,6 +10,8 @@ Note: Original grammar was from a sample in the YAPPS
 documentation.  Though it's kinda hard to recognise here.
 """
 
+from __future__ import print_function
+
 definition = r"""
 ### A simple LISP parser
 
@@ -57,9 +59,9 @@ if __name__ == "__main__":
         try:
             success, children, next = parser.parse( item )
             if not success:
-                print 'fail', item
+                print('fail', item)
             else:
-                print 'success', item, next
+                print('success', item, next)
                 pprint.pprint( children )
-        except SyntaxError, err:
-            print err
+        except SyntaxError as err:
+            print(err)

@@ -5,30 +5,32 @@
     See the documentation for further information on copyrights,
     or contact the author. All Rights Reserved.
 """
+from __future__ import print_function
+
 import string,types
 
 #
 # import the C module and the version number
 #
-from mxTextTools import *
-from mxTextTools import __version__
+from .mxTextTools import *
+from .mxTextTools import __version__
 
 #
 # import the symbols needed to write tag tables
 #
-from Constants.TagTables import *
+from .Constants.TagTables import *
 
 #
 # import the some handy character sets
 #
-from Constants.Sets import *
+from .Constants.Sets import *
 
 #
 # format and print tables, taglists and joinlists:
 #
 def format_entry(table,i,
 
-                 TupleType=types.TupleType):
+                 TupleType=tuple):
 
     """ Returns a pp-formatted tag table entry as string 
     """
@@ -67,7 +69,7 @@ def print_tagtable(table):
 
     """ Print the tag table 
     """
-    print format_table(table)
+    print(format_table(table))
 
 def print_tags(text,tags,indent=0):
 
@@ -81,14 +83,14 @@ def print_tags(text,tags,indent=0):
         if len(target) > 60:
             target = target[:60] + '...'
         if subtags == None:
-            print ' '+indent*' |',tagname,': ',target,(l,r)
+            print(' '+indent*' |',tagname,': ',target,(l,r))
         else:
-            print ' '+indent*' |',tagname,': ',target,(l,r)
+            print(' '+indent*' |',tagname,': ',target,(l,r))
             print_tags(text,subtags,indent+1)
 
 def print_joinlist(joins,indent=0,
                    
-                   StringType=types.StringType):
+                   StringType=str):
 
     """ Print the joinlist joins using the given indent level 
     """
@@ -97,18 +99,18 @@ def print_joinlist(joins,indent=0,
             text = repr(j)
             if len(text) > 40:
                 text = text[:40] + '...'
-            print ' '+indent*' |',text,' (len = %i)' % len(j)
+            print(' '+indent*' |',text,' (len = %i)' % len(j))
         else:
             text = j[0]
             l,r = j[1:3]
             text = repr(text[l:r])
             if len(text) > 40:
                 text = text[:40] + '...'
-            print ' '+indent*' |',text,' (len = %i)' % (r-l),(l,r)
+            print(' '+indent*' |',text,' (len = %i)' % (r-l),(l,r))
 
 def normlist(jlist,
                    
-             StringType=types.StringType):
+             StringType=str):
 
     """ Return a normalized joinlist.
 
@@ -134,7 +136,7 @@ def _lookup_dict(l,index=0):
     d = {}
     for w in l:
         c = w[index]
-        if d.has_key(c):
+        if c in d:
             d[c].append(w)
         else:
             d[c] = [w]
@@ -146,13 +148,13 @@ def word_in_list(l):
     """
     t = []
     d = _lookup_dict(l)
-    keys = d.keys()
+    keys = list(d.keys())
     if len(keys) < 18: # somewhat arbitrary bound
         # fast hint for small sets
-        t.append((None,IsIn,string.join(d.keys(),'')))
+        t.append((None,IsIn,string.join(list(d.keys()),'')))
         t.append((None,Skip,-1))
     # test groups
-    for c, group in d.items():
+    for c, group in list(d.items()):
         t.append(None) # hint will be filled in later
         i = len(t)-1
         for w in group:
@@ -171,7 +173,7 @@ def replace(text,what,with_what,start=0,stop=None,
 
             SearchObject=TextSearch,join=join,joinlist=joinlist,tag=tag,
             string_replace=string.replace,type=type,
-            StringType=types.StringType):
+            StringType=str):
 
     """A fast replacement for string.replace.
     
@@ -375,7 +377,7 @@ def tagdict(text,*args):
         case rc is 0.
           
     """
-    rc,taglist,next = apply(tag,(text,)+args)
+    rc,taglist,next = tag(*(text,)+args)
     if not rc:
         return (rc,None,next)
     d = {}
@@ -540,122 +542,122 @@ class _timer:
 def _bench(file='mxTextTools/mxTextTools.c'):
 
     def mismatch(orig,new):
-        print
+        print()
         for i in range(len(orig)):
             if orig[i] != new[i]:
                 break
         else:
-            print 'Length mismatch: orig=%i new=%i' % (len(orig),len(new))
+            print('Length mismatch: orig=%i new=%i' % (len(orig),len(new)))
             if len(orig) > len(new):
-                print 'Missing chars:'+repr(orig[len(new):])
+                print('Missing chars:'+repr(orig[len(new):]))
             else:
-                print 'Excess chars:'+repr(new[len(orig):])
-            print
+                print('Excess chars:'+repr(new[len(orig):]))
+            print()
             return
-        print 'Mismatch at offset %i:' % i
-        print (orig[i-100:i] 
+        print('Mismatch at offset %i:' % i)
+        print((orig[i-100:i] 
                + '<- %s != %s ->' % (repr(orig[i]),repr(new[i]))
-               + orig[i+1:i+100])
-        print
+               + orig[i+1:i+100]))
+        print()
         
     text = open(file).read()
     import string
 
     t = _timer()
-    print 'Working on a %i byte string' % len(text)
+    print('Working on a %i byte string' % len(text))
 
     if 0:
-        print
-        print 'Replacing strings'
-        print '-'*72
-        print
+        print()
+        print('Replacing strings')
+        print('-'*72)
+        print()
         for what,with_what in (('m','M'),('mx','MX'),('mxText','MXTEXT'),
                           ('hmm','HMM'),('hmmm','HMM'),('hmhmm','HMM')):
-            print 'Replace "%s" with "%s"' % (what,with_what)
+            print('Replace "%s" with "%s"' % (what,with_what))
             t.start()
             for i in range(100):
                 rtext = string.replace(text,what,with_what)
-            print 'with string.replace:',t.stop(),'sec.'
+            print('with string.replace:',t.stop(),'sec.')
             t.start()
             for i in range(100):
                 ttext = replace(text,what,with_what)
-            print 'with tag.replace:',t.stop(),'sec.'
+            print('with tag.replace:',t.stop(),'sec.')
             if ttext != rtext:
-                print 'results are NOT ok !'
-                print '-'*72
+                print('results are NOT ok !')
+                print('-'*72)
                 mismatch(rtext,ttext)
             t.start()
             for i in range(100):
                 ttext = _replace2(text,what,with_what)
-            print 'with tag._replace2:',t.stop(),'sec.'
+            print('with tag._replace2:',t.stop(),'sec.')
             if ttext != rtext:
-                print 'results are NOT ok !'
-                print '-'*72
-                print rtext
+                print('results are NOT ok !')
+                print('-'*72)
+                print(rtext)
             t.start()
             for i in range(100):
                 ttext = _replace3(text,what,with_what)
-            print 'with tag._replace3:',t.stop(),'sec.'
+            print('with tag._replace3:',t.stop(),'sec.')
             if ttext != rtext:
-                print 'results are NOT ok !'
-                print '-'*72
-                print rtext
+                print('results are NOT ok !')
+                print('-'*72)
+                print(rtext)
             t.start()
             for i in range(100):
                 ttext = _replace4(text,what,with_what)
-            print 'with tag._replace4:',t.stop(),'sec.'
+            print('with tag._replace4:',t.stop(),'sec.')
             if ttext != rtext:
-                print 'results are NOT ok !'
-                print '-'*72
-                print rtext
-            print
+                print('results are NOT ok !')
+                print('-'*72)
+                print(rtext)
+            print()
 
     if 0:
-        print
-        print 'String lower/upper'
-        print '-'*72
-        print
+        print()
+        print('String lower/upper')
+        print('-'*72)
+        print()
 
         op = string.lower
         t.start()
         for i in range(1000):
             op(text)
         t.stop()
-        print ' string.lower:',t
+        print(' string.lower:',t)
 
         op = string.upper
         t.start()
         for i in range(1000):
             op(text)
         t.stop()
-        print ' string.upper:',t
+        print(' string.upper:',t)
 
         op = upper
         t.start()
         for i in range(1000):
             op(text)
         t.stop()
-        print ' TextTools.upper:',t
+        print(' TextTools.upper:',t)
 
         op = lower
         t.start()
         for i in range(1000):
             op(text)
         t.stop()
-        print ' TextTools.lower:',t
+        print(' TextTools.lower:',t)
 
-        print 'Testing...',
+        print('Testing...', end=' ')
         ltext = string.lower(text)
         assert ltext == lower(text)
         utext = string.upper(text)
         assert utext == upper(text)
-        print 'ok.'
+        print('ok.')
 
     if 0:
-        print
-        print 'Joining lists'
-        print '-'*72
-        print
+        print()
+        print('Joining lists')
+        print('-'*72)
+        print()
 
         l = setsplit(text,whitespace_set)
 
@@ -664,34 +666,34 @@ def _bench(file='mxTextTools/mxTextTools.c'):
         for i in range(1000):
             op(l)
         t.stop()
-        print ' string.join:',t
+        print(' string.join:',t)
 
         op = join
         t.start()
         for i in range(1000):
             op(l)
         t.stop()
-        print ' TextTools.join:',t
+        print(' TextTools.join:',t)
 
         op = string.join
         t.start()
         for i in range(1000):
             op(l,' ')
         t.stop()
-        print ' string.join with separator:',t
+        print(' string.join with separator:',t)
 
         op = join
         t.start()
         for i in range(1000):
             op(l,' ')
         t.stop()
-        print ' TextTools.join with separator:',t
+        print(' TextTools.join with separator:',t)
 
     if 0:
-        print
-        print 'Creating join lists'
-        print '-'*72
-        print
+        print()
+        print('Creating join lists')
+        print('-'*72)
+        print()
 
         repl = []
         for i in range(0,len(text),10):
@@ -702,20 +704,20 @@ def _bench(file='mxTextTools/mxTextTools.c'):
         for i in range(1000):
             op(text,repl)
         t.stop()
-        print ' TextTools.joinlist:',t
+        print(' TextTools.joinlist:',t)
 
     if 0:
-        print
-        print 'Splitting text'
-        print '-'*72
-        print
+        print()
+        print('Splitting text')
+        print('-'*72)
+        print()
 
         op = string.split
         t.start()
         for i in range(100):
             op(text)
         t.stop()
-        print ' string.split whitespace:',t,'(',len(op(text)),'snippets )'
+        print(' string.split whitespace:',t,'(',len(op(text)),'snippets )')
 
         op = setsplit
         ws = whitespace_set
@@ -723,7 +725,7 @@ def _bench(file='mxTextTools/mxTextTools.c'):
         for i in range(100):
             op(text,ws)
         t.stop()
-        print ' TextTools.setsplit whitespace:',t,'(',len(op(text,ws)),'snippets )'
+        print(' TextTools.setsplit whitespace:',t,'(',len(op(text,ws)),'snippets )')
 
         assert string.split(text) == setsplit(text,ws)
 
@@ -733,7 +735,7 @@ def _bench(file='mxTextTools/mxTextTools.c'):
         for i in range(100):
             op(text,sep)
         t.stop()
-        print ' string.split at "a":',t,'(',len(op(text,sep)),'snippets )'
+        print(' string.split at "a":',t,'(',len(op(text,sep)),'snippets )')
 
         op = split
         sep = 'a'
@@ -741,7 +743,7 @@ def _bench(file='mxTextTools/mxTextTools.c'):
         for i in range(100):
             op(text,sep)
         t.stop()
-        print ' TextTools.split at "a":',t,'(',len(op(text,sep)),'snippets )'
+        print(' TextTools.split at "a":',t,'(',len(op(text,sep)),'snippets )')
 
         op = charsplit
         sep = 'a'
@@ -749,7 +751,7 @@ def _bench(file='mxTextTools/mxTextTools.c'):
         for i in range(100):
             op(text,sep)
         t.stop()
-        print ' TextTools.charsplit at "a":',t,'(',len(op(text,sep)),'snippets )'
+        print(' TextTools.charsplit at "a":',t,'(',len(op(text,sep)),'snippets )')
 
         op = setsplit
         sep = set('a')
@@ -757,7 +759,7 @@ def _bench(file='mxTextTools/mxTextTools.c'):
         for i in range(100):
             op(text,sep)
         t.stop()
-        print ' TextTools.setsplit at "a":',t,'(',len(op(text,sep)),'snippets )'
+        print(' TextTools.setsplit at "a":',t,'(',len(op(text,sep)),'snippets )')
 
         # Note: string.split and setsplit don't work identically !
 
@@ -767,7 +769,7 @@ def _bench(file='mxTextTools/mxTextTools.c'):
         for i in range(100):
             op(text,sep)
         t.stop()
-        print ' string.split at "int":',t,'(',len(op(text,sep)),'snippets )'
+        print(' string.split at "int":',t,'(',len(op(text,sep)),'snippets )')
 
         op = split
         sep = 'int'
@@ -775,7 +777,7 @@ def _bench(file='mxTextTools/mxTextTools.c'):
         for i in range(100):
             op(text,sep)
         t.stop()
-        print ' TextTools.split at "int":',t,'(',len(op(text,sep)),'snippets )'
+        print(' TextTools.split at "int":',t,'(',len(op(text,sep)),'snippets )')
 
         op = setsplit
         sep = set('int')
@@ -783,7 +785,7 @@ def _bench(file='mxTextTools/mxTextTools.c'):
         for i in range(100):
             op(text,sep)
         t.stop()
-        print ' TextTools.setsplit at "i", "n", "t":',t,'(',len(op(text,sep)),'snippets )'
+        print(' TextTools.setsplit at "i", "n", "t":',t,'(',len(op(text,sep)),'snippets )')
 
         op = string.split
         sep = 'register'
@@ -791,7 +793,7 @@ def _bench(file='mxTextTools/mxTextTools.c'):
         for i in range(100):
             op(text,sep)
         t.stop()
-        print ' string.split at "register":',t,'(',len(op(text,sep)),'snippets )'
+        print(' string.split at "register":',t,'(',len(op(text,sep)),'snippets )')
 
         op = split
         sep = 'register'
@@ -799,7 +801,7 @@ def _bench(file='mxTextTools/mxTextTools.c'):
         for i in range(100):
             op(text,sep)
         t.stop()
-        print ' TextTools.split at "register":',t,'(',len(op(text,sep)),'snippets )'
+        print(' TextTools.split at "register":',t,'(',len(op(text,sep)),'snippets )')
 
 if __name__=='__main__':
     _bench()

@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os, string
 from simpleparse.parser import Parser
 
@@ -19,7 +21,7 @@ parser = Parser( declaration, "myfile" )
 
 def bigtest( file, parser = parser  ):
     val = parser.parse( file)
-    print 'parsed %s characters of %s characters' % (val[-1], len(file))
+    print('parsed %s characters of %s characters' % (val[-1], len(file)))
     return val
 
 def test():
@@ -41,8 +43,8 @@ if __name__ == '__main__':
         t = time.time()
         val = bigtest( file )
         t = t-time.time()
-        print '''Parsing Time:''', t
+        print('''Parsing Time:''', t)
         for report, start, stop, children in val[1]:
-            print string.split(file[ start: stop ], '\n')[0][:75]
+            print(string.split(file[ start: stop ], '\n')[0][:75])
     else:
-        print usage
+        print(usage)
