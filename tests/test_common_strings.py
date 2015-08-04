@@ -1,4 +1,4 @@
-import unittest, string
+import unittest
 from simpleparse.parser import Parser
 from simpleparse.common import strings
 from simpleparse import dispatchprocessor

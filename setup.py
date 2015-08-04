@@ -9,7 +9,7 @@ try:
     from setuptools import setup, Extension
 except ImportError as err:
     from distutils.core import setup, Extension
-import os, sys, string
+import os, sys
 
 def findVersion( ):
     a = {}
@@ -27,7 +27,7 @@ def packagesFor( filename, basePackage="" ):
     set = {}
     for item in os.listdir(filename):
         dir = os.path.join(filename, item)
-        if string.lower(item) != 'cvs' and isPackage( dir ):
+        if item.lower() != 'cvs' and isPackage( dir ):
             if basePackage:
                 moduleName = basePackage+'.'+item
             else:

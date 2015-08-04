@@ -21,13 +21,12 @@ for the military_alphabet_char and lowercase for the
 military_alphabet_char_lower.
 """
 from simpleparse import objectgenerator, common
-import string
 
 c = {}
 
 # note that Juliette comes before Juliet, because
 # otherwise Juliette could never match in an FOGroup!
-_letters = string.split( """Alpha
+_letters = """Alpha
 Bravo
 Charlie
 Delta
@@ -52,7 +51,7 @@ Victor
 Whiskey
 Xray X-ray
 Yankee
-Zulu""")
+Zulu""".split()
 
 set1,set2 = [], []
 for item in _letters:
@@ -60,7 +59,7 @@ for item in _letters:
         objectgenerator.Literal( value=item)
     )
     set2.append(
-        objectgenerator.Literal( value=string.lower(item))
+        objectgenerator.Literal( value=item.lower())
     )
 
 military_alphabet_char = objectgenerator.FirstOfGroup(

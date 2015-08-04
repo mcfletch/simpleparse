@@ -34,7 +34,7 @@ example6     := 's*',(set/atom),(set/atom),'++',(set/atom),(set/atom),(set/atom)
 example7     := 'bdf*',(set/atom),(set/atom),'++',(set/atom),(set/atom),(set/atom)
 example8     := 'sd*',(set/atom),(set/atom),'++',(set/atom),(set/atom),(set/atom)
 '''
-import sys, string
+import sys
 from simpleparse.parser import Parser
 parser = Parser(declaration,'set')
 
@@ -71,7 +71,7 @@ class Emitter:
                 ### write out post elements
                 startpos = tree[3][-1][2] # end of last child
                 result.append( self.data[ startpos: tree[2]] )
-                return string.join( result, '' )
+                return ''.join(result)
             else:
                 # we're just re-emitting same text...
                 return self.data[ tree[1]:tree[2]]

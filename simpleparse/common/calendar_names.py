@@ -32,7 +32,7 @@ Interpreters:
         than the default (of 1) for the first item in
         the list.
 """
-import calendar, string
+import calendar
 from simpleparse import objectgenerator, common
 
 c = {}
@@ -49,8 +49,8 @@ def _build( name, set ):
     set.reverse()
     l,u,r = [],[],[]
     for item in set:
-        l.append( objectgenerator.Literal( value = string.lower(item) ))
-        u.append( objectgenerator.Literal( value = string.upper(item) ))
+        l.append( objectgenerator.Literal( value = item.lower() ))
+        u.append( objectgenerator.Literal( value = item.upper() ))
         r.append( objectgenerator.Literal( value = item ))
     c[ name + '_lc' ] = objectgenerator.FirstOfGroup( children = l )
     c[ name + '_uc' ] = objectgenerator.FirstOfGroup( children = u )
@@ -77,7 +77,7 @@ class NameInterpreter:
         self.offset = offset
     def __call__( self, info, buffer ):
         (tag, left, right, children) = info
-        value = string.lower( buffer[left:right] )
+        value = buffer[left:right].lower()
         for table in self.tables:
             try:
                 return table.index( value )+ self.offset

@@ -39,7 +39,6 @@ from simpleparse.parser import Parser
 from simpleparse import common, objectgenerator
 from simpleparse.common import chartypes
 from simpleparse.dispatchprocessor import *
-import string
 
 c = {}
 
@@ -124,7 +123,7 @@ class StringInterpreter(DispatchProcessor):
 
     def string_single_quote( self, info, buffer):
         (tag, left, right, sublist) = info
-        return string.join(dispatchList(self, sublist, buffer), "")
+        return "".join(dispatchList(self, sublist, buffer))
     string_double_quote = string_single_quote
     string_triple_single = string_single_quote
     string_triple_double = string_single_quote
@@ -136,14 +135,14 @@ class StringInterpreter(DispatchProcessor):
 
     def escaped_char( self, info, buffer):
         (tag, left, right, sublist) = info
-        return string.join(dispatchList(self,sublist,buffer), "")
+        return "".join(dispatchList(self,sublist,buffer))
     
     def octal_escaped_char(self, info, buffer):
         (tag, left, right, sublist) = info
-        return chr(string.atoi( buffer[left:right], 8 ))
+        return chr(int( buffer[left:right], 8 ))
     def hex_escaped_char( self, info, buffer):
         (tag, left, right, sublist) = info
-        return chr(string.atoi( buffer[left:right], 16 ))
+        return chr(int( buffer[left:right], 16 ))
     
     def backslash_char( self, info, buffer):
         return "\\"

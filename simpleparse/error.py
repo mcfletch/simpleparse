@@ -1,5 +1,4 @@
 """Definition of the ParserSyntaxError raised on parse failure"""
-import string
 from simpleparse.stt.TextTools.TextTools import countlines
 
 class ParserSyntaxError( SyntaxError ):
@@ -46,7 +45,7 @@ class ParserSyntaxError( SyntaxError ):
         return template % variables
     def getLineCoordinate( self ):
         """Get (line number, line character) for the error"""
-        lineChar = string.rfind( self.buffer, '\n', 0, self.position)
+        lineChar = self.buffer.rfind('\n', 0, self.position)
         if lineChar == -1: # was no \n before the current position
             lineChar = self.position
             line = 1

@@ -3,7 +3,7 @@
 from __future__ import print_function
 
 import sys
-import os, string
+import os
 from simpleparse.parser import Parser
 
 # we use a non-standard VRML parser definition which retains comments and whitespace
@@ -113,10 +113,10 @@ class HTMLVRMLFormatter( VRMLFormatter ):
     Format VRML files for display in HTML
     '''
     def _escapeData( self, data ):
-        return string.join( string.split( 
-            string.join( string.split( 
-                string.join( string.split( 
-                    string.join( string.split( data, '&' ), '&amp;' ),
+        return str.join( str.split( 
+            str.join( str.split( 
+                str.join( str.split( 
+                    str.join( str.split( data, '&' ), '&amp;' ),
                 '<'), '&lt;'),
             '>'), '&gt;'),
         '\t'), '  ')

@@ -63,7 +63,7 @@ class CommonTests(unittest.TestCase):
         decl = Parser("""this := (timezone_name, ' '?)+""", 'this')
         proc = dispatchprocessor.DispatchProcessor()
         proc.timezone_name = timezone_names.TimeZoneNameInterpreter()
-        text = string.join( names, ' ')
+        text = ' '.join(names)
         success, result, next = decl.parse( text, processor = proc )
         assert success, """Unable to complete parsing the timezone names, stopped parsing at char %s %s"""%(next, text[next:])
         assert result == list(map( timezone_names.timezone_mapping.get, names)), """Got different results for interpretation than expected (expected first, recieved second)\n%s\n%s"""%(list(map( timezone_names.timezone_mapping.get, names)), result)

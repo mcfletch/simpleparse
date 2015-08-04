@@ -114,7 +114,7 @@ try:
 except ImportError:
     def lines( start=None, end=None, buffer=None ):
         """Return line number in file at character index (string.count version)"""
-        return string.count(buffer, '\n', start or 0, end or len(buffer) )
+        return buffer.count('\n', start or 0, end or len(buffer))
 else:
     def lines( start=None, end=None, buffer=None ):
         """Return line number in file at character index (mx.TextTools version)"""

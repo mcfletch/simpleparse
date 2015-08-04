@@ -1,5 +1,5 @@
 """Test the various common library comment productions"""
-import unittest, string
+import unittest
 from simpleparse.parser import Parser
 from simpleparse.common import comments
 from simpleparse import dispatchprocessor

@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-import os, string
+import os
 from simpleparse.parser import Parser
 
 declaration = r'''
@@ -45,6 +45,6 @@ if __name__ == '__main__':
         t = t-time.time()
         print('''Parsing Time:''', t)
         for report, start, stop, children in val[1]:
-            print(string.split(file[ start: stop ], '\n')[0][:75])
+            print(file[ start: stop ].splitlines()[0][:75])
     else:
         print(usage)

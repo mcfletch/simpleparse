@@ -6,7 +6,6 @@ as this is the first grammar being written.
 '''
 from simpleparse.objectgenerator import *
 from simpleparse import generator, baseparser
-import string
 from simpleparse.dispatchprocessor import *
 HAVE_UNICODE = 1
 
@@ -612,13 +611,13 @@ class SPGrammarProcessor( DispatchProcessor ):
             classObject = Literal
         elements = dispatchList( self, sublist, buffer)
         ### Should check for CILiteral with non-CI string or single-character value!
-        return classObject( value = string.join(elements, "" ) )
+        return classObject( value = "".join(elements) )
 
     def range( self, info, buffer):
 ##		if hasattr( Range, 'requiresExpandedSet') and Range.requiresExpandedSet:
         (tag, left, right, sublist) = info
         return Range(
-            value = string.join(dispatchList( self, sublist, buffer),''),
+            value = ''.join(dispatchList( self, sublist, buffer)),
         )
 ##		else:
 ##			# need to build up a new-syntax version of the range...
@@ -654,7 +653,7 @@ class SPGrammarProcessor( DispatchProcessor ):
         err = ErrorOnFail()
         if children:
             (tag,left,right,children) = children[0]
-            message = string.join( dispatchList( self, children, buffer), "")
+            message = "".join(dispatchList( self, children, buffer))
             err.message = message
         return err
     def _config_error_on_fail( self, errorOnFail, tup, buffer ):
@@ -679,7 +678,7 @@ class SPGrammarProcessor( DispatchProcessor ):
     CHAR = CHARNOSNGLQUOTE = CHARNODBLQUOTE
     def ESCAPEDCHAR( self, info, buffer):
         (tag, left, right, sublist) = info
-        return string.join(dispatchList( self, sublist, buffer), "")
+        return "".join(dispatchList( self, sublist, buffer))
     specialescapedmap = {
     'a':'\a',
     'b':'\b',
@@ -695,12 +694,12 @@ class SPGrammarProcessor( DispatchProcessor ):
     def SPECIALESCAPEDCHAR( self, tup, buffer):
         return self.specialescapedmap[ getString(tup, buffer)]
     def OCTALESCAPEDCHAR(self, tup, buffer):
-        return chr(string.atoi( getString(tup, buffer), 8 ))
+        return chr(int( getString(tup, buffer), 8 ))
     def HEXESCAPEDCHAR( self, tup , buffer):
-        return chr(string.atoi( getString(tup, buffer), 16 ))
+        return chr(int( getString(tup, buffer), 16 ))
     def CHARNOBRACE( self, info, buffer):
         (tag, left, right, sublist) = info
-        return string.join(dispatchList( self, sublist, buffer), "")
+        return "".join(dispatchList( self, sublist, buffer))
     def CHARRANGE( self, info, buffer):
         '''Create a string from first to second item'''
         (tag, left, right, sublist) = info

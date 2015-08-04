@@ -48,7 +48,6 @@ from simpleparse.parser import Parser
 from simpleparse import common, objectgenerator
 from simpleparse.common import chartypes
 from simpleparse.dispatchprocessor import *
-import string
 
 c = {}
 
@@ -101,12 +100,9 @@ def _toInt( s, base ):
     try:
         return int( s, base)
     except TypeError:
-        return string.atoi( s, base)
-def _toLong( s, base ):
-    try:
         return int( s, base)
-    except TypeError:
-        return string.atol( s, base)
+def _toLong( s, base ):
+    return int( s, base)
 
 class IntInterpreter(DispatchProcessor):
     """Interpret an integer (or unsigned integer) string as an integer"""

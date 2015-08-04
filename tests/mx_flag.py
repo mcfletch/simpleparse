@@ -1,8 +1,7 @@
 import unittest, pprint
 from simpleparse.stt.TextTools import *
-import string
 from simpleparse.stt import TextTools
-mxVersion = tuple(string.split( TextTools.__version__, '.')[:3])
+mxVersion = tuple(TextTools.__version__.split('.')[:3])
 
 class MXFlagTests(unittest.TestCase):
     """Test Flags for returning/calling different functions on success"""

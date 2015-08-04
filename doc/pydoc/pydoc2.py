@@ -1,12 +1,11 @@
 """Pydoc sub-class for generating documentation for entire packages"""
 from __future__ import print_function
-import pydoc, inspect, os, string
+import pydoc, inspect, os
 import sys, imp, os, stat, re, types, inspect
 try:
     from reprlib import Repr
 except ImportError:
     from repr import Repr
-from string import expandtabs, find, join, lower, split, strip, rfind, rstrip
 
 def classify_class_attrs(cls):
     """Return list of attribute-descriptor tuples.
@@ -89,13 +88,13 @@ class DefaultFormatter(pydoc.HTMLDoc):
     def docmodule(self, object, name=None, mod=None, packageContext = None, *ignored):
         """Produce HTML documentation for a module object."""
         name = object.__name__ # ignore the passed-in name
-        parts = split(name, '.')
+        parts = name.split('.')
         links = []
         for i in range(len(parts)-1):
             links.append(
                 '<a href="%s.html"><font color="#ffffff">%s</font></a>' %
-                (join(parts[:i+1], '.'), parts[i]))
-        linkedname = join(links + parts[-1:], '.')
+                ('.'.join(parts[:i+1]), parts[i]))
+        linkedname = '.'.join(links + parts[-1:])
         head = '<big><big><strong>%s</strong></big></big>' % linkedname
         try:
             path = inspect.getabsfile(object)
@@ -110,12 +109,12 @@ class DefaultFormatter(pydoc.HTMLDoc):
         if hasattr(object, '__version__'):
             version = str(object.__version__)
             if version[:11] == '$' + 'Revision: ' and version[-1:] == '$':
-                version = strip(version[11:-1])
+                version = version[11:-1].strip()
             info.append('version %s' % self.escape(version))
         if hasattr(object, '__date__'):
             info.append(self.escape(str(object.__date__)))
         if info:
-            head = head + ' (%s)' % join(info, ', ')
+            head = head + ' (%s)' % ', '.join(info)
         result = self.heading(
             head, '#ffffff', '#7799ee', '<a href=".">index</a><br>' + filelink)
 
@@ -186,13 +185,13 @@ class DefaultFormatter(pydoc.HTMLDoc):
             for key, value in classes:
                 contents.append(self.document(value, key, name, fdict, cdict))
             result = result + self.bigsection(
-                'Classes', '#ffffff', '#ee77aa', join(contents))
+                'Classes', '#ffffff', '#ee77aa', " ".join(contents))
         if funcs:
             contents = []
             for key, value in funcs:
                 contents.append(self.document(value, key, name, fdict, cdict))
             result = result + self.bigsection(
-                'Functions', '#ffffff', '#eeaa77', join(contents))
+                'Functions', '#ffffff', '#eeaa77', " ".join(contents))
         if data:
             contents = []
             for key, value in data:
@@ -201,7 +200,7 @@ class DefaultFormatter(pydoc.HTMLDoc):
                 except Exception as err:
                     pass
             result = result + self.bigsection(
-                'Data', '#ffffff', '#55aa55', join(contents, '<br>\n'))
+                'Data', '#ffffff', '#55aa55', '<br>\n'.join(contents))
         if hasattr(object, '__author__'):
             contents = self.markup(str(object.__author__), self.preformat)
             result = result + self.bigsection(
@@ -242,7 +241,7 @@ class DefaultFormatter(pydoc.HTMLDoc):
             modpkgs.sort()
             # do more recursion here...
             for (modname, name, ya,yo) in modpkgs:
-                packageContext.addInteresting( join( (object.__name__, modname), '.'))
+                packageContext.addInteresting('.'.join( (object.__name__, modname)))
             items = []
             for (modname, name, ispackage,isshadowed) in modpkgs:
                 try:
@@ -267,7 +266,7 @@ class DefaultFormatter(pydoc.HTMLDoc):
                     items.append(
                         self.modpkglink( (modname, name, ispackage, isshadowed) )
                     )
-            contents = string.join( items, '<br>')
+            contents = '<br>'.join(items)
             result = self.bigsection(
                 'Package Contents', '#ffffff', '#aa55cc', contents)
         elif modules:
@@ -354,17 +353,17 @@ class PackageDocumentationGenerator:
         """Check that the specifier is "in scope" for the recursion"""
         if not self.recursion:
             return 0
-        items = string.split (specifier, ".")
+        items = specifier.split(".")
         stopCheck = items [:]
         while stopCheck:
-            name = string.join(items, ".")
+            name = ".".join(items)
             if self.recursionStops.get( name):
                 return 0
             elif self.completed.get (name):
                 return 0
             del stopCheck[-1]
         while items:
-            if self.baseSpecifiers.get( string.join(items, ".")):
+            if self.baseSpecifiers.get(".".join(items)):
                 return 1
             del items[-1]
         # was not within any given scope

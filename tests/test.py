@@ -10,9 +10,8 @@ except ImportError:
 import test_common_strings, test_printers, test_optimisation, test_common_comments
 import test_xml
 
-import string
 from simpleparse.stt import TextTools
-mxVersion = tuple(string.split( TextTools.__version__, '.'))
+mxVersion = tuple(TextTools.__version__.split('.'))
 mxVersion = mxVersion[:3]
 
 def getSuite():
