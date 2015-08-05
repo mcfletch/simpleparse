@@ -479,53 +479,6 @@ static void mx_Py_PRINT_REFCOUNT(PyObject *v,
         (((unsigned char)(set)[(unsigned char)(chr) >> 3] & 	\
 	  (1 << ((unsigned char)(chr) & 7))) != 0)
 
-/* --- Macros for getattr ------------------------------------------------- */
-
-/* Compares var to name and returns 1 iff they match.
-
-   This assumes that name is a constant char array. */
-
-#define Py_WantAttr(var,name) Py_StringsCompareEqual(var,name)
-
-/* --- Module init helpers ------------------------------------------------ */
-
-/* Error reporting for module init functions */
-
-#define Py_ReportModuleInitError(modname) {			\
-    PyObject *exc_type, *exc_value, *exc_tb;			\
-    PyObject *str_type, *str_value;				\
-								\
-    /* Fetch error objects and convert them to strings */	\
-    PyErr_Fetch(&exc_type, &exc_value, &exc_tb);		\
-    if (exc_type && exc_value) {				\
-	str_type = PyObject_Str(exc_type);			\
-	str_value = PyObject_Str(exc_value);			\
-    }								\
-    else {							\
-	str_type = NULL;					\
-	str_value = NULL;					\
-    }								\
-    /* Try to format a more informative error message using the	\
-       original error */					\
-    if (str_type && str_value &&				\
-	PyString_Check(str_type) && PyString_Check(str_value))	\
-	PyErr_Format(						\
-		PyExc_ImportError,				\
-		"initialization of module "modname" failed "	\
-		"(%s:%s)",					\
-		PyString_AS_STRING(str_type),			\
-		PyString_AS_STRING(str_value));			\
-    else							\
-	PyErr_SetString(					\
-		PyExc_ImportError,				\
-		"initialization of module "modname" failed");	\
-    Py_XDECREF(str_type);					\
-    Py_XDECREF(str_value);					\
-    Py_XDECREF(exc_type);					\
-    Py_XDECREF(exc_value);					\
-    Py_XDECREF(exc_tb);						\
-}
-
 /* --- SWIG addons -------------------------------------------------------- */
 
 /* Throw this error after having set the correct Python exception
