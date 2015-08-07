@@ -8,8 +8,6 @@
   Copyright (c) 2000-2002, eGenix.com Software GmbH; mailto:info@egenix.com
   Copyright (c) 2003-2006, Mike Fletcher; mailto:mcfletch@vrplumber.com
 */
-#include "mcfpyapi.h"
-
 
 #ifndef TE_STRING_CHECK 
 # define TE_STRING_CHECK(obj) PyString_Check(obj)
