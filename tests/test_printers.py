@@ -5,6 +5,7 @@ parsed, then linearised, then loaded as a Python module.
 """
 import os, unittest
 import test_grammarparser
+from importlib import reload
 testModuleFile = 'test_printers_garbage.py'
 
 

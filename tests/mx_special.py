@@ -206,20 +206,20 @@ class MXSpecialTests(unittest.TestCase):
             """Test JumpTarget command with tagobj specified"""
             self.doBasicTest(
                 (
-                    ( "ab", JumpTarget, "SomeString" ),
+                    ( b"ab", JumpTarget, b"SomeString" ),
                 ),
-                "abbaab",
+                b"abbaab",
                 ( 1,[
-                    ("ab",0,0,None),
+                    (b"ab",0,0,None),
                 ],0),
             )
         def testJumpTarget( self ):
             """Test JumpTarget command in normal usage"""
             self.doBasicTest(
                 (
-                    "this",
+                    b"this",
                 ),
-                "abbaab",
+                b"abbaab",
                 ( 1,[
                 ],0),
             )

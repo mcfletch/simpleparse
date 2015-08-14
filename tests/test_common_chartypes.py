@@ -34,7 +34,7 @@ class CommonTests(unittest.TestCase):
             ("digits", "digit", "digits"),
             ("uppercase", "uppercasechar", "uppercase"),
             ("lowercase", "lowercasechar", "lowercase"),
-            ("letters", "letter", "letters"),
+            ("ascii_letters", "letter", "letters"),
             ("whitespace", "whitespacechar", "whitespace"),
             ("octdigits", "octdigit", "octdigits"),
             ("hexdigits", "hexdigit", "hexdigits"),
@@ -47,12 +47,12 @@ class CommonTests(unittest.TestCase):
             try:
                 set = getattr( string, set)
                 self._testSet(
-                    set,
+                    set.encode('ascii'),
                     single,
                     multiple,
                 )
             except AttributeError:
-                pass
+                raise
     def testEOF( self ):
         p = Parser( """this := 'a',EOF""", 'this')
         success, children, next = p.parse( 'a' )

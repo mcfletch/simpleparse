@@ -27,7 +27,7 @@ def _rcmp( item1, item2 ):
             print(item1)
             print(item2)
     elif item1[1] == 207:
-        if cmp(item2[:2], item2[:2]) != 0:
+        if item2[:2] != item2[:2]:
             return 0
         if not rcmp( item1[2], item2[2]):
             return 0

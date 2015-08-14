@@ -1,5 +1,5 @@
 """Low-level matching tests for mx.TextTools"""
-import unittest, pprint
+import unittest
 from simpleparse.stt.TextTools import *
 
 from simpleparse.stt import TextTools
@@ -65,19 +65,19 @@ class MXHighTests(unittest.TestCase):
             for algo in [BOYERMOORE, TRIVIAL]:
                 self.doBasicTest(
                     (
-                        ( "ab", sWordStart, TextSearch("ab", algorithm=algo), 0 ),
+                        ( b"ab", sWordStart, TextSearch(b"ab", algorithm=algo), 0 ),
                     ),
-                    "ddeeffab",
-                    ( 1,[("ab",0,6,None)],6),
+                    b"ddeeffab",
+                    ( 1,[(b"ab",0,6,None)],6),
                 )
         def testsWordStart2( self ):
             """Test simple sWordStart command ignore fail"""
             for algo in [BOYERMOORE, TRIVIAL]:
                 self.doBasicTest(
                     (
-                        ( "ab", sWordStart, TextSearch("ab", algorithm=algo), 1,1),
+                        ( b"ab", sWordStart, TextSearch(b"ab", algorithm=algo), 1,1),
                     ),
-                    "cdffgg",
+                    b"cdffgg",
                     ( 1,[],0),
                 )
             
@@ -86,43 +86,41 @@ class MXHighTests(unittest.TestCase):
             for algo in [BOYERMOORE, TRIVIAL]:
                 self.doBasicTest(
                     (
-                        ( "ab", sWordEnd, TextSearch("ab", algorithm=algo), 0 ),
+                        ( b"ab", sWordEnd, TextSearch(b"ab", algorithm=algo), 0 ),
                     ),
-                    "ddeeffab",
-                    ( 1,[("ab",0,8,None)],8),
+                    b"ddeeffab",
+                    ( 1,[(b"ab",0,8,None)],8),
                 )
         def testsWordEnd2( self ):
             """Test simple sWordEnd command ignore fail"""
             for algo in [BOYERMOORE, TRIVIAL]:
                 self.doBasicTest(
                     (
-                        ( "ab", sWordEnd, TextSearch("ab", algorithm=algo), 1,1),
+                        ( b"ab", sWordEnd, TextSearch(b"ab", algorithm=algo), 1,1),
                     ),
-                    "cdffgg",
+                    b"cdffgg",
                     ( 1,[],0),
                 )
 
 
         def testsFindWord1( self ):
             """Test simple sWordFind command"""
-#			import pdb
-#			pdb.set_trace()
             for algo in [BOYERMOORE, TRIVIAL]:
                 self.doBasicTest(
                     (
-                        ( "ab", sFindWord, TextSearch("ab", algorithm=algo), 0 ),
+                        ( b"ab", sFindWord, TextSearch(b"ab", algorithm=algo), 0 ),
                     ),
-                    "ddeeffab",
-                    ( 1,[("ab",6,8,None)],8),
+                    b"ddeeffab",
+                    ( 1,[(b"ab",6,8,None)],8),
                 )
         def testsFindWord2( self ):
             """Test simple sFindWord command ignore fail"""
             for algo in [BOYERMOORE, TRIVIAL]:
                 self.doBasicTest(
                     (
-                        ( "ab", sFindWord, TextSearch("ab", algorithm=algo), 1,1),
+                        ( b"ab", sFindWord, TextSearch(b"ab", algorithm=algo), 1,1),
                     ),
-                    "cdffgg",
+                    b"cdffgg",
                     ( 1,[],0),
                 )
     else:
@@ -130,18 +128,18 @@ class MXHighTests(unittest.TestCase):
             """Test simple sWordStart command"""
             self.doBasicTest(
                 (
-                    ( "ab", sWordStart, BMS("ab"), 0 ),
+                    ( b"ab", sWordStart, BMS("ab"), 0 ),
                 ),
-                "ddeeffab",
-                ( 1,[("ab",0,6,None)],6),
+                b"ddeeffab",
+                ( 1,[(b"ab",0,6,None)],6),
             )
         def testsWordStart2( self ):
             """Test simple sWordStart command ignore fail"""
             self.doBasicTest(
                 (
-                    ( "ab", sWordStart, BMS("ab"), 1,1),
+                    ( b"ab", sWordStart, BMS("ab"), 1,1),
                 ),
-                "cdffgg",
+                b"cdffgg",
                 ( 1,[],0),
             )
             
@@ -149,18 +147,18 @@ class MXHighTests(unittest.TestCase):
             """Test simple sWordEnd command"""
             self.doBasicTest(
                 (
-                    ( "ab", sWordEnd, BMS("ab"), 0 ),
+                    ( b"ab", sWordEnd, BMS(b"ab"), 0 ),
                 ),
-                "ddeeffab",
-                ( 1,[("ab",0,8,None)],8),
+                b"ddeeffab",
+                ( 1,[(b"ab",0,8,None)],8),
             )
         def testsWordEnd2( self ):
             """Test simple sWordEnd command ignore fail"""
             self.doBasicTest(
                 (
-                    ( "ab", sWordEnd, BMS("ab"), 1,1),
+                    ( b"ab", sWordEnd, BMS(b"ab"), 1,1),
                 ),
-                "cdffgg",
+                b"cdffgg",
                 ( 1,[],0),
             )
 
