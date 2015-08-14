@@ -127,7 +127,7 @@ XXX Not sure if loop vars are table or tag specific
 */
 #define RESET_TABLE_VARIABLES {\
 	index=0;\
-	table_len = table->ob_size;\
+	table_len = table->numentries;\
 	returnCode = NULL_CODE;\
 	loopcount = -1;\
 	loopstart = startPosition;\
@@ -193,7 +193,7 @@ XXX Not sure if loop vars are table or tag specific
 		taglist = stackParent->results;\
 		if (table != stackParent->table ) { Py_DECREF( table ); }\
 		table = stackParent->table;\
-		table_len = table->ob_size;\
+		table_len = table->numentries;\
 		index = stackParent->index;\
 		\
 		stackTemp = stackParent->parent;\
@@ -233,7 +233,7 @@ int TE_ENGINE_API(
 		/* whole-table variables */
 		Py_ssize_t position = sliceleft;		/* current (head) position in text for whole table */
 		Py_ssize_t startPosition = sliceleft;	/* start position for current tag */
-		Py_ssize_t table_len = table->ob_size; /* table length */
+		Py_ssize_t table_len = table->numentries; /* table length */
 		short returnCode = NULL_CODE;		/* return code: -1 not set, 0 error, 1
 					   not ok, 2 ok */
 		Py_ssize_t index=0; 			/* index of current table entry */

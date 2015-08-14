@@ -137,10 +137,9 @@ typedef struct {
     int tabletype;              /* Type of compiled table:
                                    0 - 8-bit string args
                                    1 - Unicode args */
+    int numentries;             /* number of allocated entries */
     mxTagTableEntry entry[1];   /* Variable length array of
-                                   mxTagTableEntry fields;
-                                   ob_size gives the number of
-                                   allocated entries. */
+                                   mxTagTableEntry fields */
 } mxTagTableObject;
 
 MXTEXTTOOLS_EXTERNALIZE(PyTypeObject) mxTagTable_Type;

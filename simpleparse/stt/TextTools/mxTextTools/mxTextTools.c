@@ -39,7 +39,7 @@
 
 /* --- module doc-string -------------------------------------------------- */
 
-static char *Module_docstring = 
+PyDoc_STRVAR(Module_docstring,
 
  MXTEXTTOOLS_MODULE" -- Tools for fast text processing. Version "VERSION"\n\n"
 
@@ -49,7 +49,7 @@ static char *Module_docstring =
 
  "                 All Rights Reserved\n\n"
  "See the documentation for further information on copyrights,\n"
- "or contact the author."
+ "or contact the author.")
 ;
 
 /* --- internal macros ---------------------------------------------------- */
@@ -777,7 +777,7 @@ PyTypeObject mxTextSearch_Type = {
     (printfunc)0,                       /*tp_print*/
     (getattrfunc)0,                     /*tp_getattr*/
     (setattrfunc)0,                     /*tp_setattr*/
-    (cmpfunc)0,                         /*tp_compare*/
+    0,                                  /*tp_compare*/
     (reprfunc)mxTextSearch_Repr,        /*tp_repr*/
     0,                                  /*tp_as_number*/
     0,                                  /*tp_as_number*/
@@ -1948,7 +1948,7 @@ PyTypeObject mxCharSet_Type = {
     (printfunc)0,                       /* tp_print */
     (getattrfunc)0,                     /* tp_getattr */
     (setattrfunc)0,                     /* tp_setattr */
-    (cmpfunc)0,                         /* tp_compare */
+    0,                                  /* tp_compare */
     (reprfunc)mxCharSet_Repr,           /* tp_repr */
     0,                                  /* tp_as_number */
     &mxCharSet_TypeAsSequence,          /* tp_as_sequence */
@@ -2109,7 +2109,7 @@ static
 int tc_cleanup(mxTagTableObject *tagtable)
 {
     Py_ssize_t i;
-    for (i = 0; i < tagtable->ob_size; i++) {
+    for (i = 0; i < tagtable->numentries; i++) {
 	mxTagTableEntry *tagtableentry = &tagtable->entry[i];
 
 	Py_XDECREF(tagtableentry->tagobj);
@@ -2145,6 +2145,7 @@ int init_tag_table(mxTagTableObject *tagtable,
     
     /* First pass */
     secondpass = 0;
+    tagtable->numentries = size;
     for (i = 0; i < size; i++) {
 	mxTagTableEntry *tagtableentry = &tagtable->entry[i];
 
@@ -2646,7 +2647,7 @@ PyObject *mxTagTable_CompiledDefinition(PyObject *self)
 	goto onError;
     }
 
-    size = tagtable->ob_size;
+    size = tagtable->numentries;
     tuple = PyTuple_New(size);
     if (tuple == NULL)
 	goto onError;
@@ -2765,7 +2766,7 @@ PyTypeObject mxTagTable_Type = {
     (printfunc)0,                           /* tp_print */
     (getattrfunc)0,                         /* tp_getattr */
     (setattrfunc)0,                         /* tp_setattr */
-    (cmpfunc)0,                             /* tp_compare */
+    0,                                      /* tp_compare */
     (reprfunc)mxTagTable_Repr,              /* tp_repr */
     0,                                      /* tp_as_number */
     0,                                      /* tp_as_sequence */
@@ -4554,6 +4555,7 @@ Py_C_Function( mxTextTools_cmp,
 	       "position; this is useful for sorting joinlists.")
 {
     PyObject *v,*w;
+    short index;
     int cmp;
 
     Py_Get2Args("OO:cmp",v,w);
@@ -4563,11 +4565,15 @@ Py_C_Function( mxTextTools_cmp,
 	      PyExc_TypeError,
 	      "invalid taglist-tuple");
 
-    cmp = PyObject_Compare(PyTuple_GET_ITEM(v,1),PyTuple_GET_ITEM(w,1));
-    if (cmp != 0) 
-	return PyInt_FromLong(cmp);
-    cmp = - PyObject_Compare(PyTuple_GET_ITEM(v,2),PyTuple_GET_ITEM(w,2));
-    return PyInt_FromLong(cmp);
+    for (index = 1; index < 3; index++) {
+        cmp = PyObject_RichCompareBool(PyTuple_GET_ITEM(v,1),PyTuple_GET_ITEM(w,1),Py_LT);
+        if (cmp) 
+            return PyInt_FromLong(cmp);
+        cmp = PyObject_RichCompareBool(PyTuple_GET_ITEM(v,2),PyTuple_GET_ITEM(w,2), Py_GT);
+        if (cmp)
+            return PyInt_FromLong(cmp);
+    }
+    return PyInt_FromLong(0);
 
  onError:
     return NULL;
@@ -4994,6 +5000,15 @@ void mxTextToolsModule_Cleanup(void)
     mxTextTools_Initialized = 0;
 }
 
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef mxTextTools_ModuleDef = {
+    PyModuleDef_HEAD_INIT,
+    MXTEXTTOOLS_MODULE,
+    Module_docstring,
+    -1,
+    Module_methods
+};
+#endif
 
 static PyObject* mxTextToolsModule_Initialize(void)
 {
@@ -5014,11 +5029,15 @@ static PyObject* mxTextToolsModule_Initialize(void)
         return NULL;
 
     /* create module */
+#if PY_MAJOR_VERSION >= 3
+    module = PyModule_Create(&mxTextTools_ModuleDef);
+#else
     module = Py_InitModule4(MXTEXTTOOLS_MODULE, /* Module name */
                 Module_methods, /* Method list */
                 Module_docstring, /* Module doc-string */
                 (PyObject *)NULL, /* always pass this as *self */
                 PYTHON_API_VERSION); /* API Version */
+#endif
     if (!module)
         return NULL;
 
@@ -5056,7 +5075,7 @@ static PyObject* mxTextToolsModule_Initialize(void)
     ADD_INT_CONSTANT("TRIVIAL", MXTEXTSEARCH_TRIVIAL);
 
     /* Init exceptions */
-    mxTextTools_Error = PyErr_NewException("mxTextTools.Error", PyExc_StandardError, NULL);
+    mxTextTools_Error = PyErr_NewException("mxTextTools.Error", PyExc_Exception, NULL);
     if (!mxTextTools_Error)
         return NULL;
     if (PyModule_AddObject(module, "Error", mxTextTools_Error) < 0)
@@ -5146,10 +5165,15 @@ static PyObject* mxTextToolsModule_Initialize(void)
     return module;
 }
 
-
-MX_EXPORT(void) 
-     initmxTextTools(void)
+#if PY_MAJOR_VERSION >= 3
+PyMODINIT_FUNC PyInit_mxTextTools(void)
+{
+    return mxTextToolsModule_Initialize();
+}
+#else
+MX_EXPORT(void) initmxTextTools(void)
 {
     mxTextToolsModule_Initialize();
 }
+#endif
 
