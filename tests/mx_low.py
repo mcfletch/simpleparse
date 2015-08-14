@@ -220,18 +220,18 @@ class MXLowTests(unittest.TestCase):
         """Test simple AllInSet command"""
         self.doBasicTest(
             (
-                ( "ab", AllInSet, set("ab"), 0 ),
+                ( b"ab", AllInSet, set(b"ab"), 0 ),
             ),
-            "abbaab",
-            ( 1,[("ab",0,6,None)],6),
+            b"abbaab",
+            ( 1,[(b"ab",0,6,None)],6),
         )
     def testAllInSet2( self ):
         """Test simple AllInSet command ignore fail"""
         self.doBasicTest(
             (
-                ( "ab", AllInSet, set("ab"), 1,1 ),
+                ( b"ab", AllInSet, set(b"ab"), 1,1 ),
             ),
-            "c",
+            b"c",
             ( 1,[],0),
         )
 
@@ -239,18 +239,18 @@ class MXLowTests(unittest.TestCase):
         """Test simple IsInSet command"""
         self.doBasicTest(
             (
-                ( "ab", IsInSet, set("ab"), 0 ),
+                ( b"ab", IsInSet, set(b"ab"), 0 ),
             ),
-            "abbaab",
-            ( 1,[("ab",0,1,None)],1),
+            b"abbaab",
+            ( 1,[(b"ab",0,1,None)],1),
         )
     def testIsInSet2( self ):
         """Test simple IsInSet command ignore fail"""
         self.doBasicTest(
             (
-                ( "ab", IsInSet, set("ab"), 1,1),
+                ( b"ab", IsInSet, set(b"ab"), 1,1),
             ),
-            "c",
+            b"c",
             ( 1,[],0),
         )
     if mxVersion >= ('2','1'):
@@ -258,10 +258,10 @@ class MXLowTests(unittest.TestCase):
             """Test simple IsInCharSet command"""
             self.doBasicTest(
                 (
-                    ( "ab", IsInCharSet, CharSet("ab"), 0 ),
+                    ( b"ab", IsInCharSet, CharSet(b"ab"), 0 ),
                 ),
-                "abbaab",
-                ( 1,[("ab",0,1,None)],1),
+                b"abbaab",
+                ( 1,[(b"ab",0,1,None)],1),
             )
         def testIsInCharSet2( self ):
             """Test simple IsInCharSet command ignore fail"""

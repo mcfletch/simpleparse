@@ -5,7 +5,10 @@ parsed, then linearised, then loaded as a Python module.
 """
 import os, unittest
 import test_grammarparser
-from importlib import reload
+try:
+    reload
+except NameError:
+    from importlib import reload
 testModuleFile = 'test_printers_garbage.py'
 
 
@@ -13,7 +16,8 @@ class PrintersTests(test_grammarparser.SimpleParseGrammarTests):
     def setUp( self ):
         from simpleparse import simpleparsegrammar, parser, printers, baseparser
         p = parser.Parser( simpleparsegrammar.declaration, 'declarationset')
-        open(testModuleFile,'w').write(printers.asGenerator( p._generator ))
+        with open(testModuleFile,'w') as fh:
+            fh.write(printers.asGenerator( p._generator ))
         import test_printers_garbage
         reload( test_printers_garbage )
         

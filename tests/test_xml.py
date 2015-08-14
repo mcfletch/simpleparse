@@ -1,6 +1,10 @@
 from simpleparse.xmlparser import xml_parser
 from simpleparse.parser import Parser
-import unittest, string
+import unittest
+try:
+    unicode
+except NameError:
+    unicode = str
 
 p = Parser( xml_parser.declaration )
 
@@ -16,10 +20,14 @@ class ProductionTest:
     def __call__( self ):
         """Perform the test"""
         for item in self.should:
+            if isinstance(item,unicode):
+                item = item.encode('utf-8')
             success, children, next = p.parse( item, self.production )
             assert success, """Didn't parse %s as a %s, should have"""%( repr(item), self.production)
             assert next == len(item), """Didn't parse whole of %s as a %s, parsed %s of %s characters, results were:\n%s\nRest was:\n%s"""%( repr(item), self.production, next, len(item), children, item[next:])
         for item in shouldnot:
+            if isinstance(item,unicode):
+                item = item.encode('utf-8')
             success, children, next = p.parse( item, self.production )
             assert not success, """Parsed %s chars of %s as a %s, shouldn't have, result was:\n%s"""%( next, repr(item), self.production, children)
 

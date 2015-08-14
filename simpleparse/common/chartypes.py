@@ -44,12 +44,12 @@ c = {}
 
 for source,single,repeat in [
     ("digits","digit","digits"),
-    ("uppercase", "uppercasechar", "uppercase"),
-    ("lowercase", "lowercasechar", "lowercase"),
-    ("letters", "letter", "letters" ),
+    ("ascii_uppercase", "uppercasechar", "uppercase"),
+    ("ascii_lowercase", "lowercasechar", "lowercase"),
+    ("ascii_letters", "letter", "letters" ),
+    ("ascii_letters", "ascii_letter", "ascii_letters" ), # alias
     ("ascii_lowercase", "ascii_lowercasechar", "ascii_lowercase"),
     ("ascii_uppercase", "ascii_uppercasechar", "ascii_uppercase"),
-    ("ascii_letters", "ascii_letter", "ascii_letters" ),
     ("whitespace", "whitespacechar", "whitespace"),
     ("punctuation", "punctuationchar", "punctuation"),
     ("octdigits", "octdigit", "octdigits"),

@@ -20,9 +20,13 @@ class CommonTests(unittest.TestCase):
         p = Parser(decl)
         notset = translate( fulltrans, fulltrans, set )
         for char in set:
+            if isinstance(char,int):
+                char = chr(char)
             success, children, next = p.parse( char, singleName)
             assert success and (next == 1), """Parser for %s couldn't parse %s"""%( singleName, char )
         for char in notset:
+            if isinstance(char,int):
+                char = chr(char)
             success, children, next = p.parse( char, singleName)
             assert (not success) and (next == 0), """Parser for %s parsed %s"""%( singleName, char )
             success, children, next = p.parse( char, multiName)
@@ -32,8 +36,8 @@ class CommonTests(unittest.TestCase):
     def testBasic( self ):
         for set, single, multiple in (
             ("digits", "digit", "digits"),
-            ("uppercase", "uppercasechar", "uppercase"),
-            ("lowercase", "lowercasechar", "lowercase"),
+            ("ascii_uppercase", "uppercasechar", "uppercase"),
+            ("ascii_lowercase", "lowercasechar", "lowercase"),
             ("ascii_letters", "letter", "letters"),
             ("whitespace", "whitespacechar", "whitespace"),
             ("octdigits", "octdigit", "octdigits"),
@@ -52,6 +56,9 @@ class CommonTests(unittest.TestCase):
                     multiple,
                 )
             except AttributeError:
+                raise
+            except TypeError as err:
+                err.args += (set,single,multiple)
                 raise
     def testEOF( self ):
         p = Parser( """this := 'a',EOF""", 'this')
