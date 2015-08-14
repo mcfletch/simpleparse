@@ -3,7 +3,12 @@ from simpleparse.parser import Parser
 from simpleparse.common import chartypes, timezone_names
 from simpleparse import dispatchprocessor
 
-fulltrans = string.maketrans("","")
+try:
+    fulltrans = string.maketrans("","")
+    translate = string.translate
+except AttributeError:
+    fulltrans = bytes.maketrans(b"",b"")
+    translate = bytes.translate
 
 class CommonTests(unittest.TestCase):
     def doBasicTest(self, definition, parserName, testValue, expected, ):
@@ -13,7 +18,7 @@ class CommonTests(unittest.TestCase):
         """Test multi-line definitions"""
         decl = """single := %s multiple := %s"""%( singleName, multiName )
         p = Parser(decl)
-        notset = string.translate( fulltrans, fulltrans, set )
+        notset = translate( fulltrans, fulltrans, set )
         for char in set:
             success, children, next = p.parse( char, singleName)
             assert success and (next == 1), """Parser for %s couldn't parse %s"""%( singleName, char )
