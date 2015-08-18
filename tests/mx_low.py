@@ -1,10 +1,10 @@
 """Low-level matching tests for mx.TextTools"""
-import unittest, pprint
+import unittest
 from simpleparse.stt.TextTools import *
 
 from simpleparse.stt import TextTools
 mxVersion = tuple(TextTools.__version__.split('.')[:3])
-from genericvalues import AnyInt, NullResult
+from .genericvalues import AnyInt
 
 
 class MXLowTests(unittest.TestCase):

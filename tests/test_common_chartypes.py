@@ -1,10 +1,11 @@
 import unittest, string
 from simpleparse.parser import Parser
 from simpleparse.common import chartypes, timezone_names
+assert chartypes
 from simpleparse import dispatchprocessor
 
 try:
-    fulltrans = string.maketrans("","")
+    fulltrans = string.maketrans(b"",b"")
     translate = string.translate
 except AttributeError:
     fulltrans = bytes.maketrans(b"",b"")

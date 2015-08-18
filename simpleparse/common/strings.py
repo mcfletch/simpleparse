@@ -38,6 +38,7 @@ Interpreters:
 from simpleparse.parser import Parser
 from simpleparse import common, objectgenerator
 from simpleparse.common import chartypes
+assert chartypes
 from simpleparse.dispatchprocessor import *
 
 c = {}

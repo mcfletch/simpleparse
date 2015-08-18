@@ -7,7 +7,6 @@ as this is the first grammar being written.
 from simpleparse.objectgenerator import *
 from simpleparse import generator, baseparser
 from simpleparse.dispatchprocessor import *
-HAVE_UNICODE = 1
 
 try:
     _unichr = unichr
@@ -678,6 +677,7 @@ class SPGrammarProcessor( DispatchProcessor ):
     CHAR = CHARNOSNGLQUOTE = CHARNODBLQUOTE
     def ESCAPEDCHAR( self, info, buffer):
         (tag, left, right, sublist) = info
+        print( buffer[left:right] )
         return "".join(dispatchList( self, sublist, buffer))
     specialescapedmap = {
     'a':'\a',

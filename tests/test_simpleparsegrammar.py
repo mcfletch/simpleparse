@@ -1,7 +1,9 @@
-import unittest, pprint
+import unittest, sys
 from simpleparse.parser import Parser
 from simpleparse.stt.TextTools import TextTools
-from genericvalues import NullResult, AnyInt
+from .genericvalues import NullResult, AnyInt
+from . import test_grammarparser
+from . import test_erroronfail
         
 class ParserGenerationTests(unittest.TestCase):
     def doBasicTest(self, definition, parserName, testValue, expected, ):
@@ -290,16 +292,17 @@ class ParserGenerationTests(unittest.TestCase):
             u'\u0600\u06ff',
             (1,[],2)
         )
-    def testGenUnicodeRangeBroken( self ):
-        self.assertRaises(
-            ValueError,
-            self.doBasicTest,
-                '''s := [a-\u06ff]+''',
-                's',
-                u'\u0600\u06ff',
-                (1,[],2)
-        )
-                
+    if sys.version_info.major < 3:
+        def testGenUnicodeRangeBroken( self ):
+            self.assertRaises(
+                ValueError,
+                self.doBasicTest,
+                    '''s := [a-\u06ff]+''',
+                    's',
+                    u'\u0600\u06ff',
+                    (1,[],2)
+            )
+        
 
 class NameTests(unittest.TestCase):
     def doBasicTest(self, definition, parserName, testValue, expected, ):
@@ -516,14 +519,12 @@ class CallTests(unittest.TestCase):
     def test_AppendToTagObj( self ):
         """Test basic ability to call a method instead of regular functioning"""
         source = AppendToTagobjMethodSource()
-        result = self.parse( """
+        self.parse( """
             x := d*
             d := 'd'
         """, 'x', 'ddd', source)
         assert source._o_d == [ (None,0,1,NullResult),(None,1,2,NullResult),(None,2,3,NullResult)], """Method source methods were not called, or called improperly:\n%s"""%(source._o_d,)
 
-import test_grammarparser
-import test_erroronfail
 
 def getSuite():
     return unittest.TestSuite((

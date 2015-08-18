@@ -2,8 +2,7 @@ from __future__ import print_function
 
 from simpleparse.simpleparsegrammar import Parser
 from simpleparse.stt.TextTools import TextTools
-import pprint
-from .genericvalues import NullResult, AnyInt
+from .genericvalues import NullResult
 
 
 declaration = r'''testparser := as?

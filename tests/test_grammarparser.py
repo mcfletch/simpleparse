@@ -1,12 +1,10 @@
 """Tests that simpleparsegrammar does parse SimpleParse grammars
 """
-
-import unittest, pprint
+import unittest,pprint
 from simpleparse.simpleparsegrammar import SPGenerator, declaration
 from simpleparse.parser import Parser
-from simpleparse.error import ParserSyntaxError
 from simpleparse.stt.TextTools import TextTools
-from genericvalues import NullResult, AnyInt
+from .genericvalues import NullResult, AnyInt
 
 from simpleparse.stt.TextTools import print_tagtable
 print_tagtable(
@@ -19,7 +17,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
     def doBasicTest(self, parserName, testValue, expected, ):
         parser = SPGenerator.buildParser( parserName )
         result = TextTools.tag( testValue, parser )
-        assert result == expected, '''\nexpected:%s\n     got:%s\n'''%( expected, result )
+        assert result == expected, '''\nexpected:%s\n     got:%s\n'''%( pprint.pformat(expected), pprint.pformat(result))
     def testChar1( self ):
         self.doBasicTest(
             "CHARNODBLQUOTE",
@@ -390,7 +388,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
             '+',
             (1, [], 1)
         )
-    def testNegposIndicator2( self ):
+    def testNegposIndicator3( self ):
         self.doBasicTest(
             "negpos_indicator",
             ')',
@@ -452,15 +450,21 @@ class SimpleParseGrammarTests(unittest.TestCase):
                 ('element_token', 4,38,[
                     ('seq_group',5,37,[
                         ('fo_group',5,37,[
-                            ('element_token', 7,8,[
-                                ("name",7,8,NullResult),
-                            ])
+                            ('element_token', 5,19,[
+                                ("name",5,19,NullResult),
+                            ]),
+                            ('element_token', 20,32,[
+                                ("name",20,32,NullResult),
+                            ]),
+                            ('element_token', 33,37,[
+                                ("name",33,37,NullResult),
+                            ]),
                         ]),
                     ]),
                 ]),
             ], 38)
         )
-    def testSeqGroup2( self ):
+    def testSeqGroup3( self ):
         self.doBasicTest(
             "seq_group",
             '(a/b/c)',
@@ -673,7 +677,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
                 ("occurence_indicator",6,7,NullResult),
             ], 7)
         )
-    def testElementToken8( self ):
+    def testElementToken9( self ):
         """Error on fail indicator"""
         self.doBasicTest(
             "element_token",
@@ -684,7 +688,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
                 ("error_on_fail",6,7,NullResult),
             ], 7)
         )
-    def testElementToken9( self ):
+    def testElementToken10( self ):
         """Error on fail indicator with message"""
         self.doBasicTest(
             "element_token",

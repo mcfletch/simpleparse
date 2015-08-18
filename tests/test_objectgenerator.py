@@ -1,7 +1,6 @@
-import unittest, pprint, traceback
+import unittest
 from simpleparse.objectgenerator import *
-from simpleparse.stt.TextTools import TextTools
-from genericvalues import NullResult, AnyInt
+from .genericvalues import AnyInt
 
 try:
     _unichr = unichr
