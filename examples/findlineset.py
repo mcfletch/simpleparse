@@ -53,7 +53,7 @@ if __name__ == "__main__":
         results
     )
     print()
-    testData = file1 * (30000000/len(file1))
+    testData = file1 * (30000000//len(file1))
     print('starting parse of file 1 with ~230,000 matches (slow)')
     t = time.clock()
     success, results, next = p.parse( testData, "sets")
