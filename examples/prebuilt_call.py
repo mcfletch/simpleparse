@@ -14,6 +14,10 @@ import re
 from simpleparse.stt.TextTools.TextTools import *
 from simpleparse.parser import Parser
 from simpleparse import dispatchprocessor
+try:
+    raw_input
+except NameError:
+    raw_input = input
 
 class REMatch:
     """An object wrapping a regular expression with __call__ (and Call) semantics"""
@@ -59,5 +63,5 @@ parser = Parser( declaration, "v", prebuilts = [
 if __name__ == "__main__":
     print("""Please enter some number of words seperated by whitespace.
 We will attempt to parse them and return the parse results""")
-    data = input( ">>> " )
+    data = raw_input( ">>> " )
     parser.parse( data , processor = WordProcessor())
