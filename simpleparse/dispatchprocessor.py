@@ -60,38 +60,22 @@ def dispatchList( source, taglist, buffer ):
     else:
         return []
 
-try:
-    {}.setdefault
-except AttributeError:
-    def multiMap( taglist ):
-        """Convert the taglist to a mapping from tag-object:[list-of-tags]
-        (slower non-setdefault version for older Python versions)"""
-        set = {}
-        if not taglist:
-            return set
-        for tag in taglist:
-            key = tag[0]
-            if source and buffer:
-                tag = dispatch( source, tag, buffer )
-            set[key] = set.get(key, []) + [tag]
+def multiMap( taglist, source=None, buffer=None ):
+    """Convert a taglist to a mapping from tag-object:[list-of-tags]
+    
+    For instance, if you have items of 3 different types, in any order,
+    you can retrieve them all sorted by type with multimap( childlist)
+    then access them by tagobject key.
+    """
+    set = {}
+    if not taglist:
         return set
-else:
-    def multiMap( taglist, source=None, buffer=None ):
-        """Convert a taglist to a mapping from tag-object:[list-of-tags]
-        
-        For instance, if you have items of 3 different types, in any order,
-        you can retrieve them all sorted by type with multimap( childlist)
-        then access them by tagobject key.
-        """
-        set = {}
-        if not taglist:
-            return set
-        for tag in taglist:
-            key = tag[0]
-            if source and buffer:
-                tag = dispatch( source, tag, buffer )
-            set.setdefault(key,[]).append( tag )
-        return set
+    for tag in taglist:
+        key = tag[0]
+        if source and buffer:
+            tag = dispatch( source, tag, buffer )
+        set.setdefault(key,[]).append( tag )
+    return set
 def singleMap( taglist, source=None, buffer=None ):
     """Convert a taglist to a mapping from tag-object:tag, overwritting early with late tags"""
     set = {}
