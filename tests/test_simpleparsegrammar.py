@@ -292,7 +292,7 @@ class ParserGenerationTests(unittest.TestCase):
             u'\u0600\u06ff',
             (1,[],2)
         )
-    if sys.version_info.major < 3:
+    if sys.version_info[0] < 3:
         def testGenUnicodeRangeBroken( self ):
             self.assertRaises(
                 ValueError,

@@ -4,3 +4,4 @@ SimpleParse.egg-info
 simpleparse.e4p
 __pycache__
 .eric?project
+.tox
