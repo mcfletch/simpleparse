@@ -6,6 +6,7 @@ recursive-include . *.py
 recursive-include simpleparse/stt *
 recursive-include doc *.html
 recursive-include doc *.css
+recursive-include tests *.py
 prune examples/html.py
 prune examples/py*
 prune examples/rtf*
