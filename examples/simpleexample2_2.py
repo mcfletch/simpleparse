@@ -22,16 +22,16 @@ from simpleparse.parser import Parser
 parser = Parser( declaration )
 
 testEquality = [
-	"s=3\n",
-	"s = 3\n",
-	'''  s="three\\nthere"\n''',
-	'''  s=three\n''',
+    "s=3\n",
+    "s = 3\n",
+    '''  s="three\\nthere"\n''',
+    '''  s=three\n''',
 ]
 
 production = "equality"
 
 if __name__ =="__main__":
-	for testData in testEquality:
-		success, children, nextcharacter = parser.parse( testData, production=production)
-		assert success and nextcharacter==len(testData), """Wasn't able to parse %s as a %s (%s chars parsed of %s), returned value was %s"""%( repr(testData), production, nextcharacter, len(testData), (success, children, nextcharacter))
-	
+    for testData in testEquality:
+        success, children, nextcharacter = parser.parse( testData, production=production)
+        assert success and nextcharacter==len(testData), """Wasn't able to parse %s as a %s (%s chars parsed of %s), returned value was %s"""%( repr(testData), production, nextcharacter, len(testData), (success, children, nextcharacter))
+    

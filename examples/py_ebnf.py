@@ -14,9 +14,9 @@ grammar is assuming a very different parser type than SimpleParse,
 for instance, it assumes that alternation (|) will use longest-of
 semantics, so that:
 
-	int      := blah
-	long_int := int, [lL]
-	all_ints := int, long_int
+    int      := blah
+    long_int := int, [lL]
+    all_ints := int, long_int
 
 Would match long_int (because it's longest), rather than int, which
 is what the base SimpleParse FOGroup would do.  You could fairly
@@ -31,21 +31,22 @@ with this demo.
 The grammar being parsed (and included) is part of Python, so
 here's the copyright notice:
 
-	Python is Copyright (c) 2001, 2002 Python Software Foundation.
-	All Rights Reserved.
+    Python is Copyright (c) 2001, 2002 Python Software Foundation.
+    All Rights Reserved.
 
-	Copyright (c) 2000 BeOpen.com.
-	All Rights Reserved.
+    Copyright (c) 2000 BeOpen.com.
+    All Rights Reserved.
 
-	Copyright (c) 1995-2001 Corporation for National Research Initiatives.
-	All Rights Reserved.
+    Copyright (c) 1995-2001 Corporation for National Research Initiatives.
+    All Rights Reserved.
 
-	Copyright (c) 1991-1995 Stichting Mathematisch Centrum, Amsterdam.
-	All Rights Reserved.
-	
+    Copyright (c) 1991-1995 Stichting Mathematisch Centrum, Amsterdam.
+    All Rights Reserved.
+    
 You should have a full copy of the Python license in your Python
 distribution.
 """
+from __future__ import print_function
 declaration = r"""
 
 declarationset      :=  declaration+
@@ -69,22 +70,23 @@ optional_element    := '[',fo_group,']'
 
 name                :=  [a-zA-Z_],[a-zA-Z0-9_]*
 <ts>                :=  (
-	('\n', ?-name) /
-	[ \011]+ /
-	comment
+    ('\n', ?-name) /
+    [ \011]+ /
+    comment
 )*
 comment             :=  '#',-'\n'+,'\n'
 
 range               :=  string, ts, '...', ts, string
 
 """
+
 from simpleparse.parser import Parser
 from simpleparse.common import strings
 
 parser = Parser( declaration )
 if __name__ == "__main__":
-	from simpleparse.stt.TextTools import print_tags
-	grammar = open("""py_grammar.txt""").read()
-	success, result, next = parser.parse( grammar, 'declarationset')
-	print 'success', success, next
-	print_tags( grammar, result )
+    from simpleparse.stt.TextTools import print_tags
+    grammar = open("""py_grammar.txt""").read()
+    success, result, next = parser.parse( grammar, 'declarationset')
+    print('success', success, next)
+    print_tags( grammar, result )

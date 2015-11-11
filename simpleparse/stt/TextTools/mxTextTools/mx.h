@@ -39,7 +39,7 @@
 
 /* Some more tweaks for various platforms. */
 
-/* VMS needs this define. Thanks to Jean-François PIÉRONNE */
+/* VMS needs this define. Thanks to Jean-FranÃ§ois PIÃ‰RONNE */
 #if defined(__VMS)
 # define __SC__
 #endif
@@ -125,7 +125,7 @@ static void mx_Py_INCREF(PyObject *v,
 	Py_INCREF(v);;
 	mxDebugPrintf("[%s:%5i] Py_XINCREF( %-8s at 0x%x [%s]); "
 		      "new refcount = %i\n",
-		      filename,lineno,name,(int)v,v->ob_type->tp_name,
+		      filename,lineno,name,(int)v,Py_TYPE(v)->tp_name,
 		      v->ob_refcnt);
     }
 }
@@ -148,11 +148,11 @@ static void mx_Py_DECREF(PyObject *v,
 	if (refcnt <= 1)
 	    mxDebugPrintf("[%s:%5i] Py_XDECREF( %-8s at 0x%x [%s]); "
 			  "object deleted\n",
-			  filename,lineno,name,(int)v,v->ob_type->tp_name);
+			  filename,lineno,name,(int)v,Py_TYPE(v)->tp_name);
 	else
 	    mxDebugPrintf("[%s:%5i] Py_XDECREF( %-8s at 0x%x [%s]); "
 			  "new refcount = %i\n",
-			  filename,lineno,name,(int)v,v->ob_type->tp_name,
+			  filename,lineno,name,(int)v,Py_TYPE(v)->tp_name,
 			  v->ob_refcnt);
     }
 }
@@ -167,7 +167,7 @@ static void mx_Py_PRINT_REFCOUNT(PyObject *v,
 		      filename,lineno,name);
     else {
 	mxDebugPrintf("[%s:%5i] Py_PRINT_REFCOUNT( %-8s at 0x%x [%s]) = %i;\n",
-		      filename,lineno,name,(int)v,v->ob_type->tp_name,
+		      filename,lineno,name,(int)v,Py_TYPE(v)->tp_name,
 		      v->ob_refcnt);
     }
 }
@@ -395,12 +395,6 @@ static void mx_Py_PRINT_REFCOUNT(PyObject *v,
 		start = stop;			\
 	}
 
-/* --- Number macros ------------------------------------------------------ */
-
-/* Test for PyFloat_AsDouble() compatible object */
-#define PyFloat_Compatible(obj) \
-        (obj->ob_type->tp_as_number->nb_float != NULL)
-
 /* --- Text macros -------------------------------------------------------- */
 
 /* Check a given text slice and apply the usual rules for negative
@@ -484,63 +478,6 @@ static void mx_Py_PRINT_REFCOUNT(PyObject *v,
 #define Py_CharInSet(chr,set)					\
         (((unsigned char)(set)[(unsigned char)(chr) >> 3] & 	\
 	  (1 << ((unsigned char)(chr) & 7))) != 0)
-
-/* --- Macros for getattr ------------------------------------------------- */
-
-/* Compares var to name and returns 1 iff they match.
-
-   This assumes that name is a constant char array. */
-
-#define Py_WantAttr(var,name) Py_StringsCompareEqual(var,name)
-
-/* --- Module init helpers ------------------------------------------------ */
-
-/* Helper for startup type object initialization */
-
-#define PyType_Init(x)						\
-{								\
-    x.ob_type = &PyType_Type; 					\
-    Py_Assert(x.tp_basicsize >= (int)sizeof(PyObject),	        \
-	      PyExc_SystemError,				\
-	      "Internal error: tp_basicsize of "#x" too small");\
-}
-
-/* Error reporting for module init functions */
-
-#define Py_ReportModuleInitError(modname) {			\
-    PyObject *exc_type, *exc_value, *exc_tb;			\
-    PyObject *str_type, *str_value;				\
-								\
-    /* Fetch error objects and convert them to strings */	\
-    PyErr_Fetch(&exc_type, &exc_value, &exc_tb);		\
-    if (exc_type && exc_value) {				\
-	str_type = PyObject_Str(exc_type);			\
-	str_value = PyObject_Str(exc_value);			\
-    }								\
-    else {							\
-	str_type = NULL;					\
-	str_value = NULL;					\
-    }								\
-    /* Try to format a more informative error message using the	\
-       original error */					\
-    if (str_type && str_value &&				\
-	PyString_Check(str_type) && PyString_Check(str_value))	\
-	PyErr_Format(						\
-		PyExc_ImportError,				\
-		"initialization of module "modname" failed "	\
-		"(%s:%s)",					\
-		PyString_AS_STRING(str_type),			\
-		PyString_AS_STRING(str_value));			\
-    else							\
-	PyErr_SetString(					\
-		PyExc_ImportError,				\
-		"initialization of module "modname" failed");	\
-    Py_XDECREF(str_type);					\
-    Py_XDECREF(str_value);					\
-    Py_XDECREF(exc_type);					\
-    Py_XDECREF(exc_value);					\
-    Py_XDECREF(exc_tb);						\
-}
 
 /* --- SWIG addons -------------------------------------------------------- */
 

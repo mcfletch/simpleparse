@@ -1,4 +1,6 @@
 """Simple example of a json parser with comment support"""
+from __future__ import print_function
+
 from simpleparse.common import numbers, strings, comments
 
 declaration = r'''
@@ -25,16 +27,20 @@ from simpleparse.dispatchprocessor import *
 import pprint
 
 class Processor( DispatchProcessor ):
-    def object( self, (tag,start,stop,children), buffer ):
+    def object( self, info, buffer ):
+        (tag,start,stop,children) = info
         obj = {}
         for key,value in dispatchList( self, children, buffer ):
             obj[key] = value
         return obj
-    def member( self, (tag,start,stop,children), buffer ):
+    def member( self, info, buffer ):
+        (tag,start,stop,children) = info
         return dispatchList( self, children, buffer )
-    def array( self, (tag,start,stop,children), buffer ):
+    def array( self, info, buffer ):
+        (tag,start,stop,children) = info
         return dispatchList( self, children, buffer )
-    def int_w_exp( self, (tag,start,stop,(a,b)), buffer ):
+    def int_w_exp( self, info, buffer ):
+        (tag,start,stop,(a,b)) = info
         base = dispatch( self, a, buffer )
         exp = dispatch( self, b, buffer )
         return base ** exp
@@ -54,6 +60,6 @@ class Processor( DispatchProcessor ):
 parser = Parser( declaration, "object" )
 if __name__ =="__main__":
     import sys,json
-    print json.dumps(
+    print(json.dumps(
         parser.parse( open(sys.argv[1]).read(), processor=Processor())
-    )
+    ))

@@ -1,5 +1,7 @@
 build
 dist
 SimpleParse.egg-info
-.eric4project
 simpleparse.e4p
+__pycache__
+.eric?project
+.tox

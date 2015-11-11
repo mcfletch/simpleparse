@@ -20,7 +20,7 @@ def _module_init():
 
     # Fetch symbols from the C extension and add them to this module
     ns = globals()
-    for name, value in vars(mxTextTools).items():
+    for name, value in list(vars(mxTextTools).items()):
         if name[:7] == '_const_':
             cmd = name[7:]
             ns[cmd] = value

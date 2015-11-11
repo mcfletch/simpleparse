@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 declaration = r'''testparser := (a,b)*
 a := 'a'
 b := 'b'
@@ -13,7 +15,6 @@ import pprint
 parser = Parser( declaration ).generator.buildParser('testparser' )
 result = TextTools.tag( testdata, parser )
 if result != expectedResult:
-	print 'backup-on-subtable-test failed'
-	print '\texpected', pprint.pprint( expectedResult )
-	print '\tgot', pprint.pprint( result )
-
+    print('backup-on-subtable-test failed')
+    print('\texpected', pprint.pprint( expectedResult ))
+    print('\tgot', pprint.pprint( result ))

@@ -6,7 +6,9 @@
 */
 
 /* We want all our symbols to be exported */
+#ifndef MX_BUILDING_MXTEXTTOOLS
 #define MX_BUILDING_MXTEXTTOOLS
+#endif
 
 /* Logging file used by debugging facility */
 #ifndef MAL_DEBUG_OUTPUTFILE
@@ -15,6 +17,7 @@
 
 #include "mx.h"
 #include "mxTextTools.h"
+#include "structmember.h"
 #include <ctype.h>
 
 #define VERSION "2.1.0"
@@ -29,9 +32,14 @@
 /* Define this to enable the copy-protocol (__copy__, __deepcopy__) */
 #define COPY_PROTOCOL
 
+/* Convenience macro for reducing clutter */
+#define ADD_INT_CONSTANT(name, value) \
+    if (PyModule_AddIntConstant(module, name, value) < 0) \
+        return NULL;
+
 /* --- module doc-string -------------------------------------------------- */
 
-static char *Module_docstring = 
+PyDoc_STRVAR(Module_docstring,
 
  MXTEXTTOOLS_MODULE" -- Tools for fast text processing. Version "VERSION"\n\n"
 
@@ -41,7 +49,7 @@ static char *Module_docstring =
 
  "                 All Rights Reserved\n\n"
  "See the documentation for further information on copyrights,\n"
- "or contact the author."
+ "or contact the author.")
 ;
 
 /* --- internal macros ---------------------------------------------------- */
@@ -91,62 +99,9 @@ PyObject *mxTextTools_ToLower(void)
    object to be used by the exception object. It should be NULL
    otherwise */
 
-static 
-PyObject *insexc(PyObject *moddict,
-		 char *name,
-		 PyObject *base)
-{
-    PyObject *v;
-    char fullname[256];
-    char *modname;
-    char *dot;
-    
-    v = PyDict_GetItemString(moddict, "__name__");
-    if (v == NULL)
-	modname = NULL;
-    else
-	modname = PyString_AsString(v);
-    if (modname == NULL) {
-	PyErr_Clear();
-	modname = MXTEXTTOOLS_MODULE;
-    }
-    /* The symbols from this extension are imported into
-       simpleparse.stt.TextTools. We trim the name to not confuse the user with an
-       overly long package path. */
-    strcpy(fullname, modname);
-    dot = strchr(fullname, '.');
-    if (dot)
-	dot = strchr(dot+1, '.');
-    if (dot)
-	strcpy(dot+1, name);
-    else
-	sprintf(fullname, "%s.%s", modname, name);
-
-    v = PyErr_NewException(fullname, base, NULL);
-    if (v == NULL)
-	return NULL;
-    if (PyDict_SetItemString(moddict,name,v))
-	return NULL;
-    return v;
-}
-
-/* Helper for adding integer constants to a dictionary. Check for
-   errors with PyErr_Occurred() */
-static 
-void insint(PyObject *dict,
-	    char *name,
-	    int value)
-{
-    PyObject *v = PyInt_FromLong((long)value);
-    PyDict_SetItemString(dict, name, v);
-    Py_XDECREF(v);
-}
-
 /* --- module interface --------------------------------------------------- */
 
 /* --- Text Search Object ----------------------------------------------*/
-
-staticforward PyMethodDef mxTextSearch_Methods[];
 
 /* allocation */
 
@@ -195,19 +150,6 @@ PyObject *mxTextSearch_New(PyObject *match,
 		  "error initializing the search object");
 	break;
 
-#ifdef MXFASTSEARCH	
-    case MXTEXTSEARCH_FASTSEARCH:
-	Py_Assert(PyString_Check(match),
-		  PyExc_TypeError,
-		  "match must be a string for FastSearch");
-	so->data = fs_init(PyString_AS_STRING(match),
-			   PyString_GET_SIZE(match));
-	Py_Assert(so->data != NULL,
-		  PyExc_TypeError,
-		  "error initializing the search object");
-	break;
-#endif	
-
     case MXTEXTSEARCH_TRIVIAL:
 	Py_Assert(PyString_Check(match) || PyUnicode_Check(match),
 		  PyExc_TypeError,
@@ -247,11 +189,7 @@ Py_C_Function_WithKeywords(
 	if (PyUnicode_Check(match))
 	    algorithm = MXTEXTSEARCH_TRIVIAL;
 	else
-#ifdef MXFASTSEARCH
 	    algorithm = MXTEXTSEARCH_BOYERMOORE;
-#else
-	    algorithm = MXTEXTSEARCH_BOYERMOORE;
-#endif
     }
     return mxTextSearch_New(match, translate, algorithm);
 
@@ -269,11 +207,6 @@ void mxTextSearch_Free(mxTextSearchObject *so)
 	    bm_free(so->data);
 	    break;
 
-#ifdef MXFASTSEARCH	
-	case MXTEXTSEARCH_FASTSEARCH:
-	    fs_free(so->data);
-	    break;
-#endif
 	case MXTEXTSEARCH_TRIVIAL:
 	    break;
 	    
@@ -302,12 +235,6 @@ Py_ssize_t mxTextSearch_MatchLength(PyObject *self)
     case MXTEXTSEARCH_BOYERMOORE:
 	return BM_MATCH_LEN(so->data);
 	break;
-
-#ifdef MXFASTSEARCH	
-    case MXTEXTSEARCH_FASTSEARCH:
-	return FS_MATCH_LEN(so->data);
-	break;
-#endif		
 
     case MXTEXTSEARCH_TRIVIAL:
 	if (PyString_Check(so->match))
@@ -451,27 +378,6 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 	match_len = BM_MATCH_LEN(so->data);
 	break;
 
-#ifdef MXFASTSEARCH
-    case MXTEXTSEARCH_FASTSEARCH:
-	if (so->translate) {
-	    /* search with translate table */
-	    nextpos = fs_tr_search((mxfse_data *)so->data,
-				   text,
-				   start,
-				   stop,
-				   PyString_AS_STRING(so->translate));
-	}
-	else {
-	    /* exact search */
-	    nextpos = fs_search((mxfse_data *)so->data,
-				text,
-				start,
-				stop);
-	}
-	match_len = FS_MATCH_LEN(so->data);
-	break;
-#endif
-	
     case MXTEXTSEARCH_TRIVIAL:
 	{
 	    const char *match;
@@ -532,12 +438,6 @@ Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
 		 "Boyer-Moore search algorithm does not support Unicode");
 	break;
 
-#ifdef MXFASTSEARCH
-    case MXTEXTSEARCH_FASTSEARCH:
-	Py_Error(PyExc_TypeError,
-		 "FastSearch search algorithm does not support Unicode");
-#endif
-	
     case MXTEXTSEARCH_TRIVIAL:
 	{
 	    PyObject *u;
@@ -830,11 +730,6 @@ PyObject *mxTextSearch_Repr(mxTextSearchObject *self)
     case MXTEXTSEARCH_BOYERMOORE:
 	algoname = "Boyer-Moore";
 	break;
-#ifdef MXFASTSEARCH	
-    case MXTEXTSEARCH_FASTSEARCH:
-	algoname = "FastSearch";
-	break;
-#endif		
     case MXTEXTSEARCH_TRIVIAL:
 	algoname = "Trivial";
 	break;
@@ -848,63 +743,11 @@ PyObject *mxTextSearch_Repr(mxTextSearchObject *self)
     return PyString_FromString(t);
 }
 
-static 
-PyObject *mxTextSearch_GetAttr(mxTextSearchObject *self,
-			char *name)
-{
-    PyObject *v;
-    
-    if (Py_WantAttr(name,"match")) {
-	v = self->match;
-	Py_INCREF(v);
-	return v;
-    }
-    else if (Py_WantAttr(name,"translate")) {
-        v = self->translate;
-	if (v == NULL)
-	    v = Py_None;
-	Py_INCREF(v);
-	return v;
-    }
-    else if (Py_WantAttr(name,"algorithm"))
-        return PyInt_FromLong(self->algorithm);
-    else if (Py_WantAttr(name,"__members__"))
-	return Py_BuildValue("[sss]",
-			     "match", "translate", "algorithm");
-    
-    return Py_FindMethod(mxTextSearch_Methods, (PyObject *)self, (char *)name);
-}
-
-/* Python Type Table */
-
-PyTypeObject mxTextSearch_Type = {
-        PyObject_HEAD_INIT(0)		/* init at startup ! */
-	0,			  	/*ob_size*/
-	"TextSearch",		  	/*tp_name*/
-	sizeof(mxTextSearchObject),	/*tp_basicsize*/
-	0,			  	/*tp_itemsize*/
-	/* methods */
-	(destructor)mxTextSearch_Free,	/*tp_dealloc*/
-	(printfunc)0,			/*tp_print*/
-	(getattrfunc)mxTextSearch_GetAttr,  	/*tp_getattr*/
-	(setattrfunc)0,		  	/*tp_setattr*/
-	(cmpfunc)0,		  	/*tp_compare*/
-	(reprfunc)mxTextSearch_Repr,  	/*tp_repr*/
-        0,			  	/*tp_as_number*/
-	0,				/*tp_as_number*/
-	0,				/*tp_as_mapping*/
-	(hashfunc)0,			/*tp_hash*/
-	(ternaryfunc)0,			/*tp_call*/
-	(reprfunc)0,			/*tp_str*/
-	(getattrofunc)0, 		/*tp_getattro*/
-	(setattrofunc)0, 		/*tp_setattro*/
-};
-
 /* Python Method Table */
 
-statichere
+static
 PyMethodDef mxTextSearch_Methods[] =
-{   
+{
     Py_MethodListEntry("search",mxTextSearch_search),
     Py_MethodListEntry("find",mxTextSearch_find),
     Py_MethodListEntry("findall",mxTextSearch_findall),
@@ -915,9 +758,49 @@ PyMethodDef mxTextSearch_Methods[] =
     {NULL,NULL} /* end of list */
 };
 
-/* --- Character Set Object --------------------------------------------*/
+static PyMemberDef mxTextSearch_members[] = {
+    {"match",T_OBJECT_EX,offsetof(mxTextSearchObject,match),READONLY,"Text that this search matches"},
+    {"translate",T_OBJECT,offsetof(mxTextSearchObject,translate),READONLY,"Translated search term"},
+    {"algorithm",T_INT,offsetof(mxTextSearchObject,algorithm),READONLY,"Algorithm in use by the text search"},
+    {NULL}
+};
 
-staticforward PyMethodDef mxCharSet_Methods[];
+/* Python Type Table */
+
+PyTypeObject mxTextSearch_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)      /* init at startup ! */
+    "TextSearch",                       /*tp_name*/
+    sizeof(mxTextSearchObject),         /*tp_basicsize*/
+    0,                                  /*tp_itemsize*/
+    /* methods */
+    (destructor)mxTextSearch_Free,      /*tp_dealloc*/
+    (printfunc)0,                       /*tp_print*/
+    (getattrfunc)0,                     /*tp_getattr*/
+    (setattrfunc)0,                     /*tp_setattr*/
+    0,                                  /*tp_compare*/
+    (reprfunc)mxTextSearch_Repr,        /*tp_repr*/
+    0,                                  /*tp_as_number*/
+    0,                                  /*tp_as_number*/
+    0,                                  /*tp_as_mapping*/
+    (hashfunc)0,                        /*tp_hash*/
+    (ternaryfunc)0,                     /*tp_call*/
+    (reprfunc)0,                        /*tp_str*/
+    (getattrofunc)0,                    /*tp_getattro*/
+    (setattrofunc)0,                    /*tp_setattro*/
+    0,                                  /*tp_asbuffer*/
+    Py_TPFLAGS_DEFAULT,                 /*tp_flags*/
+    "mxTextTools text-search object",   /*tp_doc*/
+    0,                                  /*tp_traverse*/
+    0,                                  /*tp_clear*/
+    0,                                  /*tp_richcompare*/
+    0,                                  /*tp_weaklistoffset*/
+    0,                                  /*tp_iter*/
+    0,                                  /*tp_iternext*/
+    mxTextSearch_Methods,               /*tp_methods*/
+    mxTextSearch_members,               /*tp_members*/
+};
+
+/* --- Character Set Object --------------------------------------------*/
 
 /* internal */
 
@@ -2019,70 +1902,27 @@ PyObject *mxCharSet_Repr(mxCharSetObject *self)
     return PyString_FromString(t);
 }
 
-static 
-PyObject *mxCharSet_GetAttr(mxCharSetObject *self,
-			    char *name)
-{
-    PyObject *v;
-    
-    if (Py_WantAttr(name,"definition")) {
-	v = self->definition;
-	Py_INCREF(v);
-	return v;
-    }
-
-    else if (Py_WantAttr(name,"__members__"))
-	return Py_BuildValue("[s]",
-			     "definition");
-    
-    return Py_FindMethod(mxCharSet_Methods, (PyObject *)self, (char *)name);
-}
-
 /* Python Type Tables */
 
 static
 PySequenceMethods mxCharSet_TypeAsSequence = {
-    (lenfunc)0,				/*sq_length*/
-    (binaryfunc)0,			/*sq_concat*/
-    (ssizeargfunc)0,			/*sq_repeat*/
-    (ssizeargfunc)0,			/*sq_item*/
-    (ssizessizeargfunc)0,			/*sq_slice*/
-    (ssizeobjargproc)0,			/*sq_ass_item*/
-    (ssizessizeobjargproc)0,		/*sq_ass_slice*/
-#if PY_VERSION_HEX >= 0x02000000
+    (lenfunc)0,                         /*sq_length*/
+    (binaryfunc)0,                      /*sq_concat*/
+    (ssizeargfunc)0,                    /*sq_repeat*/
+    (ssizeargfunc)0,                    /*sq_item*/
+    (ssizessizeargfunc)0,               /*sq_slice*/
+    (ssizeobjargproc)0,                 /*sq_ass_item*/
+    (ssizessizeobjargproc)0,            /*sq_ass_slice*/
     (objobjproc)mxCharSet_Contains,     /*sq_contains*/
-#endif
 };
 
-PyTypeObject mxCharSet_Type = {
-        PyObject_HEAD_INIT(0)		/* init at startup ! */
-	0,			  	/* ob_size */
-	"Character Set",	  	/* tp_name */
-	sizeof(mxCharSetObject),	/* tp_basicsize */
-	0,			  	/* tp_itemsize */
-	/* methods */
-	(destructor)mxCharSet_Free,	/* tp_dealloc */
-	(printfunc)0,			/* tp_print */
-	(getattrfunc)mxCharSet_GetAttr, /* tp_getattr */
-	(setattrfunc)0,		  	/* tp_setattr */
-	(cmpfunc)0,		  	/* tp_compare */
-	(reprfunc)mxCharSet_Repr,  	/* tp_repr */
-        0,			  	/* tp_as_number */
-        &mxCharSet_TypeAsSequence,	/* tp_as_sequence */
-	0,				/* tp_as_mapping */
-	(hashfunc)0,			/* tp_hash */
-	(ternaryfunc)0,			/* tp_call */
-	(reprfunc)0,			/* tp_str */
-	(getattrofunc)0, 		/* tp_getattro */
-	(setattrofunc)0, 		/* tp_setattro */
-        0,				/* tp_as_buffer */
-        Py_TPFLAGS_DEFAULT,		/* tp_flags */
-        (char*) 0,			/* tp_doc */
+static
+PyMemberDef mxCharSet_Members[] = {
+    {"definition",T_OBJECT_EX,offsetof(mxCharSetObject,definition),READONLY,"Definition"},
+    {NULL}
 };
 
-/* Python Method Table */
-
-statichere
+static
 PyMethodDef mxCharSet_Methods[] =
 {   
     Py_MethodListEntry("contains",mxCharSet_contains),
@@ -2098,9 +1938,40 @@ PyMethodDef mxCharSet_Methods[] =
     {NULL,NULL} /* end of list */
 };
 
-/* --- Tag Table Object ------------------------------------------------*/
+PyTypeObject mxCharSet_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)      /* init at startup ! */
+    "Character Set",                    /* tp_name */
+    sizeof(mxCharSetObject),            /* tp_basicsize */
+    0,                                  /* tp_itemsize */
+    /* methods */
+    (destructor)mxCharSet_Free,         /* tp_dealloc */
+    (printfunc)0,                       /* tp_print */
+    (getattrfunc)0,                     /* tp_getattr */
+    (setattrfunc)0,                     /* tp_setattr */
+    0,                                  /* tp_compare */
+    (reprfunc)mxCharSet_Repr,           /* tp_repr */
+    0,                                  /* tp_as_number */
+    &mxCharSet_TypeAsSequence,          /* tp_as_sequence */
+    0,                                  /* tp_as_mapping */
+    (hashfunc)0,                        /* tp_hash */
+    (ternaryfunc)0,                     /* tp_call */
+    (reprfunc)0,                        /* tp_str */
+    (getattrofunc)0,                    /* tp_getattro */
+    (setattrofunc)0,                    /* tp_setattro */
+    0,                                  /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                 /* tp_flags */
+    (char*) 0,                          /* tp_doc */
+    0,                                  /* tp_traverse */
+    0,                                  /* tp_clear */
+    0,                                  /* tp_richcompare */
+    0,                                  /* tp_weaklistoffset */
+    0,                                  /* tp_iter */
+    0,                                  /* tp_iternext */
+    mxCharSet_Methods,                  /* tp_methods */
+    mxCharSet_Members,                  /* tp_members */
+};
 
-staticforward PyMethodDef mxTagTable_Methods[];
+/* --- Tag Table Object ------------------------------------------------*/
 
 PyObject *mxTagTable_New(PyObject *definition,
 			 int tabletype,
@@ -2238,7 +2109,7 @@ static
 int tc_cleanup(mxTagTableObject *tagtable)
 {
     Py_ssize_t i;
-    for (i = 0; i < tagtable->ob_size; i++) {
+    for (i = 0; i < tagtable->numentries; i++) {
 	mxTagTableEntry *tagtableentry = &tagtable->entry[i];
 
 	Py_XDECREF(tagtableentry->tagobj);
@@ -2274,6 +2145,7 @@ int init_tag_table(mxTagTableObject *tagtable,
     
     /* First pass */
     secondpass = 0;
+    tagtable->numentries = size;
     for (i = 0; i < size; i++) {
 	mxTagTableEntry *tagtableentry = &tagtable->entry[i];
 
@@ -2775,7 +2647,7 @@ PyObject *mxTagTable_CompiledDefinition(PyObject *self)
 	goto onError;
     }
 
-    size = tagtable->ob_size;
+    size = tagtable->numentries;
     tuple = PyTuple_New(size);
     if (tuple == NULL)
 	goto onError;
@@ -2865,57 +2737,7 @@ PyObject *mxTagTable_Repr(mxTagTableObject *self)
     return PyString_FromString(t);
 }
 
-static 
-PyObject *mxTagTable_GetAttr(mxTagTableObject *self,
-			     char *name)
-{
-    PyObject *v;
-    
-    if (Py_WantAttr(name,"definition")) {
-	v = self->definition;
-	if (v == NULL)
-	    v = Py_None;
-	Py_INCREF(v);
-	return v;
-    }
-    else if (Py_WantAttr(name,"__members__"))
-	return Py_BuildValue("[s]",
-			     "definition");
-    
-    return Py_FindMethod(mxTagTable_Methods, (PyObject *)self, (char *)name);
-}
-
-/* Python Type Tables */
-
-PyTypeObject mxTagTable_Type = {
-        PyObject_HEAD_INIT(0)		/* init at startup ! */
-	0,			  	/* ob_size */
-	"Tag Table",		  	/* tp_name */
-	sizeof(mxTagTableObject),	/* tp_basicsize */
-	sizeof(mxTagTableEntry),  	/* tp_itemsize */
-	/* methods */
-	(destructor)mxTagTable_Free,	/* tp_dealloc */
-	(printfunc)0,			/* tp_print */
-	(getattrfunc)mxTagTable_GetAttr, /* tp_getattr */
-	(setattrfunc)0,		  	/* tp_setattr */
-	(cmpfunc)0,		  	/* tp_compare */
-	(reprfunc)mxTagTable_Repr,  	/* tp_repr */
-        0,			  	/* tp_as_number */
-        0,				/* tp_as_sequence */
-	0,				/* tp_as_mapping */
-	(hashfunc)0,			/* tp_hash */
-	(ternaryfunc)0,			/* tp_call */
-	(reprfunc)0,			/* tp_str */
-	(getattrofunc)0, 		/* tp_getattro */
-	(setattrofunc)0, 		/* tp_setattro */
-        0,				/* tp_as_buffer */
-        Py_TPFLAGS_DEFAULT,		/* tp_flags */
-        (char*) 0,			/* tp_doc */
-};
-
-/* Python Method Table */
-
-statichere
+static
 PyMethodDef mxTagTable_Methods[] =
 {   
     Py_MethodListEntryNoArgs("compiled",mxTagTable_compiled),
@@ -2924,6 +2746,47 @@ PyMethodDef mxTagTable_Methods[] =
     Py_MethodListEntry("__copy__",mxTagTable_copy),
 #endif
     {NULL,NULL} /* end of list */
+};
+
+static
+PyMemberDef mxTagTable_Members[] = {
+    {"definition",T_OBJECT_EX,offsetof(mxTagTableObject,definition),READONLY,"Definition"},
+    {NULL}
+};
+
+/* Python Type Tables */
+
+PyTypeObject mxTagTable_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)          /* init at startup ! */
+    "Tag Table",                            /* tp_name */
+    sizeof(mxTagTableObject),               /* tp_basicsize */
+    sizeof(mxTagTableEntry),                /* tp_itemsize */
+    /* methods */
+    (destructor)mxTagTable_Free,            /* tp_dealloc */
+    (printfunc)0,                           /* tp_print */
+    (getattrfunc)0,                         /* tp_getattr */
+    (setattrfunc)0,                         /* tp_setattr */
+    0,                                      /* tp_compare */
+    (reprfunc)mxTagTable_Repr,              /* tp_repr */
+    0,                                      /* tp_as_number */
+    0,                                      /* tp_as_sequence */
+    0,                                      /* tp_as_mapping */
+    (hashfunc)0,                            /* tp_hash */
+    (ternaryfunc)0,                         /* tp_call */
+    (reprfunc)0,                            /* tp_str */
+    (getattrofunc)0,                        /* tp_getattro */
+    (setattrofunc)0,                        /* tp_setattro */
+    0,                                      /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                     /* tp_flags */
+    (char*) 0,                              /* tp_doc */
+    0,                                      /* tp_traverse */
+    0,                                      /* tp_clear */
+    0,                                      /* tp_richcompare */
+    0,                                      /* tp_weaklistoffset */
+    0,                                      /* tp_iter */
+    0,                                      /* tp_iternext */
+    mxTagTable_Methods,                     /* tp_methods */
+    mxTagTable_Members,                     /* tp_members */
 };
 
 /* --- Internal functions ----------------------------------------------*/
@@ -4692,6 +4555,7 @@ Py_C_Function( mxTextTools_cmp,
 	       "position; this is useful for sorting joinlists.")
 {
     PyObject *v,*w;
+    short index;
     int cmp;
 
     Py_Get2Args("OO:cmp",v,w);
@@ -4701,11 +4565,15 @@ Py_C_Function( mxTextTools_cmp,
 	      PyExc_TypeError,
 	      "invalid taglist-tuple");
 
-    cmp = PyObject_Compare(PyTuple_GET_ITEM(v,1),PyTuple_GET_ITEM(w,1));
-    if (cmp != 0) 
-	return PyInt_FromLong(cmp);
-    cmp = - PyObject_Compare(PyTuple_GET_ITEM(v,2),PyTuple_GET_ITEM(w,2));
-    return PyInt_FromLong(cmp);
+    for (index = 1; index < 3; index++) {
+        cmp = PyObject_RichCompareBool(PyTuple_GET_ITEM(v,1),PyTuple_GET_ITEM(w,1),Py_LT);
+        if (cmp) 
+            return PyInt_FromLong(cmp);
+        cmp = PyObject_RichCompareBool(PyTuple_GET_ITEM(v,2),PyTuple_GET_ITEM(w,2), Py_GT);
+        if (cmp)
+            return PyInt_FromLong(cmp);
+    }
+    return PyInt_FromLong(0);
 
  onError:
     return NULL;
@@ -5132,145 +5000,159 @@ void mxTextToolsModule_Cleanup(void)
     mxTextTools_Initialized = 0;
 }
 
-MX_EXPORT(void) 
-     initmxTextTools(void)
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef mxTextTools_ModuleDef = {
+    PyModuleDef_HEAD_INIT,
+    MXTEXTTOOLS_MODULE,
+    Module_docstring,
+    -1,
+    Module_methods
+};
+#endif
+
+static PyObject* mxTextToolsModule_Initialize(void)
 {
-    PyObject *module, *moddict;
-    
-    if (mxTextTools_Initialized)
-	Py_Error(PyExc_SystemError,
-		 "can't initialize "MXTEXTTOOLS_MODULE" more than once");
+    PyObject *module;
+
+    if (mxTextTools_Initialized) {
+        PyErr_SetString(PyExc_SystemError,
+                "can't initialize "MXTEXTTOOLS_MODULE" more than once");
+        return NULL;
+    }
 
     /* Init type objects */
-    PyType_Init(mxTextSearch_Type);
-#ifdef MXFASTSEARCH
-    PyType_Init(mxFS_Type);
-#endif
-    PyType_Init(mxCharSet_Type);
-    PyType_Init(mxTagTable_Type);
+    if (PyType_Ready(&mxTextSearch_Type) < 0)
+        return NULL;
+    if (PyType_Ready(&mxCharSet_Type) < 0)
+        return NULL;
+    if (PyType_Ready(&mxTagTable_Type) < 0)
+        return NULL;
 
     /* create module */
+#if PY_MAJOR_VERSION >= 3
+    module = PyModule_Create(&mxTextTools_ModuleDef);
+#else
     module = Py_InitModule4(MXTEXTTOOLS_MODULE, /* Module name */
-			    Module_methods, /* Method list */
-			    Module_docstring, /* Module doc-string */
-			    (PyObject *)NULL, /* always pass this as *self */
-			    PYTHON_API_VERSION); /* API Version */
+                Module_methods, /* Method list */
+                Module_docstring, /* Module doc-string */
+                (PyObject *)NULL, /* always pass this as *self */
+                PYTHON_API_VERSION); /* API Version */
+#endif
     if (!module)
-	goto onError;
+        return NULL;
 
     /* Init TagTable cache */
-    if ((mxTextTools_TagTables = PyDict_New()) == NULL)
-	goto onError;
+    mxTextTools_TagTables = PyDict_New();
+    if (!mxTextTools_TagTables)
+        return NULL;
 
     /* Register cleanup function */
-    if (Py_AtExit(mxTextToolsModule_Cleanup))
-	/* XXX what to do if we can't register that function ??? */;
+    if (Py_AtExit(mxTextToolsModule_Cleanup) < 0)
+        return NULL;
 
     /* Add some symbolic constants to the module */
-    moddict = PyModule_GetDict(module);
-    PyDict_SetItemString(moddict, 
-			 "__version__",
-			 PyString_FromString(VERSION));
-
+    if (PyModule_AddStringConstant(module, "__version__", VERSION) < 0)
+        return NULL;
     mx_ToUpper = mxTextTools_ToUpper();
-    PyDict_SetItemString(moddict, 
-			 "to_upper",
-			 mx_ToUpper);
-
+    if (!mx_ToUpper)
+        return NULL;
+    if (PyModule_AddObject(module, "to_upper", mx_ToUpper) < 0)
+        return NULL;
     mx_ToLower = mxTextTools_ToLower();
-    PyDict_SetItemString(moddict, 
-			 "to_lower",
-			 mx_ToLower);
+    if (!mx_ToLower)
+        return NULL;
+    if (PyModule_AddObject(module, "to_lower", mx_ToLower) < 0)
+        return NULL;
 
     /* Let the tag table cache live in the module dictionary; we just
        keep a weak reference in mxTextTools_TagTables around. */
-    PyDict_SetItemString(moddict, 
-			 "tagtable_cache",
-			 mxTextTools_TagTables);
+    if (PyModule_AddObject(module, "tagtable_cache", mxTextTools_TagTables) < 0)
+        return NULL;
     Py_DECREF(mxTextTools_TagTables);
 
-    insint(moddict, "BOYERMOORE", MXTEXTSEARCH_BOYERMOORE);
-    insint(moddict, "FASTSEARCH", MXTEXTSEARCH_FASTSEARCH);
-    insint(moddict, "TRIVIAL", MXTEXTSEARCH_TRIVIAL);
-  
+    ADD_INT_CONSTANT("BOYERMOORE", MXTEXTSEARCH_BOYERMOORE);
+    ADD_INT_CONSTANT("FASTSEARCH", MXTEXTSEARCH_FASTSEARCH);
+    ADD_INT_CONSTANT("TRIVIAL", MXTEXTSEARCH_TRIVIAL);
+
     /* Init exceptions */
-    if ((mxTextTools_Error = insexc(moddict,
-				    "Error",
-				    PyExc_StandardError)) == NULL)
-	goto onError;
+    mxTextTools_Error = PyErr_NewException("mxTextTools.Error", PyExc_Exception, NULL);
+    if (!mxTextTools_Error)
+        return NULL;
+    if (PyModule_AddObject(module, "Error", mxTextTools_Error) < 0)
+        return NULL;
 
     /* Type objects */
     Py_INCREF(&mxTextSearch_Type);
-    PyDict_SetItemString(moddict, "TextSearchType",
-			 (PyObject *)&mxTextSearch_Type);
+    if (PyModule_AddObject(module, "TextSearchType", (PyObject*) &mxTextSearch_Type) < 0)
+        return NULL;
     Py_INCREF(&mxCharSet_Type);
-    PyDict_SetItemString(moddict, "CharSetType",
-			 (PyObject *)&mxCharSet_Type);
+    if (PyModule_AddObject(module, "CharSetType", (PyObject*) &mxCharSet_Type) < 0)
+        return NULL;
     Py_INCREF(&mxTagTable_Type);
-    PyDict_SetItemString(moddict, "TagTableType",
-			 (PyObject *)&mxTagTable_Type);
+    if (PyModule_AddObject(module, "TagTableType", (PyObject*) &mxTagTable_Type) < 0)
+        return NULL;
 
     /* Tag Table command symbols (these will be exposed via
        simpleparse.stt.TextTools.Constants.TagTables) */
-    insint(moddict, "_const_AllIn", MATCH_ALLIN);
-    insint(moddict, "_const_AllNotIn", MATCH_ALLNOTIN);
-    insint(moddict, "_const_Is", MATCH_IS);
-    insint(moddict, "_const_IsIn", MATCH_ISIN);
-    insint(moddict, "_const_IsNot", MATCH_ISNOTIN);
-    insint(moddict, "_const_IsNotIn", MATCH_ISNOTIN);
+    ADD_INT_CONSTANT("_const_AllIn", MATCH_ALLIN);
+    ADD_INT_CONSTANT("_const_AllNotIn", MATCH_ALLNOTIN);
+    ADD_INT_CONSTANT("_const_Is", MATCH_IS);
+    ADD_INT_CONSTANT("_const_IsIn", MATCH_ISIN);
+    ADD_INT_CONSTANT("_const_IsNot", MATCH_ISNOTIN);
+    ADD_INT_CONSTANT("_const_IsNotIn", MATCH_ISNOTIN);
 
-    insint(moddict, "_const_Word", MATCH_WORD);
-    insint(moddict, "_const_WordStart", MATCH_WORDSTART);
-    insint(moddict, "_const_WordEnd", MATCH_WORDEND);
+    ADD_INT_CONSTANT("_const_Word", MATCH_WORD);
+    ADD_INT_CONSTANT("_const_WordStart", MATCH_WORDSTART);
+    ADD_INT_CONSTANT("_const_WordEnd", MATCH_WORDEND);
 
-    insint(moddict, "_const_AllInSet", MATCH_ALLINSET);
-    insint(moddict, "_const_IsInSet", MATCH_ISINSET);
-    insint(moddict, "_const_AllInCharSet", MATCH_ALLINCHARSET);
-    insint(moddict, "_const_IsInCharSet", MATCH_ISINCHARSET);
+    ADD_INT_CONSTANT("_const_AllInSet", MATCH_ALLINSET);
+    ADD_INT_CONSTANT("_const_IsInSet", MATCH_ISINSET);
+    ADD_INT_CONSTANT("_const_AllInCharSet", MATCH_ALLINCHARSET);
+    ADD_INT_CONSTANT("_const_IsInCharSet", MATCH_ISINCHARSET);
 
-    insint(moddict, "_const_Fail", MATCH_FAIL);
-    insint(moddict, "_const_Jump", MATCH_JUMP);
-    insint(moddict, "_const_EOF", MATCH_EOF);
-    insint(moddict, "_const_Skip", MATCH_SKIP);
-    insint(moddict, "_const_Move", MATCH_MOVE);
+    ADD_INT_CONSTANT("_const_Fail", MATCH_FAIL);
+    ADD_INT_CONSTANT("_const_Jump", MATCH_JUMP);
+    ADD_INT_CONSTANT("_const_EOF", MATCH_EOF);
+    ADD_INT_CONSTANT("_const_Skip", MATCH_SKIP);
+    ADD_INT_CONSTANT("_const_Move", MATCH_MOVE);
 
-    insint(moddict, "_const_JumpTarget", MATCH_JUMPTARGET);
+    ADD_INT_CONSTANT("_const_JumpTarget", MATCH_JUMPTARGET);
 
-    insint(moddict, "_const_sWordStart", MATCH_SWORDSTART);
-    insint(moddict, "_const_sWordEnd", MATCH_SWORDEND);
-    insint(moddict, "_const_sFindWord", MATCH_SFINDWORD);
-    insint(moddict, "_const_NoWord", MATCH_NOWORD);
+    ADD_INT_CONSTANT("_const_sWordStart", MATCH_SWORDSTART);
+    ADD_INT_CONSTANT("_const_sWordEnd", MATCH_SWORDEND);
+    ADD_INT_CONSTANT("_const_sFindWord", MATCH_SFINDWORD);
+    ADD_INT_CONSTANT("_const_NoWord", MATCH_NOWORD);
 
-    insint(moddict, "_const_Call", MATCH_CALL);
-    insint(moddict, "_const_CallArg", MATCH_CALLARG);
+    ADD_INT_CONSTANT("_const_Call", MATCH_CALL);
+    ADD_INT_CONSTANT("_const_CallArg", MATCH_CALLARG);
 
-    insint(moddict, "_const_Table", MATCH_TABLE);
-    insint(moddict, "_const_SubTable", MATCH_SUBTABLE);
-    insint(moddict, "_const_TableInList", MATCH_TABLEINLIST);
-    insint(moddict, "_const_SubTableInList", MATCH_SUBTABLEINLIST);
+    ADD_INT_CONSTANT("_const_Table", MATCH_TABLE);
+    ADD_INT_CONSTANT("_const_SubTable", MATCH_SUBTABLE);
+    ADD_INT_CONSTANT("_const_TableInList", MATCH_TABLEINLIST);
+    ADD_INT_CONSTANT("_const_SubTableInList", MATCH_SUBTABLEINLIST);
 
-    insint(moddict, "_const_Loop", MATCH_LOOP);
-    insint(moddict, "_const_LoopControl", MATCH_LOOPCONTROL);
+    ADD_INT_CONSTANT("_const_Loop", MATCH_LOOP);
+    ADD_INT_CONSTANT("_const_LoopControl", MATCH_LOOPCONTROL);
 
     /* Tag Table command flags */
-    insint(moddict, "_const_CallTag", MATCH_CALLTAG);
-    insint(moddict, "_const_AppendToTagobj", MATCH_APPENDTAG);
-    insint(moddict, "_const_AppendTagobj", MATCH_APPENDTAGOBJ);
-    insint(moddict, "_const_AppendMatch", MATCH_APPENDMATCH);
-    insint(moddict, "_const_LookAhead", MATCH_LOOKAHEAD);
+    ADD_INT_CONSTANT("_const_CallTag", MATCH_CALLTAG);
+    ADD_INT_CONSTANT("_const_AppendToTagobj", MATCH_APPENDTAG);
+    ADD_INT_CONSTANT("_const_AppendTagobj", MATCH_APPENDTAGOBJ);
+    ADD_INT_CONSTANT("_const_AppendMatch", MATCH_APPENDMATCH);
+    ADD_INT_CONSTANT("_const_LookAhead", MATCH_LOOKAHEAD);
 
     /* Tag Table argument integers */
-    insint(moddict, "_const_To", MATCH_JUMP_TO);
-    insint(moddict, "_const_MatchOk", MATCH_JUMP_MATCHOK);
-    insint(moddict, "_const_MatchFail", MATCH_JUMP_MATCHFAIL);
-    insint(moddict, "_const_ToEOF", MATCH_MOVE_EOF);
-    insint(moddict, "_const_ToBOF", MATCH_MOVE_BOF);
-    insint(moddict, "_const_Here", MATCH_FAIL_HERE);
+    ADD_INT_CONSTANT("_const_To", MATCH_JUMP_TO);
+    ADD_INT_CONSTANT("_const_MatchOk", MATCH_JUMP_MATCHOK);
+    ADD_INT_CONSTANT("_const_MatchFail", MATCH_JUMP_MATCHFAIL);
+    ADD_INT_CONSTANT("_const_ToEOF", MATCH_MOVE_EOF);
+    ADD_INT_CONSTANT("_const_ToBOF", MATCH_MOVE_BOF);
+    ADD_INT_CONSTANT("_const_Here", MATCH_FAIL_HERE);
 
-    insint(moddict, "_const_ThisTable", MATCH_THISTABLE);
+    ADD_INT_CONSTANT("_const_ThisTable", MATCH_THISTABLE);
 
-    insint(moddict, "_const_Break", MATCH_LOOPCONTROL_BREAK);
-    insint(moddict, "_const_Reset", MATCH_LOOPCONTROL_RESET);
+    ADD_INT_CONSTANT("_const_Break", MATCH_LOOPCONTROL_BREAK);
+    ADD_INT_CONSTANT("_const_Reset", MATCH_LOOPCONTROL_RESET);
 
     DPRINTF("sizeof(string_charset)=%i bytes\n", sizeof(string_charset));
 #ifdef HAVE_UNICODE
@@ -5280,9 +5162,18 @@ MX_EXPORT(void)
     /* We are now initialized */
     mxTextTools_Initialized = 1;
 
- onError:
-    /* Check for errors and report them */
-    if (PyErr_Occurred())
-	Py_ReportModuleInitError(MXTEXTTOOLS_MODULE);
-    return;
+    return module;
 }
+
+#if PY_MAJOR_VERSION >= 3
+PyMODINIT_FUNC PyInit_mxTextTools(void)
+{
+    return mxTextToolsModule_Initialize();
+}
+#else
+MX_EXPORT(void) initmxTextTools(void)
+{
+    mxTextToolsModule_Initialize();
+}
+#endif
+

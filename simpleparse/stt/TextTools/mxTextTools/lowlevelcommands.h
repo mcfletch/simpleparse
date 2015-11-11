@@ -21,7 +21,7 @@ if (m == NULL) {
 		 "Low-level command (%i) argument in entry %d couldn't be converted to a string object, is a %.50s",
 		 command,
 		 (unsigned int)index,
-		 textobj->ob_type->tp_name
+		 Py_TYPE(textobj)->tp_name
 
 	);
 } else {

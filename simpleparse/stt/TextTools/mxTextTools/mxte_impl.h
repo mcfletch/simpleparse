@@ -9,7 +9,6 @@
   Copyright (c) 2003-2006, Mike Fletcher; mailto:mcfletch@vrplumber.com
 */
 
-
 #ifndef TE_STRING_CHECK 
 # define TE_STRING_CHECK(obj) PyString_Check(obj)
 #endif
@@ -32,7 +31,6 @@
 # define TE_ENGINE_API mxTextTools_TaggingEngine
 #endif
 
-#include "mcfpyapi.h"
 
 /* --- Tagging Engine ----------------------------------------------------- */
 /*  Non-recursive restructuring by Mike Fletcher to support SimpleParse
@@ -129,7 +127,7 @@ XXX Not sure if loop vars are table or tag specific
 */
 #define RESET_TABLE_VARIABLES {\
 	index=0;\
-	table_len = table->ob_size;\
+	table_len = table->numentries;\
 	returnCode = NULL_CODE;\
 	loopcount = -1;\
 	loopstart = startPosition;\
@@ -195,7 +193,7 @@ XXX Not sure if loop vars are table or tag specific
 		taglist = stackParent->results;\
 		if (table != stackParent->table ) { Py_DECREF( table ); }\
 		table = stackParent->table;\
-		table_len = table->ob_size;\
+		table_len = table->numentries;\
 		index = stackParent->index;\
 		\
 		stackTemp = stackParent->parent;\
@@ -235,7 +233,7 @@ int TE_ENGINE_API(
 		/* whole-table variables */
 		Py_ssize_t position = sliceleft;		/* current (head) position in text for whole table */
 		Py_ssize_t startPosition = sliceleft;	/* start position for current tag */
-		Py_ssize_t table_len = table->ob_size; /* table length */
+		Py_ssize_t table_len = table->numentries; /* table length */
 		short returnCode = NULL_CODE;		/* return code: -1 not set, 0 error, 1
 					   not ok, 2 ok */
 		Py_ssize_t index=0; 			/* index of current table entry */
@@ -284,7 +282,7 @@ int TE_ENGINE_API(
 		errorType = PyExc_TypeError;
 		errorMessage = PyString_FromFormat(
 		     "Expected a string or unicode object to parse: found %.50s",
-		     textobj->ob_type->tp_name
+		     Py_TYPE(textobj)->tp_name
 		);
 	} else {
 	    text = TE_STRING_AS_STRING(textobj);
@@ -349,7 +347,7 @@ int TE_ENGINE_API(
 				errorType = PyExc_TypeError;
 				errorMessage = PyString_FromFormat(
 					 "tagobj (type %.50s) table entry %d moved/skipped beyond start of text (to position %d)",
-					 tagobj->ob_type->tp_name,
+					 Py_TYPE(tagobj)->tp_name,
 					 (unsigned int)index,
 					 (unsigned int)childPosition
 				);
@@ -425,7 +423,7 @@ int TE_ENGINE_API(
 									errorType = PyExc_AttributeError;
 									errorMessage = PyString_FromFormat(
 										 "tagobj (type %.50s) for table entry %d (flags include AppendTag) doesn't have an append method",
-										 tagobj->ob_type->tp_name,
+										 Py_TYPE(tagobj)->tp_name,
 										 (unsigned int)index
 									);
 								} else {
@@ -446,7 +444,7 @@ int TE_ENGINE_API(
 								errorType = PyExc_TypeError;
 								errorMessage = PyString_FromFormat(
 									 "The object to call type(%.50s) for table entry %d isn't callable",
-									 objectToCall->ob_type->tp_name,
+									 Py_TYPE(objectToCall)->tp_name,
 									 (unsigned int)index
 								);
 							}
@@ -699,7 +697,7 @@ int TE_ENGINE_API(
 				returnCode = ERROR_CODE;
 				errorMessage = PyString_FromFormat(
 					 "Unable to truncate list object (likely tagging engine error) type(%.50s)",
-					 taglist->ob_type->tp_name
+					 Py_TYPE(taglist)->tp_name
 				);
 			}
 			/* reset position */

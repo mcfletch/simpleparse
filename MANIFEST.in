@@ -1,8 +1,9 @@
 include MANIFEST.in
 include license.txt
+include tox.ini
 include setup.py
 recursive-include . *.py
-recursive-include stt *
+recursive-include simpleparse/stt *
 recursive-include doc *.html
 recursive-include doc *.css
 prune examples/html.py

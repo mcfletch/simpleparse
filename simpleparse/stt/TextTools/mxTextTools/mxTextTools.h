@@ -37,17 +37,16 @@ extern "C" {
 
 typedef struct {
     PyObject_HEAD
-    PyObject *match; 		/* Match string object */
-    PyObject *translate;	/* Translate string object or NULL */
-    int algorithm;		/* Algorithm to be used */
-    void *data; 		/* Internal data used by the algorithm or
-				   NULL */
+    PyObject *match;        /* Match string object */
+    PyObject *translate;    /* Translate string object or NULL */
+    int algorithm;          /* Algorithm to be used */
+    void *data;             /* Internal data used by the algorithm or NULL */
 } mxTextSearchObject;
 
 MXTEXTTOOLS_EXTERNALIZE(PyTypeObject) mxTextSearch_Type;
 
 #define mxTextSearch_Check(v) \
-        (((mxTextSearchObject *)(v))->ob_type == &mxTextSearch_Type)
+        (Py_TYPE((v)) == &mxTextSearch_Type)
 
 /* Exporting these APIs for mxTextTools internal use only ! */
 
@@ -81,19 +80,19 @@ Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
 
 typedef struct {
     PyObject_HEAD
-    PyObject *definition;       /* Character set definition */
-    int mode;			/* Operation mode: 
-				   0 - 8-bit character lookup 
-				   1 - UCS-2 Unicode lookup
-				   2 - UCS-4 Unicode lookup
-				*/
-    void *lookup;		/* Lookup table */
+    PyObject *definition;           /* Character set definition */
+    int mode;                       /* Operation mode: 
+                                        0 - 8-bit character lookup 
+                                        1 - UCS-2 Unicode lookup
+                                        2 - UCS-4 Unicode lookup
+                                    */
+    void *lookup;                   /* Lookup table */
 } mxCharSetObject;
 
 MXTEXTTOOLS_EXTERNALIZE(PyTypeObject) mxCharSet_Type;
 
 #define mxCharSet_Check(v) \
-        (((mxCharSetObject *)(v))->ob_type == &mxCharSet_Type)
+        (Py_TYPE((v)) == &mxCharSet_Type)
 
 
 /* Exporting these APIs for mxTextTools internal use only ! */
@@ -132,22 +131,21 @@ typedef struct {
 
 typedef struct {
     PyObject_VAR_HEAD
-    PyObject *definition;		/* Reference to the original
-					   table definition or NULL;
-					   needed for caching */
-    int tabletype;			/* Type of compiled table:
-					   0 - 8-bit string args
-					   1 - Unicode args */
-    mxTagTableEntry entry[1];		/* Variable length array of
-					   mxTagTableEntry fields;
-					   ob_size gives the number of
-					   allocated entries. */
+    PyObject *definition;       /* Reference to the original
+                                   table definition or NULL;
+                                   needed for caching */
+    int tabletype;              /* Type of compiled table:
+                                   0 - 8-bit string args
+                                   1 - Unicode args */
+    int numentries;             /* number of allocated entries */
+    mxTagTableEntry entry[1];   /* Variable length array of
+                                   mxTagTableEntry fields */
 } mxTagTableObject;
 
 MXTEXTTOOLS_EXTERNALIZE(PyTypeObject) mxTagTable_Type;
 
 #define mxTagTable_Check(v) \
-        (((mxTagTableObject *)(v))->ob_type == &mxTagTable_Type)
+        (Py_TYPE((v)) == &mxTagTable_Type)
 
 #define mxTagTable_Type(v) \
 	(((mxTagTableObject *)(v))->tabletype)

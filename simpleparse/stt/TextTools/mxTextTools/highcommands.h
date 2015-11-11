@@ -79,7 +79,7 @@
 				errorMessage = PyString_FromFormat(
 					 "Tag Table entry %d: expected an integer (command=Loop) got a %.50s",
 					 (unsigned int)index,
-					 match->ob_type->tp_name
+					 Py_TYPE(match)->tp_name
 				);
 			}
 		}
@@ -199,7 +199,7 @@
 								errorMessage = PyString_FromFormat(
 									 "Tag Table entry %d: matching function has to return an integer, returned a %.50s",
 									 (unsigned int)index,
-									 w->ob_type->tp_name
+									 Py_TYPE(w)->tp_name
 								);
 							} else {
 								childPosition = PyInt_AS_LONG(w);
@@ -222,7 +222,7 @@
 					"expected a callable object, got a %.50s"
 					"(command=Call[Arg])",
 					(unsigned int)index,
-					fct->ob_type->tp_name
+					Py_TYPE(fct)->tp_name
 				);
 			}
 			break;

@@ -1,22 +1,20 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head>
+
   <meta content="en-us" http-equiv="Content-Language">
   <meta content="text/html; charset=windows-1252" http-equiv="Content-Type">
-  <meta content="Microsoft FrontPage 4.0" name="GENERATOR">
-  <meta content="FrontPage.Editor.Document" name="ProgId">
+  <title>SimpleParse 3.0</title>
   
-  <title>SimpleParse 2.1</title><link href="sitestyle.css" type="text/css" rel="stylesheet">
-  <meta content="Mike C. Fletcher" name="author"></head>
-<body>
+  <link href="sitestyle.css" type="text/css" rel="stylesheet">
+</head><body>
 <h1>SimpleParse <font size="-2">A Parser Generator for mxTextTools
-v2.1.0</font></h1>
+v3.0.0</font></h1>
 <p>SimpleParse is a <a href="#License">BSD-licensed</a> Python package
 providing a simple and fast parser generator using a modified version
 of the <a href="http://www.lemburg.com/files/python/mxTextTools.html">mxTextTools</a>
 text-tagging engine. SimpleParse allows you to generate parsers
 directly from your
-EBNF grammar.<br>
-</p>
+EBNF grammar.</p>
 <p>Unlike most parser generators, SimpleParse generates single-pass
 parsers (there is no distinct tokenization stage), an
 approach taken from the predecessor project (mcf.pars) which
@@ -69,24 +67,25 @@ which is the primary interface for the parsing system.<br>
   </li>
 </ul>
 <h2>Acquisition and Installation</h2>
-<p> You will need a copy of Python with <a href="http://www.python.org/sigs/distutils-sig/download.html">distutils</a>
-support (Python versions 2.0 and above include this). You'll also need
-a C
-compiler compatible with your Python build and understood by distutils.</p>
-<p>To install the base SimpleParse engine, <a href="http://sourceforge.net/project/showfiles.php?group_id=55673">download
-the latest version</a> in your preferred format. If you are using the
-Win32 installer, simply run the executable. If you are using one of the
-source distributions, unpack the distribution into a
-temporary directory (maintaining the directory structure)
-then run: </p>
-<pre>setup.py install</pre>
-<p> in the top directory created by the expansion process.&nbsp; This
-will cause the patched mxTextTools library to be built as a sub-package
-of the simpleparse package and will then install the whole package to
-your system.<br>
-</p>
+<p> You will need a copy of Python 2.7, 3.3 or above. If you are compiling
+the package you'll also need a C compiler compatible with your Python.</p>
+<p>To install the base SimpleParse engine:</p>
+<pre class="code">$ pip install SimpleParse</pre>
 <h2>Features/Changelog</h2>
-<p>New in 2.1.1a2:</p><ul><li>Disable all of the mxDebugPrintf functionality, which should allow us to build on Win32 with Mingw32 for Python 2.6</li></ul><p>New in 2.1.1a1:</p><ul><li>Fixes to build under Python 2.6</li><li>Rename of simpleparse.xml to simpleparse.xmlparser to avoid conflicts with standard library "xml"</li><li>Eliminate use of .message on exceptions, as this has been deprecated in Python 2.6</li></ul><p>New in 2.1.0a1:</p>
+<p>New in 3.0.0:</p>
+<ul>
+    <li>Experimental Python 3.3+ support (thanks to Anthony Tuininga). Python 2.7 is still the recommended version.</li>
+    <li>Under Python 3.x the default is to generate unicode parsers; these are *much* slower than byte parsers</li>
+    <li>Test suite is now nosetests based</li>
+    <li>Small code cleanups throughout</li>
+</ul>
+<p>New in 2.1.1:</p>
+<ul>
+  <li>Fixes for stubbed-in Unicode character ranges, unicode support is still very much experimental<br>
+  </li>
+</ul>
+<p>New in 2.1.1a2:</p>
+<ul><li>Disable all of the mxDebugPrintf functionality, which should allow us to build on Win32 with Mingw32 for Python 2.6</li></ul><p>New in 2.1.1a1:</p><ul><li>Fixes to build under Python 2.6</li><li>Rename of simpleparse.xml to simpleparse.xmlparser to avoid conflicts with standard library "xml"</li><li>Eliminate use of .message on exceptions, as this has been deprecated in Python 2.6</li></ul><p>New in 2.1.0a1:</p>
 <ul>
   <li>Includes (patched) mxTextTools extension as part of SimpleParse,
 no longer uses stand-alone mxTextTools installations<br>
@@ -254,7 +253,7 @@ SGML parsers</li>
 this may seem silly, but it would be nice to implement a more advanced
 parsing algorithm directly in C, without going through the
 assembly-like
-interface of mxTextTools. &nbsp;Given that Marc-André isn't
+interface of mxTextTools. &nbsp;Given that Marc-AndrÃ© isn't
 interested
 in adopting the non-recursive codebase, there's not much point
 retaining compatability with mxTextTools, so moving to a more
@@ -318,9 +317,9 @@ licensing terms for the original library, the eGenix extensions are:<br>
 <p>Extensions to the eGenix extensions (most significantly the rewrite
 of the core loop) are copyright Mike Fletcher and released under the
 SimpleParse License below:</p>
-<p>&nbsp;&nbsp;&nbsp; Copyright © 2003-2006, Mike Fletcher</p>
+<p>&nbsp;&nbsp;&nbsp; Copyright Å  2003-2006, Mike Fletcher</p>
 <p>SimpleParse License:</p>
-<p style="margin-left: 80px;">Copyright © 1998-2006, Copyright by
+<p style="margin-left: 80px;">Copyright Å  1998-2006, Copyright by
 Mike C. Fletcher; All Rights Reserved.<br>
 mailto: <a href="mailto:mcfletch@users.sourceforge.net">mcfletch@users.sourceforge.net</a>
 </p>
