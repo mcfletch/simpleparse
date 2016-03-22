@@ -19,7 +19,7 @@ def findVersion( ):
 def isPackage( filename ):
     """Is the given filename a Python package"""
     return (
-        os.path.isdir(filename) and 
+        os.path.isdir(filename) and
         os.path.isfile( os.path.join(filename,'__init__.py'))
     )
 def packagesFor( filename, basePackage="" ):
@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
 Provides a moderately fast parser generator for use with Python,
 includes a forked version of the mxTextTools text-processing library
-modified to eliminate recursive operation and fix a number of 
+modified to eliminate recursive operation and fix a number of
 undesirable behaviours.
 
 Converts EBNF grammars directly to single-pass parsers for many
@@ -81,7 +81,7 @@ largely deterministic grammars.""",
         description = "A Parser Generator for Python (w/mxTextTools derivative)",
         author = "Mike C. Fletcher",
         author_email = "mcfletch@users.sourceforge.net",
-        url = "http://simpleparse.sourceforge.net/",
+        url = "https://bitbucket.org/jaraco/simpleparse/",
 
         package_dir = packages,
         options = options,
@@ -89,9 +89,9 @@ largely deterministic grammars.""",
         packages = list(packages.keys()),
         ext_modules=[
             Extension(
-                "simpleparse.stt.TextTools.mxTextTools.mxTextTools", 
+                "simpleparse.stt.TextTools.mxTextTools.mxTextTools",
                 [
-                    abs_rel(f) for f in 
+                    abs_rel(f) for f in
                     [
                         'simpleparse/stt/TextTools/mxTextTools/mxTextTools.c',
                         'simpleparse/stt/TextTools/mxTextTools/mxte.c',
