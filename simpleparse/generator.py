@@ -4,7 +4,7 @@ import traceback
 
 class Generator:
     '''Abstract representation of an in-memory grammar that generates parsers
-    
+
     The generator class manages a collection of
     ElementToken objects.  These element token objects
     allow the generator to be separated from the
@@ -23,12 +23,12 @@ class Generator:
         try:
             return self.names.index( name )
         except ValueError:
-            
+
             for source in self.definitionSources:
                 if name in source:
                     return self.addDefinition( name, source[name])
-##			import pdb
-##			pdb.set_trace()
+##          import pdb
+##          pdb.set_trace()
             raise NameError( '''The name %s is not defined within this generator'''%(repr(name)), self )
     def getRootObjects( self, ):
         '''Return the list of root generator objects'''
@@ -39,7 +39,7 @@ class Generator:
     def getRootObject( self, name ):
         """Get a particular root object by name"""
         return self.getRootObjects()[ self.getNameIndex(name)]
-    
+
     def addDefinition( self, name, rootElement ):
         '''Add a new definition (object) to the generator'''
         try:
@@ -87,7 +87,7 @@ class Generator:
     def getCustomTerminalParser( self, index, flags ):
         """Retrieved a cached customized terminal parser or None"""
         return self.terminalParserCache.get( (index, flags))
-        
+
     def getParserList (self):
         return self.parserList
 

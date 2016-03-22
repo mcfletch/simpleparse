@@ -29,7 +29,7 @@ class ElementToken:
     """Abstract base class for all ElementTokens
 
     Common Attributes:
-    
+
         negative -- the element token should match
             a character if the "base" definition
             would not match at the current position
@@ -46,9 +46,9 @@ class ElementToken:
             matching object iff the element token fails
             to match.  This is used to signal
             SyntaxErrors.
-            
+
     Attributes only used for top-level Productions:
-    
+
         report -- if true, the production's results
             will be added to the result tree
         expanded -- if true, the production's children's
@@ -67,8 +67,8 @@ class ElementToken:
     # as if the name wasn't present...
     expanded = 0
     lookahead = 0
-    
-    
+
+
     def __init__( self, **namedarguments ):
         """Initialize the object with named attributes
 
@@ -95,14 +95,14 @@ class ElementToken:
 
         This method applies generic logic for applying the
         operational flags to a basic recipe for an element.
-        
+
         It is normally called from the elements-token's own
         toParser method.
         '''
         flags = 0
         if self.lookahead:
             flags = flags + LookAhead
-            
+
         assert len(basetable) == 3, '''Attempt to permute a base table that already has fail flag set, can only permute unadorned tables'''
         if self.negative:
             # negative "matches" if it fails
@@ -117,7 +117,7 @@ class ElementToken:
             # unpack, add the flags, and repack
             tag, command, arg = basetable
             basetable = ( tag, command+flags, arg)
-            
+
         if self.repeating:
             ### There are a number of problems with repetition that we'd like to solve
             ### via recursive table calls, but those are very expensive in the current
@@ -172,7 +172,7 @@ class ElementToken:
     def terminal (self, generator):
         """Determine if this element is terminal for the generator"""
         return 0
-        
+
 
 class Literal( ElementToken ):
     """Literal string value to be matched
@@ -193,7 +193,7 @@ class Literal( ElementToken ):
 
     Notes:
         Currently we don't support Unicode literals
-        
+
     See also:
         CILiteral -- case-insensitive Literal values
     """
@@ -229,20 +229,20 @@ class Literal( ElementToken ):
             else: # a single-character test saying "not a this"
                 if self.optional: # test for a success, move back if success, move one forward if failure
                     if len(svalue) > 1:
-                        return [ (None, Word, svalue, 2,1), 
+                        return [ (None, Word, svalue, 2,1),
                             (None, Skip, -len(svalue), 2,2), # backup if this was the word to start of word, succeed
                             (None, Skip, 1 ) ] # else just move one character and succeed
                     else: # Uses Is test instead of Word test, should be faster I'd imagine
-                        return [ (None, Is, svalue, 2,1), 
+                        return [ (None, Is, svalue, 2,1),
                             (None, Skip, -1, 2,2), # backtrack
                             (None, Skip, 1 ) ] # else just move one character and succeed
                 else: # must find at least one character not part of the word, so
                     if len(svalue) > 1:
-                        return [ (None, Word, svalue, 2,1), 
+                        return [ (None, Word, svalue, 2,1),
                             (None, Fail, Here),
                             (None, Skip, 1 ) ] # else just move one character and succeed
                     else: #must fail if it finds or move one forward
-                        return [ (None, Is, svalue, 2,1), 
+                        return [ (None, Is, svalue, 2,1),
                             (None, Fail, Here),
                             (None, Skip, 1 ) ] # else just move one character and succeed
         else: # positive
@@ -288,7 +288,7 @@ class _Range( ElementToken ):
     The mini-grammar for the simpleparsegrammar is defined as follows:
 
         '[',CHARBRACE?,CHARDASH?, (CHARRANGE/CHARNOBRACE)*, CHARDASH?,']'
-        
+
     that is, if a literal ']' character is wanted, you must
     define the character as the first item in the range.  A literal
     '-' character must appear as the first character after any
@@ -321,40 +321,40 @@ class _Range( ElementToken ):
 # it non-functional, so for now I'm using the old version.
 # Eventually this should also support the Unicode character sets
 ##try:
-##	CharSet
-##	class Range( _Range ):
-##		"""Range type using the CharSet feature of mx.TextTools 2.1.0
+##  CharSet
+##  class Range( _Range ):
+##      """Range type using the CharSet feature of mx.TextTools 2.1.0
 ##
-##		The CharSet type allows for both Unicode and 256-char strings,
-##		so we can use it as our 2.1.0 primary parsing mechanism.
-##		It also allows for simpler definitions (doesn't require that
-##		we pre-exand the character set).  That's going to require support
-##		in the SimpleParse grammar, of course.
-##		"""
-##		requiresExpandedSet = 0
-##		def baseToParser( self, generator=None ):
-##			"""Parser generation without considering flag settings"""
-##			svalue = self.value
-##			print 'generating range for ', repr(svalue)
-##			if not svalue:
-##				raise ValueError( '''Range defined with no member values, would cause infinite loop %s'''%(self))
-##			if self.negative:
-##				svalue = '^' + svalue
-##			print '  generated', repr(svalue)
-##			svalue = CharSet(svalue)
-##			if self.repeating:
-##				if self.optional:
-##					return [ (None, AllInCharSet, svalue, 1 ) ]
-##				else: # not optional
-##					#return [ (None, AllInSet, svalue ) ]
-##					return [ (None, AllInCharSet, svalue ) ]
-##			else: # not repeating
-##				if self.optional:
-##					#return [ (None, IsInSet, svalue, 1 ) ]
-##					return [ (None, IsInCharSet, svalue, 1 ) ]
-##				else: # not optional
-##					#return [ (None, IsInSet, svalue ) ]
-##					return [ (None, IsInCharSet, svalue ) ]
+##      The CharSet type allows for both Unicode and 256-char strings,
+##      so we can use it as our 2.1.0 primary parsing mechanism.
+##      It also allows for simpler definitions (doesn't require that
+##      we pre-exand the character set).  That's going to require support
+##      in the SimpleParse grammar, of course.
+##      """
+##      requiresExpandedSet = 0
+##      def baseToParser( self, generator=None ):
+##          """Parser generation without considering flag settings"""
+##          svalue = self.value
+##          print 'generating range for ', repr(svalue)
+##          if not svalue:
+##              raise ValueError( '''Range defined with no member values, would cause infinite loop %s'''%(self))
+##          if self.negative:
+##              svalue = '^' + svalue
+##          print '  generated', repr(svalue)
+##          svalue = CharSet(svalue)
+##          if self.repeating:
+##              if self.optional:
+##                  return [ (None, AllInCharSet, svalue, 1 ) ]
+##              else: # not optional
+##                  #return [ (None, AllInSet, svalue ) ]
+##                  return [ (None, AllInCharSet, svalue ) ]
+##          else: # not repeating
+##              if self.optional:
+##                  #return [ (None, IsInSet, svalue, 1 ) ]
+##                  return [ (None, IsInCharSet, svalue, 1 ) ]
+##              else: # not optional
+##                  #return [ (None, IsInSet, svalue ) ]
+##                  return [ (None, IsInCharSet, svalue ) ]
 ##except NameError:
 class Range( _Range ):
     """Range type which doesn't use the CharSet features in mx.TextTools
@@ -420,7 +420,7 @@ class Group( ElementToken ):
                 return self.terminalValue
         self.terminalValue = 1
         return self.terminalValue
-    
+
 class SequentialGroup( Group ):
     """A sequence of element tokens which must match in a particular order
 
@@ -443,7 +443,7 @@ class SequentialGroup( Group ):
             if len(first) == 3 and first[0] is None and first[1] == SubTable:
                 return tuple(first[2])
         return basic
-            
+
 class CILiteral( SequentialGroup ):
     """Case-insensitive Literal values
 
@@ -503,7 +503,7 @@ class CILiteral( SequentialGroup ):
             result.append( (None, IsIn, a[0]+b[0]) )
             a,b = a[1:], b[1:]
         return result
-        
+
 
 class ErrorOnFail(ElementToken):
     """When called as a matching function, raises a SyntaxError
@@ -518,10 +518,10 @@ class ErrorOnFail(ElementToken):
     (something,something)!
     (something,something)+!"Unable to parse somethings in my production"
     (something,something)!"Unable to parse somethings in my production"
-    
+
     if string -> give an explicit message (with optional % values)
     else -> use a default string
-    
+
     """
     production = ""
     message = ""
@@ -538,7 +538,7 @@ class ErrorOnFail(ElementToken):
     def copy( self ):
         import copy
         return copy.copy( self )
-    
+
 
 
 
@@ -638,7 +638,7 @@ class Name( ElementToken ):
 
     Notes:
         expanded and un-reported productions won't get any
-        methodsource methods called when 
+        methodsource methods called when
         they are finished, that's just how I decided to
         do it, not sure if there's some case where you'd
         want it.  As a result, it's possible to have a

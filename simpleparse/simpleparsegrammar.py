@@ -116,11 +116,11 @@ SPGenerator.addDefinition (
 SPGenerator.addDefinition (
     "seq_indicator",
     Literal(value = ",", report=0 ),
-)	
+)
 SPGenerator.addDefinition (
     "fo_indicator",
     Literal(value = "/", report=0 ),
-)	
+)
 
 SPGenerator.addDefinition (
     "element_token",
@@ -153,12 +153,12 @@ SPGenerator.addDefinition (
 SPGenerator.addDefinition (
     "lookahead_indicator",
     Literal(value = "?" ),
-)	
+)
 
 SPGenerator.addDefinition (
     "occurence_indicator",
     Range (value = "+*?" ),
-)	
+)
 SPGenerator.addDefinition (
     "error_on_fail",
     SequentialGroup (
@@ -295,11 +295,11 @@ SPGenerator.addDefinition (
     )
 )
 SPGenerator.addDefinition (
-    "CHARBRACE",   
+    "CHARBRACE",
     Literal (value = "]"),
 )
 SPGenerator.addDefinition (
-    "CHARDASH",   
+    "CHARDASH",
     Literal (value = "-"),
 )
 SPGenerator.addDefinition (
@@ -500,7 +500,7 @@ class SPGrammarProcessor( DispatchProcessor ):
                 self.generator.addDefinition( name, Prebuilt(value=table))
         for source in definitionSources:
             self.generator.addDefinitionSource( source )
-    
+
     def declaration( self, info, buffer):
         '''Base declaration from the grammar, a "production" or "rule"'''
         (tag, left, right, sublist) = info
@@ -598,7 +598,7 @@ class SPGrammarProcessor( DispatchProcessor ):
             children = children
         )
         return base
-        
+
     def literal( self, info, buffer):
         '''Turn a literal result into a literal generator'''
         (tag, left, right, sublist) = info
@@ -613,18 +613,18 @@ class SPGrammarProcessor( DispatchProcessor ):
         return classObject( value = "".join(elements) )
 
     def range( self, info, buffer):
-##		if hasattr( Range, 'requiresExpandedSet') and Range.requiresExpandedSet:
+##      if hasattr( Range, 'requiresExpandedSet') and Range.requiresExpandedSet:
         (tag, left, right, sublist) = info
         return Range(
             value = ''.join(dispatchList( self, sublist, buffer)),
         )
-##		else:
-##			# need to build up a new-syntax version of the range...
-##			# escape ^ to \^
-##			# escape \ to \\
-##			# escape - to \-
-##			# make sure range-sets are in proper order...
-##			raise NotImplementedError( """Haven't got the new CharSet version implemented yet""")
+##      else:
+##          # need to build up a new-syntax version of the range...
+##          # escape ^ to \^
+##          # escape \ to \\
+##          # escape - to \-
+##          # make sure range-sets are in proper order...
+##          raise NotImplementedError( """Haven't got the new CharSet version implemented yet""")
     def name( self, tup, buffer):
         return Name(
             value = getString(tup, buffer),
@@ -661,7 +661,7 @@ class SPGrammarProcessor( DispatchProcessor ):
         errorOnFail.expected = buffer[tup[1]:tup[2]]
         if hasattr( self, "currentProduction"):
             errorOnFail.production = self.currentProduction
-        
+
 
     negposIndicatorMap = {
         '+': 0,
@@ -710,7 +710,7 @@ class SPGrammarProcessor( DispatchProcessor ):
             if not (isinstance( second, _unicode ) and isinstance( first, _unicode )):
                 raise ValueError( 'Range %s uses one unicode and one string escape, cannot mix'%(buffer[left:right]) )
         else:
-            _chr = chr 
+            _chr = chr
         first, second = list(map( ord, (first,second) ))
         return u''.join([_chr(u) for u in range(first,second+1)])
     def CHARDASH( self, tup , buffer):

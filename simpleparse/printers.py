@@ -45,7 +45,7 @@ class Parser:
                 for child in value:
                     childTemp.append(childTemplate%self.reprObject(child,depth+2))
                 childTemp.append( (indent*(depth+1))+']' )
-                
+
                 temp.append(
                     argTemplate% (key, '\n'.join(childTemp))
                 )

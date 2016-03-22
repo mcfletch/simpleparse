@@ -17,7 +17,7 @@ class Parser( baseparser.BaseParser ):
     """
     def __init__(
         self, declaration, root='root',
-        prebuilts=(), 
+        prebuilts=(),
         definitionSources=common.SOURCES,
     ):
         """Initialise the parser, creating the tagging table for it
@@ -46,4 +46,4 @@ class Parser( baseparser.BaseParser ):
             production,
             methodSource=processor,
         )
-    
+

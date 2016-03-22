@@ -167,7 +167,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
             '[] ',
             (0, [], AnyInt),
         )
-        
+
     def testLiteral1( self ):
         self.doBasicTest(
             "literal",
@@ -184,7 +184,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
                     ('SPECIALESCAPEDCHAR', 6, 7, NullResult)
                 ])
             ], 8)
-            
+
         )
     def testLiteral3( self ):
         self.doBasicTest(
@@ -207,7 +207,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
                     ('SPECIALESCAPEDCHAR', 2, 3, NullResult)
                 ]),
                 ('CHARNODBLQUOTE', 3, 7, NullResult)
-            ], 8)			
+            ], 8)
         )
     def testLiteral6( self ):
         self.doBasicTest(
@@ -219,7 +219,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
                     ('OCTALESCAPEDCHAR', 6, 9, NullResult)
                 ])
             ], 10)
-            
+
         )
     def testLiteralDecorator( self ):
         self.doBasicTest(
@@ -240,7 +240,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
             'c "this"',
             (0, [], AnyInt),
         )
-        
+
     def testWhitespace1( self ):
         self.doBasicTest(
             "ts",
@@ -276,7 +276,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
             ' #\n ',
             (1, [('comment',1,3,NullResult)], 4)
         )
-        
+
     def testName1( self ):
         self.doBasicTest(
             "name",

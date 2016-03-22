@@ -34,6 +34,6 @@ result = TextTools.tag( testdata, parser )
 if result != expectedResult:
     print('test-deep-nesting failed')
     print('\texpected', expectedResult)
-    print('\tgot', result) 
+    print('\tgot', result)
 else:
     print("test-deep-nesting succeeded!\nYou're probably using the non-recursive mx.TextTools rewrite")

@@ -4,10 +4,10 @@ numbers
     integers
         int
         int_unsigned
-        
+
     hexidecimal integers
         hex
-        
+
     floats (including exponents, requring a '.' in the literal)
         float
             floats, with optional integer-only exponents
@@ -42,7 +42,7 @@ Interpreters:
         binary_number
     ImaginaryInterpreter
         imaginary_number
-    
+
 """
 from simpleparse.parser import Parser
 from simpleparse import common, objectgenerator
@@ -70,7 +70,7 @@ exponent_loose      := explicit_base/int
 
 float               := explicit_base, ([eE],exponent)?
 float_floatexp      := explicit_base, ([eE],exponent_loose)?
- 
+
 hex                 := sign?, '0', [xX], hexdigits
 int_unsigned        := l_digits
 int                 := sign?, l_digits
@@ -120,7 +120,7 @@ class HexInterpreter(DispatchProcessor):
             return _toInt( buffer[left:right], 16)
         except ValueError:
             return _toLong( buffer[left:right], 16)
-        
+
 class FloatFloatExpInterpreter(DispatchProcessor):
     """Interpret a float string as an integer value
     Note: we're allowing float exponentiation, which
@@ -134,10 +134,10 @@ class FloatFloatExpInterpreter(DispatchProcessor):
             # figure out the exponent...
             exp = children[1]
             exp = buffer[ exp[1]:exp[2]]
-##			import pdb
-##			pdb.set_trace()
+##          import pdb
+##          pdb.set_trace()
             exp = float( exp )
-            
+
             base = base * (10** exp)
         return base
 class FloatInterpreter(DispatchProcessor):
@@ -174,7 +174,7 @@ else:
                 if bit == '1':
                     value = value + 1
             return value
-        
+
 class ImaginaryInterpreter( DispatchProcessor ):
     map = {
         "float":FloatInterpreter(),
@@ -187,4 +187,4 @@ class ImaginaryInterpreter( DispatchProcessor ):
         base = children[0]
         base = self.mapSet[base[0]](base, buffer)
         return base * 1j
-    
+
