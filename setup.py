@@ -81,7 +81,7 @@ largely deterministic grammars.""",
         description = "A Parser Generator for Python (w/mxTextTools derivative)",
         author = "Mike C. Fletcher",
         author_email = "mcfletch@users.sourceforge.net",
-        url = "https://bitbucket.org/jaraco/simpleparse/",
+        url = "https://github.com/yougov/simpleparse",
 
         package_dir = packages,
         options = options,
