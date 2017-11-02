@@ -74,7 +74,7 @@ nondelimiter               :=  -"'''"
 char_no_quote              :=  -[\\\\']+
 string_special_escapes     := [\\\\abfnrtv']
 """),
-    ("string_triple_double",'''
+    ("string_triple_double", '''
 nondelimiter               :=  -'"""'
 <delimiter>                :=  '"""'
 char_no_quote              :=  -[\\\\"]+
@@ -83,19 +83,20 @@ string_special_escapes     := [\\\\abfnrtv"]
 ]
 
 for name, partial in _stringTypeData:
-    _p = Parser( stringDeclaration + partial )
-    c[ name ] = objectgenerator.LibraryElement(
-        builder = _p._generator.getBuilder(),
-        production = "str",
+    _p = Parser(stringDeclaration + partial)
+    c[name] = objectgenerator.LibraryElement(
+        builder=_p._generator.getBuilder(),
+        production="str",
     )
-common.share( c )
-_p = Parser( """
+common.share(c)
+_p = Parser("""
 string :=  string_triple_double/string_triple_single/string_double_quote/string_single_quote
-""" )
-c[ "string"] = objectgenerator.LibraryElement(
-    builder = _p._generator.getBuilder(),
-    production = "string",
+""")
+c["string"] = objectgenerator.LibraryElement(
+    builder=_p._generator.getBuilder(),
+    production="string",
 )
+
 
 class StringInterpreter(DispatchProcessor):
     """Processor for converting parsed string values to their "intended" value
@@ -117,52 +118,53 @@ class StringInterpreter(DispatchProcessor):
             # used string in another area.
             string_single_quote = string
     """
-    def string( self, info, buffer):
+
+    def string(self, info, buffer):
         """Dispatch any of the string types and return the result"""
         (tag, left, right, sublist) = info
-        return dispatch( self, sublist[0], buffer )
+        return dispatch(self, sublist[0], buffer)
 
-    def string_single_quote( self, info, buffer):
+    def string_single_quote(self, info, buffer):
         (tag, left, right, sublist) = info
         return "".join(dispatchList(self, sublist, buffer))
     string_double_quote = string_single_quote
     string_triple_single = string_single_quote
     string_triple_double = string_single_quote
 
-    def char_no_quote( self, info, buffer):
+    def char_no_quote(self, info, buffer):
         (tag, left, right, sublist) = info
         return buffer[left:right]
     nondelimiter = char_no_quote
 
-    def escaped_char( self, info, buffer):
+    def escaped_char(self, info, buffer):
         (tag, left, right, sublist) = info
-        return "".join(dispatchList(self,sublist,buffer))
+        return "".join(dispatchList(self, sublist, buffer))
 
     def octal_escaped_char(self, info, buffer):
         (tag, left, right, sublist) = info
-        return chr(int( buffer[left:right], 8 ))
-    def hex_escaped_char( self, info, buffer):
-        (tag, left, right, sublist) = info
-        return chr(int( buffer[left:right], 16 ))
+        return chr(int(buffer[left:right], 8))
 
-    def backslash_char( self, info, buffer):
+    def hex_escaped_char(self, info, buffer):
+        (tag, left, right, sublist) = info
+        return chr(int(buffer[left:right], 16))
+
+    def backslash_char(self, info, buffer):
         return "\\"
 
-    def string_special_escapes( self, info, buffer):
+    def string_special_escapes(self, info, buffer):
         """Maps "special" escapes to the corresponding characters"""
         (tag, left, right, sublist) = info
-        return self.specialescapedmap[ buffer[left:right]]
+        return self.specialescapedmap[buffer[left:right]]
     specialescapedmap = {
-    'a':'\a',
-    'b':'\b',
-    'f':'\f',
-    'n':'\n',
-    'r':'\r',
-    't':'\t',
-    'v':'\v',
-    '\\':'\\',
-    '\n':'',
-    '"':'"',
-    "'":"'",
+        'a': '\a',
+        'b': '\b',
+        'f': '\f',
+        'n': '\n',
+        'r': '\r',
+        't': '\t',
+        'v': '\v',
+        '\\': '\\',
+        '\n': '',
+        '"': '"',
+        "'": "'",
     }
-

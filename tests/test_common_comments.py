@@ -11,7 +11,7 @@ parseTests = [
     ("c_comment", [
         """/* this */""",
         """/* this \n\n*/""",
-    ],[
+    ], [
         """// this""",
         """# this""",
         """# this\n""",
@@ -22,7 +22,7 @@ parseTests = [
         """/* this \n\n*/""",
         """/* /* this */ */""",
         """/* /* this \n*/ */""",
-    ],[
+    ], [
         """// this""",
         """# this""",
         """; this""",
@@ -31,7 +31,7 @@ parseTests = [
         """# this""",
         """# this\n""",
         """# this\r\n""",
-    ],[
+    ], [
         """// this""",
         """/* this */""",
         """/* /* this */ */""",
@@ -40,7 +40,7 @@ parseTests = [
         """; this""",
         """; this\n""",
         """; this\r\n""",
-    ],[
+    ], [
         """# this""",
         """// this""",
         """/* this */""",
@@ -50,7 +50,7 @@ parseTests = [
         """// this""",
         """// this\n""",
         """// this\r\n""",
-    ],[
+    ], [
         """# this""",
         """/ this""",
         """/* this */""",
@@ -60,21 +60,25 @@ parseTests = [
 
 
 class CommonTests(unittest.TestCase):
-    def testBasic( self ):
+    def testBasic(self):
         for production, yestable, notable in parseTests:
-            p = Parser( "x := %s"%production, 'x')
+            p = Parser("x := %s" % production, 'x')
             for data in yestable:
-                success, results, next = p.parse( data)
-                assert success and (next == len(data)), """Did not parse comment %s as a %s result=%s"""%( repr(data), production, (success, results, next))
-                assert results, """Didn't get any results for comment %s as a %s result=%s"""%( repr(data), production, (success, results, next))
+                success, results, next = p.parse(data)
+                assert success and (next == len(data)), """Did not parse comment %s as a %s result=%s""" % (
+                    repr(data), production, (success, results, next))
+                assert results, """Didn't get any results for comment %s as a %s result=%s""" % (
+                    repr(data), production, (success, results, next))
             for data in notable:
-                success, results, next = p.parse( data)
-                assert not success, """Parsed %s of %s as a %s result=%s"""%( 
+                success, results, next = p.parse(data)
+                assert not success, """Parsed %s of %s as a %s result=%s""" % (
                     next, repr(data), production, results
                 )
-        
+
+
 def getSuite():
     return unittest.makeSuite(CommonTests, 'test')
+
 
 if __name__ == "__main__":
     unittest.main(defaultTest="getSuite")

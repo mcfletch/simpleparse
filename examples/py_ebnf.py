@@ -83,10 +83,10 @@ range               :=  string, ts, '...', ts, string
 from simpleparse.parser import Parser
 from simpleparse.common import strings
 
-parser = Parser( declaration )
+parser = Parser(declaration)
 if __name__ == "__main__":
     from simpleparse.stt.TextTools import print_tags
     grammar = open("""py_grammar.txt""").read()
-    success, result, next = parser.parse( grammar, 'declarationset')
+    success, result, next = parser.parse(grammar, 'declarationset')
     print('success', success, next)
-    print_tags( grammar, result )
+    print_tags(grammar, result)

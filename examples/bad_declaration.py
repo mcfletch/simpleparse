@@ -24,4 +24,4 @@ testdata = '''[test1]
 '''
 if __name__ == "__main__":
     from simpleparse.parser import Parser
-    parser = Parser( declaration, "file" ) # will raise ValueError
+    parser = Parser(declaration, "file")  # will raise ValueError

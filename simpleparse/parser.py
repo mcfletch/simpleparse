@@ -1,7 +1,8 @@
 """Real-world parsers using the SimpleParse EBNF"""
 from simpleparse import baseparser, simpleparsegrammar, common
 
-class Parser( baseparser.BaseParser ):
+
+class Parser(baseparser.BaseParser):
     """EBNF-generated Parsers with results-handling
 
     The Parser is a two-stage object:
@@ -15,6 +16,7 @@ class Parser( baseparser.BaseParser ):
         parser passing the results to your processor object
         and then back to you.
     """
+
     def __init__(
         self, declaration, root='root',
         prebuilts=(),
@@ -34,9 +36,10 @@ class Parser( baseparser.BaseParser ):
         self._declaration = declaration
         self._generator = simpleparsegrammar.Parser(
             declaration, prebuilts,
-            definitionSources = definitionSources,
+            definitionSources=definitionSources,
         ).generator
-    def buildTagger( self, production=None, processor=None):
+
+    def buildTagger(self, production=None, processor=None):
         """Get a particular parsing table for a particular production"""
         if production is None:
             production = self._rootProduction
@@ -44,4 +47,3 @@ class Parser( baseparser.BaseParser ):
             processor = self.buildProcessor()
         builder = self._generator.getBuilder(methodSource=processor)
         return builder.getParser(production)
-

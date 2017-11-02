@@ -2,6 +2,7 @@
 from simpleparse.stt.TextTools import TextTools
 import traceback
 
+
 class Generator:
     '''Abstract representation of an in-memory grammar that generates parsers
 
@@ -12,61 +13,69 @@ class Generator:
     grammar.  In fact, it is possible to create entire grammars
     using only the generator objects as a python API.
     '''
-    def __init__( self ):
+
+    def __init__(self):
         """Initialise the Generator"""
         self.names = []
         self.rootObjects = []
         self.definitionSources = []
         self.terminalParserCache = {}
-    def getNameIndex( self, name ):
+
+    def getNameIndex(self, name):
         '''Return the index into the main list for the given name'''
         try:
-            return self.names.index( name )
+            return self.names.index(name)
         except ValueError:
 
             for source in self.definitionSources:
                 if name in source:
-                    return self.addDefinition( name, source[name])
+                    return self.addDefinition(name, source[name])
 ##          import pdb
-##          pdb.set_trace()
-            raise NameError( '''The name %s is not defined within this generator'''%(repr(name)), self )
-    def getRootObjects( self, ):
+# pdb.set_trace()
+            raise NameError(
+                '''The name %s is not defined within this generator''' % (repr(name)), self)
+
+    def getRootObjects(self, ):
         '''Return the list of root generator objects'''
         return self.rootObjects
-    def getNames( self, ):
+
+    def getNames(self, ):
         '''Return the list of root generator objects'''
         return self.names
-    def getRootObject( self, name ):
-        """Get a particular root object by name"""
-        return self.getRootObjects()[ self.getNameIndex(name)]
 
-    def addDefinition( self, name, rootElement ):
+    def getRootObject(self, name):
+        """Get a particular root object by name"""
+        return self.getRootObjects()[self.getNameIndex(name)]
+
+    def addDefinition(self, name, rootElement):
         '''Add a new definition (object) to the generator'''
         try:
-            self.names.index( name )
-            raise NameError( '''Attempt to redefine an existing name %s'''%(name), self )
+            self.names.index(name)
+            raise NameError(
+                '''Attempt to redefine an existing name %s''' % (name), self)
         except ValueError:
-            self.names.append( name )
-            self.rootObjects.append( rootElement )
-            return self.getNameIndex( name )
+            self.names.append(name)
+            self.rootObjects.append(rootElement)
+            return self.getNameIndex(name)
 
-    def getBuilder( self, methodSource=None ):
+    def getBuilder(self, methodSource=None):
         '''Return a Builder instance for building parsers.'''
         builder = Builder(self, methodSource)
         builder.fill_terminals(self.rootObjects)
         return builder
 
-    def cacheCustomTerminalParser( self, index, flags, parser ):
+    def cacheCustomTerminalParser(self, index, flags, parser):
         """Optimization to reuse customized terminal parsers"""
-        self.terminalParserCache[ (index,flags) ] = parser
-    def getCustomTerminalParser( self, index, flags ):
-        """Retrieved a cached customized terminal parser or None"""
-        return self.terminalParserCache.get( (index, flags))
+        self.terminalParserCache[(index, flags)] = parser
 
-    def addDefinitionSource( self, item ):
+    def getCustomTerminalParser(self, index, flags):
+        """Retrieved a cached customized terminal parser or None"""
+        return self.terminalParserCache.get((index, flags))
+
+    def addDefinitionSource(self, item):
         """Add a source for definitions when the current grammar doesn't supply
         a particular rule (effectively common/shared items for the grammar)."""
-        self.definitionSources.append( item )
+        self.definitionSources.append(item)
 
 
 class Builder(object):
@@ -82,67 +91,70 @@ class Builder(object):
         for i, rootObject in enumerate(rootObjects):
             try:
                 if len(self.parserList) <= i or self.parserList[i] is None:
-                    parser = tuple(rootObject.toParser( self ))
-                    self.setTerminalParser( i, parser )
+                    parser = tuple(rootObject.toParser(self))
+                    self.setTerminalParser(i, parser)
             except NameError as err:
-                err.args += (('current declaration is %s' % self.generator.names[i]), )
+                err.args += (('current declaration is %s' %
+                              self.generator.names[i]), )
                 raise
         assert None not in self.parserList, str(self.parserList)
 
     def getParser(self, name):
         """Return a TextTools parsing tuple for the given name."""
-        return self.parserList [self.generator.getNameIndex(name)]
+        return self.parserList[self.generator.getNameIndex(name)]
 
-    def setTerminalParser( self, index, parser ):
+    def setTerminalParser(self, index, parser):
         """Explicitly set the parser value for given name"""
         while index >= len(self.parserList):
             self.parserList.append(None)
         self.parserList[index] = parser
 
-    def getTerminalParser( self, index ):
+    def getTerminalParser(self, index):
         """Try to retrieve a parser from the parser-list"""
         try:
-            return self.parserList[ index ]
+            return self.parserList[index]
         except IndexError:
             return None
 
-    def getParserList (self):
+    def getParserList(self):
         return self.parserList
 
-    def getObjectForName( self, name):
+    def getObjectForName(self, name):
         """Determine whether our methodSource has a parsing method for the given name
 
         returns ( flags or 0 , tagobject)
         """
-        testName = "_m_"+name
-        if hasattr( self.methodSource, testName):
-            method = getattr( self.methodSource, testName )
+        testName = "_m_" + name
+        if hasattr(self.methodSource, testName):
+            method = getattr(self.methodSource, testName)
             if callable(method):
-                return  TextTools.CallTag, method
+                return TextTools.CallTag, method
             elif method == TextTools.AppendMatch:
                 return method, name
             elif method in (TextTools.AppendToTagobj, TextTools.AppendTagobj):
-                object = self.getTagObjectForName( name )
+                object = self.getTagObjectForName(name)
                 if method == TextTools.AppendToTagobj:
-                    if not ( hasattr( object, 'append') and callable(object.append)):
-                        raise ValueError( """Method source %s declares production %s to use AppendToTagobj method, but doesn't given an object with an append method in _o_%s (gave %s)"""%(repr(self.methodSource), name,name, repr(object)))
+                    if not (hasattr(object, 'append') and callable(object.append)):
+                        raise ValueError("""Method source %s declares production %s to use AppendToTagobj method, but doesn't given an object with an append method in _o_%s (gave %s)""" % (
+                            repr(self.methodSource), name, name, repr(object)))
                 return method, object
             else:
-                raise ValueError( """Unrecognised command value %s (not callable, not one of the Append* constants) found in methodSource %s, name=%s"""%( repr(method),repr(methodSource),name))
+                raise ValueError("""Unrecognised command value %s (not callable, not one of the Append* constants) found in methodSource %s, name=%s""" %
+                                 (repr(method), repr(methodSource), name))
         return 0, name
 
-    def getTagObjectForName( self, name ):
+    def getTagObjectForName(self, name):
         """Get any explicitly defined tag object for the given name"""
-        testName = "_o_"+name
-        if hasattr( self.methodSource, testName):
-            object = getattr( self.methodSource, testName )
+        testName = "_o_" + name
+        if hasattr(self.methodSource, testName):
+            object = getattr(self.methodSource, testName)
             return object
         return name
 
 
-### Compatability API
-##  This API exists to allow much of the code written with SimpleParse 1.0
-##  to work with SimpleParse 2.0
+# Compatability API
+# This API exists to allow much of the code written with SimpleParse 1.0
+# to work with SimpleParse 2.0
 class GeneratorAPI1:
     """Stand-in class supporting operation of SimpleParse 1.0 applications
 
@@ -150,17 +162,20 @@ class GeneratorAPI1:
     everything else was internal (and is now part of
     simpleparsegrammar.py).
     """
-    def __init__( self, production, prebuilt=() ):
-        from simpleparse.parser import Parser
-        self.parser = Parser( production, prebuilts=prebuilt )
-    def parserbyname( self, name ):
-        """Retrieve a tag-table by production name"""
-        return self.parser.buildTagger( name )
 
-def buildParser( declaration, prebuiltnodes=() ):
+    def __init__(self, production, prebuilt=()):
+        from simpleparse.parser import Parser
+        self.parser = Parser(production, prebuilts=prebuilt)
+
+    def parserbyname(self, name):
+        """Retrieve a tag-table by production name"""
+        return self.parser.buildTagger(name)
+
+
+def buildParser(declaration, prebuiltnodes=()):
     """API 1.0 primary entry point, returns a GeneratorAPI1 instance
 
     That object will respond to the parserbyname API expected by
     SimpleParse 1.0 applications.
     """
-    return GeneratorAPI1( declaration, prebuiltnodes )
+    return GeneratorAPI1(declaration, prebuiltnodes)

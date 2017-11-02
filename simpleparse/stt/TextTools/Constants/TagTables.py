@@ -9,7 +9,8 @@
     or contact the author. All Rights Reserved.
 
 """
-### Module init.
+# Module init.
+
 
 def _module_init():
 
@@ -28,5 +29,6 @@ def _module_init():
                 id2cmd[0] = 'Fail/Jump'
             else:
                 id2cmd[value] = cmd
+
 
 _module_init()

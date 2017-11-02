@@ -26,40 +26,48 @@ from simpleparse.parser import Parser
 from simpleparse.dispatchprocessor import *
 import pprint
 
-class Processor( DispatchProcessor ):
-    def object( self, info, buffer ):
-        (tag,start,stop,children) = info
+
+class Processor(DispatchProcessor):
+    def object(self, info, buffer):
+        (tag, start, stop, children) = info
         obj = {}
-        for key,value in dispatchList( self, children, buffer ):
+        for key, value in dispatchList(self, children, buffer):
             obj[key] = value
         return obj
-    def member( self, info, buffer ):
-        (tag,start,stop,children) = info
-        return dispatchList( self, children, buffer )
-    def array( self, info, buffer ):
-        (tag,start,stop,children) = info
-        return dispatchList( self, children, buffer )
-    def int_w_exp( self, info, buffer ):
-        (tag,start,stop,(a,b)) = info
-        base = dispatch( self, a, buffer )
-        exp = dispatch( self, b, buffer )
+
+    def member(self, info, buffer):
+        (tag, start, stop, children) = info
+        return dispatchList(self, children, buffer)
+
+    def array(self, info, buffer):
+        (tag, start, stop, children) = info
+        return dispatchList(self, children, buffer)
+
+    def int_w_exp(self, info, buffer):
+        (tag, start, stop, (a, b)) = info
+        base = dispatch(self, a, buffer)
+        exp = dispatch(self, b, buffer)
         return base ** exp
     int = numbers.IntInterpreter()
     float = numbers.FloatInterpreter()
     string = strings.StringInterpreter()
     string_double_quote = strings.StringInterpreter()
     string_single_quote = string_double_quote
-    def true( self, tag, buffer ):
+
+    def true(self, tag, buffer):
         return True
-    def false( self, tag, buffer ):
+
+    def false(self, tag, buffer):
         return False
-    def null( self, tag, buffer ):
+
+    def null(self, tag, buffer):
         return None
 
 
-parser = Parser( declaration, "object" )
-if __name__ =="__main__":
-    import sys,json
+parser = Parser(declaration, "object")
+if __name__ == "__main__":
+    import sys
+    import json
     print(json.dumps(
-        parser.parse( open(sys.argv[1]).read(), processor=Processor())
+        parser.parse(open(sys.argv[1]).read(), processor=Processor())
     ))

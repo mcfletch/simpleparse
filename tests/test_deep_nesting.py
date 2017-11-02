@@ -26,11 +26,11 @@ expectedResult = (1, [
 ], 4)
 
 
-parser = Parser( declaration ).generator.getBuilder().getParser( 'testparser' )
+parser = Parser(declaration).generator.getBuilder().getParser('testparser')
 print("About to attempt the deep-nesting test")
 print("If python goes into an infinite loop, then the test failed ;) ")
 print()
-result = TextTools.tag( testdata, parser )
+result = TextTools.tag(testdata, parser)
 if result != expectedResult:
     print('test-deep-nesting failed')
     print('\texpected', expectedResult)

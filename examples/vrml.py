@@ -10,7 +10,7 @@ from __future__ import print_function
 
 from simpleparse.parser import Parser
 
-#print file
+# print file
 VRMLPARSERDEF = r'''header         := -[\n]*
 rootItem       := ts,(Proto/ExternProto/ROUTE/('USE',ts,USE,ts)/Script/Node),ts
 vrmlScene      := rootItem*
@@ -46,17 +46,22 @@ SIMPLEBACKSLASH := '\134'
 ESCAPEDCHAR    := '\\"'/'\134\134'
 <ts>           :=  ( [ \011-\015,]+ / ('#',-'\012'*,'\n')+ )*
 '''
-def buildVRMLParser( declaration = VRMLPARSERDEF ):
-    return Parser( declaration, "vrmlScene" )
+
+
+def buildVRMLParser(declaration=VRMLPARSERDEF):
+    return Parser(declaration, "vrmlScene")
+
 
 if __name__ == "__main__":
-    import os, sys, time
+    import os
+    import sys
+    import time
     if sys.argv[1:]:
         filename = sys.argv[1]
         data = open(filename).read()
         parser = buildVRMLParser()
         t = time.time()
-        success, tags, next = parser.parse( data)
-        d = time.time()-t
-        print("parsed %s characters of %s in %s seconds (%scps)"%( next, len(data), d, next/(d or 0.000000001) ))
-    
+        success, tags, next = parser.parse(data)
+        d = time.time() - t
+        print("parsed %s characters of %s in %s seconds (%scps)" %
+              (next, len(data), d, next / (d or 0.000000001)))

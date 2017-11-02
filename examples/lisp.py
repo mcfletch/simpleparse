@@ -31,7 +31,7 @@ from simpleparse.parser import Parser
 from simpleparse.common import strings, numbers
 from simpleparse.dispatchprocessor import *
 
-parser = Parser( definition, 'atom' )
+parser = Parser(definition, 'atom')
 
 if __name__ == "__main__":
     from simpleparse.stt.TextTools import print_tags
@@ -57,11 +57,11 @@ if __name__ == "__main__":
     import pprint
     for item in shouldParse:
         try:
-            success, children, next = parser.parse( item )
+            success, children, next = parser.parse(item)
             if not success:
                 print('fail', item)
             else:
                 print('success', item, next)
-                pprint.pprint( children )
+                pprint.pprint(children)
         except SyntaxError as err:
             print(err)

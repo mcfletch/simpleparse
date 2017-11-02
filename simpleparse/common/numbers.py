@@ -84,78 +84,92 @@ number              := hex/float/int
 number_full         := binary_number/imaginary_number/hex/float/int
 """
 
-_p = Parser( declaration )
-for name in ["int","hex", "int_unsigned", "number", "float", "binary_number", "float_floatexp", "imaginary_number", "number_full"]:
-    c[ name ] = objectgenerator.LibraryElement(
-        builder = _p._generator.getBuilder(),
-        production = name,
+_p = Parser(declaration)
+for name in ["int", "hex", "int_unsigned", "number", "float", "binary_number", "float_floatexp", "imaginary_number", "number_full"]:
+    c[name] = objectgenerator.LibraryElement(
+        builder=_p._generator.getBuilder(),
+        production=name,
     )
 
 if __name__ == "__main__":
     test()
 
-common.share( c )
+common.share(c)
 
-def _toInt( s, base ):
+
+def _toInt(s, base):
     try:
-        return int( s, base)
+        return int(s, base)
     except TypeError:
-        return int( s, base)
-def _toLong( s, base ):
-    return int( s, base)
+        return int(s, base)
+
+
+def _toLong(s, base):
+    return int(s, base)
+
 
 class IntInterpreter(DispatchProcessor):
     """Interpret an integer (or unsigned integer) string as an integer"""
-    def __call__( self, info, buffer):
+
+    def __call__(self, info, buffer):
         (tag, left, right, children) = info
         try:
-            return _toInt( buffer[left:right], 10)
+            return _toInt(buffer[left:right], 10)
         except ValueError:
-            return _toLong( buffer[left:right], 10)
+            return _toLong(buffer[left:right], 10)
+
+
 class HexInterpreter(DispatchProcessor):
     """Interpret a hexidecimal integer string as an integer value"""
-    def __call__( self, info, buffer):
+
+    def __call__(self, info, buffer):
         (tag, left, right, children) = info
         try:
-            return _toInt( buffer[left:right], 16)
+            return _toInt(buffer[left:right], 16)
         except ValueError:
-            return _toLong( buffer[left:right], 16)
+            return _toLong(buffer[left:right], 16)
+
 
 class FloatFloatExpInterpreter(DispatchProcessor):
     """Interpret a float string as an integer value
     Note: we're allowing float exponentiation, which
     gives you a nice way to write 2e.5
     """
-    def __call__( self, info, buffer):
+
+    def __call__(self, info, buffer):
         (tag, left, right, children) = info
         tag, l, r, _ = children[0]
-        base = float( buffer[l:r] )
+        base = float(buffer[l:r])
         if len(children) > 1:
             # figure out the exponent...
             exp = children[1]
-            exp = buffer[ exp[1]:exp[2]]
+            exp = buffer[exp[1]:exp[2]]
 ##          import pdb
-##          pdb.set_trace()
-            exp = float( exp )
+# pdb.set_trace()
+            exp = float(exp)
 
-            base = base * (10** exp)
+            base = base * (10 ** exp)
         return base
+
+
 class FloatInterpreter(DispatchProcessor):
     """Interpret a standard float value as a float"""
-    def __call__( self, info, buffer):
+
+    def __call__(self, info, buffer):
         (tag, left, right, children) = info
-        return float( buffer[left:right])
+        return float(buffer[left:right])
+
 
 import sys
-if hasattr( sys,'version_info') and sys.version_info[:2] > (2,0):
+if hasattr(sys, 'version_info') and sys.version_info[:2] > (2, 0):
     class BinaryInterpreter(DispatchProcessor):
-        def __call__( self, info, buffer):
+        def __call__(self, info, buffer):
             """Interpret a bitfield set as an integer"""
             (tag, left, right, children) = info
-            return _toInt( buffer[left:right-1], 2)
+            return _toInt(buffer[left:right - 1], 2)
 else:
     class BinaryInterpreter(DispatchProcessor):
-        def __call__( self, info, buffer):
+        def __call__(self, info, buffer):
             """Interpret a bitfield set as an integer, not sure this algo
             is correct, will see I suppose"""
             (tag, left, right, children) = info
@@ -175,16 +189,17 @@ else:
                     value = value + 1
             return value
 
-class ImaginaryInterpreter( DispatchProcessor ):
+
+class ImaginaryInterpreter(DispatchProcessor):
     map = {
-        "float":FloatInterpreter(),
-        "int":IntInterpreter()
+        "float": FloatInterpreter(),
+        "int": IntInterpreter()
     }
-    def __call__( self, info, buffer):
+
+    def __call__(self, info, buffer):
         """Interpret a bitfield set as an integer, not sure this algo
         is correct, will see I suppose"""
         (tag, left, right, children) = info
         base = children[0]
         base = self.mapSet[base[0]](base, buffer)
         return base * 1j
-
