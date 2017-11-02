@@ -23,11 +23,10 @@ if __name__ == "__main__":
         'simpleparse.tests',
         'simpleparse.xmlparser',
         '__builtin__',
-    ]	
+    ]
     pydoc2.PackageDocumentationGenerator(
-        baseModules = modules,
-        destinationDirectory = ".",
-        exclusions = excludes,
-        recursionStops = stops,
-    ).process ()
-    
+        baseModules=modules,
+        destinationDirectory=".",
+        exclusions=excludes,
+        recursionStops=stops,
+    ).process()

@@ -1,4 +1,6 @@
 """Utility to print Python code for a given generator object's element tokens"""
+
+
 class _GeneratorFormatter:
     """Singleton Class to give a generator's element tokens as a source string
 
@@ -27,32 +29,36 @@ class Parser:
     %(element)s,
 )
 """
-    def __call__( self, generator ):
+
+    def __call__(self, generator):
         temp = [self.HEAD]
-        for name,element in zip(generator.getNames(), generator.getRootObjects()):
+        for name, element in zip(generator.getNames(), generator.getRootObjects()):
             name = repr(name)
-            element = self.reprObject(element,1)
-            temp.append( self.ITEM%locals())
+            element = self.reprObject(element, 1)
+            temp.append(self.ITEM % locals())
         return "".join(temp)
-    def reprObject( self, obj, depth=0, indent='    ' ):
+
+    def reprObject(self, obj, depth=0, indent='    '):
         """Return a recognisable version of an objectgenerator element token"""
-        argTemplate = (indent*(depth+1))+"%s = %s,"
-        temp = ["""%s("""%(obj.__class__.__name__)]
-        for key,value in list(obj.__dict__.items()):
+        argTemplate = (indent * (depth + 1)) + "%s = %s,"
+        temp = ["""%s(""" % (obj.__class__.__name__)]
+        for key, value in list(obj.__dict__.items()):
             if key == 'children':
-                childTemplate = (indent*(depth+2)) + '%s,'
+                childTemplate = (indent * (depth + 2)) + '%s,'
                 childTemp = ["["]
                 for child in value:
-                    childTemp.append(childTemplate%self.reprObject(child,depth+2))
-                childTemp.append( (indent*(depth+1))+']' )
-                
+                    childTemp.append(childTemplate %
+                                     self.reprObject(child, depth + 2))
+                childTemp.append((indent * (depth + 1)) + ']')
+
                 temp.append(
-                    argTemplate% (key, '\n'.join(childTemp))
+                    argTemplate % (key, '\n'.join(childTemp))
                 )
             else:
-                temp.append( argTemplate%( key, repr(value)))
-        temp.append( (indent*depth)+')')
+                temp.append(argTemplate % (key, repr(value)))
+        temp.append((indent * depth) + ')')
         return '\n'.join(temp)
+
 
 asGenerator = _GeneratorFormatter()
 asObject = asGenerator.reprObject

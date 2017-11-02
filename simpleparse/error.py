@@ -1,7 +1,8 @@
 """Definition of the ParserSyntaxError raised on parse failure"""
 from simpleparse.stt.TextTools.TextTools import countlines
 
-class ParserSyntaxError( SyntaxError ):
+
+class ParserSyntaxError(SyntaxError):
     """Sub-class of SyntaxError for use by SimpleParse parsers
 
     Every instance will have the following attributes:
@@ -14,7 +15,7 @@ class ParserSyntaxError( SyntaxError ):
     human-friendly error messages:
         line -- ~ text line-number or -1
         lineChar -- ~ character on line where parsing failed or -1
-    
+
     """
     buffer = ""
     position = -1
@@ -23,13 +24,15 @@ class ParserSyntaxError( SyntaxError ):
     expected = ""
     error_message = None
     DEFAULTTEMPLATE = """Failed parsing production "%(production)s" @pos %(position)s (~line %(line)s:%(lineChar)s).\nExpected syntax: %(expected)s\nGot text: %(text)s"""
-    def __str__( self ):
+
+    def __str__(self):
         """Create a string representation of the error"""
         if self.error_message:
-            return '%s: %s'%( self.__class__.__name__, self.messageFormat(self.error_message) )
+            return '%s: %s' % (self.__class__.__name__, self.messageFormat(self.error_message))
         else:
-            return '%s: %s'%( self.__class__.__name__, self.messageFormat() )
-    def messageFormat( self, template=None):
+            return '%s: %s' % (self.__class__.__name__, self.messageFormat())
+
+    def messageFormat(self, template=None):
         """Create a default message for this syntax error"""
         if template is None:
             template = self.DEFAULTTEMPLATE
@@ -40,16 +43,17 @@ class ParserSyntaxError( SyntaxError ):
             "line": line,
             "lineChar": lineChar,
             "expected": self.expected or "UNKNOWN",
-            "text": repr(self.buffer[ self.position:self.position+50 ]),
+            "text": repr(self.buffer[self.position:self.position + 50]),
         }
         return template % variables
-    def getLineCoordinate( self ):
+
+    def getLineCoordinate(self):
         """Get (line number, line character) for the error"""
         lineChar = self.buffer.rfind('\n', 0, self.position)
-        if lineChar == -1: # was no \n before the current position
+        if lineChar == -1:  # was no \n before the current position
             lineChar = self.position
             line = 1
         else:
-            line = countlines( self.buffer[:lineChar] )
-            lineChar = self.position-lineChar
+            line = countlines(self.buffer[:lineChar])
+            lineChar = self.position - lineChar
         return line, lineChar

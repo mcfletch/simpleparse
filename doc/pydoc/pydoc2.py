@@ -1,11 +1,20 @@
 """Pydoc sub-class for generating documentation for entire packages"""
 from __future__ import print_function
-import pydoc, inspect, os
-import sys, imp, os, stat, re, types, inspect
+import pydoc
+import inspect
+import os
+import sys
+import imp
+import os
+import stat
+import re
+import types
+import inspect
 try:
     from reprlib import Repr
 except ImportError:
     from repr import Repr
+
 
 def classify_class_attrs(cls):
     """Return list of attribute-descriptor tuples.
@@ -29,7 +38,7 @@ def classify_class_attrs(cls):
            data attributes:  C.data is just a data object, but
            C.__dict__['data'] may be a data descriptor with additional
            info, like a __doc__ string.
-    
+
     Note: This version is patched to work with Zope Interface-bearing objects
     """
 
@@ -81,19 +90,21 @@ def classify_class_attrs(cls):
         result.append((name, kind, homecls, obj))
 
     return result
+
+
 inspect.classify_class_attrs = classify_class_attrs
 
 
 class DefaultFormatter(pydoc.HTMLDoc):
-    def docmodule(self, object, name=None, mod=None, packageContext = None, *ignored):
+    def docmodule(self, object, name=None, mod=None, packageContext=None, *ignored):
         """Produce HTML documentation for a module object."""
-        name = object.__name__ # ignore the passed-in name
+        name = object.__name__  # ignore the passed-in name
         parts = name.split('.')
         links = []
-        for i in range(len(parts)-1):
+        for i in range(len(parts) - 1):
             links.append(
                 '<a href="%s.html"><font color="#ffffff">%s</font></a>' %
-                ('.'.join(parts[:i+1]), parts[i]))
+                ('.'.join(parts[:i + 1]), parts[i]))
         linkedname = '.'.join(links + parts[-1:])
         head = '<big><big><strong>%s</strong></big></big>' % linkedname
         try:
@@ -138,7 +149,8 @@ class DefaultFormatter(pydoc.HTMLDoc):
             if inspect.isbuiltin(value) or inspect.getmodule(value) is object:
                 funcs.append((key, value))
                 fdict[key] = '#-' + key
-                if inspect.isfunction(value): fdict[value] = fdict[key]
+                if inspect.isfunction(value):
+                    fdict[value] = fdict[key]
         data = []
         for key, value in inspect.getmembers(object, pydoc.isdata):
             if key not in ['__builtins__', '__doc__']:
@@ -148,10 +160,10 @@ class DefaultFormatter(pydoc.HTMLDoc):
         doc = doc and '<tt>%s</tt>' % doc
         result = result + '<p>%s</p>\n' % doc
 
-        packageContext.clean ( classes, object )
-        packageContext.clean ( funcs, object )
-        packageContext.clean ( data, object )
-        
+        packageContext.clean(classes, object)
+        packageContext.clean(funcs, object)
+        packageContext.clean(data, object)
+
         if hasattr(object, '__path__'):
             modpkgs = []
             modnames = []
@@ -165,20 +177,19 @@ class DefaultFormatter(pydoc.HTMLDoc):
                     modpkgs.append((file, name, 1, 0))
             modpkgs.sort()
             contents = self.multicolumn(modpkgs, self.modpkglink)
-##			result = result + self.bigsection(
-##				'Package Contents', '#ffffff', '#aa55cc', contents)
-            result = result + self.moduleSection( object, packageContext)
+# result = result + self.bigsection(
+# 'Package Contents', '#ffffff', '#aa55cc', contents)
+            result = result + self.moduleSection(object, packageContext)
         elif modules:
             contents = self.multicolumn(
                 modules, lambda (key, value), s=self: s.modulelink(value))
             result = result + self.bigsection(
                 'Modules', '#fffff', '#aa55cc', contents)
 
-        
         if classes:
-##			print classes
-##			import pdb
-##			pdb.set_trace()
+            # print classes
+            ##			import pdb
+            # pdb.set_trace()
             classlist = [key_value[1] for key_value in classes]
             contents = [
                 self.formattree(inspect.getclasstree(classlist, 1), name)]
@@ -220,12 +231,12 @@ class DefaultFormatter(pydoc.HTMLDoc):
                 module.__name__, name, name
             )
         return pydoc.classname(object, modname)
-    
-    def moduleSection( self, object, packageContext ):
+
+    def moduleSection(self, object, packageContext):
         """Create a module-links section for the given object (module)"""
         modules = inspect.getmembers(object, inspect.ismodule)
-        packageContext.clean ( modules, object )
-        packageContext.recurseScan( modules )
+        packageContext.clean(modules, object)
+        packageContext.recurseScan(modules)
 
         if hasattr(object, '__path__'):
             modpkgs = []
@@ -240,31 +251,35 @@ class DefaultFormatter(pydoc.HTMLDoc):
                     modpkgs.append((file, object.__name__, 1, 0))
             modpkgs.sort()
             # do more recursion here...
-            for (modname, name, ya,yo) in modpkgs:
-                packageContext.addInteresting('.'.join( (object.__name__, modname)))
+            for (modname, name, ya, yo) in modpkgs:
+                packageContext.addInteresting(
+                    '.'.join((object.__name__, modname)))
             items = []
-            for (modname, name, ispackage,isshadowed) in modpkgs:
+            for (modname, name, ispackage, isshadowed) in modpkgs:
                 try:
                     # get the actual module object...
-##					if modname == "events":
-##						import pdb
-##						pdb.set_trace()
-                    module = pydoc.safeimport( "%s.%s"%(name,modname) )
-                    description, documentation = pydoc.splitdoc( inspect.getdoc( module ))
+                    # if modname == "events":
+                    ##						import pdb
+                    # pdb.set_trace()
+                    module = pydoc.safeimport("%s.%s" % (name, modname))
+                    description, documentation = pydoc.splitdoc(
+                        inspect.getdoc(module))
                     if description:
                         items.append(
-                            """%s -- %s"""% (
-                                self.modpkglink( (modname, name, ispackage, isshadowed) ),
+                            """%s -- %s""" % (
+                                self.modpkglink(
+                                    (modname, name, ispackage, isshadowed)),
                                 description,
                             )
                         )
                     else:
                         items.append(
-                            self.modpkglink( (modname, name, ispackage, isshadowed) )
+                            self.modpkglink(
+                                (modname, name, ispackage, isshadowed))
                         )
                 except:
                     items.append(
-                        self.modpkglink( (modname, name, ispackage, isshadowed) )
+                        self.modpkglink((modname, name, ispackage, isshadowed))
                     )
             contents = '<br>'.join(items)
             result = self.bigsection(
@@ -277,11 +292,10 @@ class DefaultFormatter(pydoc.HTMLDoc):
         else:
             result = ""
         return result
-    
-    
+
+
 class AlreadyDone(Exception):
     pass
-    
 
 
 class PackageDocumentationGenerator:
@@ -305,13 +319,14 @@ class PackageDocumentationGenerator:
     formatter -- allows for passing in a custom formatter
         see DefaultFormatter for sample implementation.
     """
-    def __init__ (
-        self, baseModules, destinationDirectory = ".",
-        recursion = 1, exclusions = (),
-        recursionStops = (),
-        formatter = None
+
+    def __init__(
+        self, baseModules, destinationDirectory=".",
+        recursion=1, exclusions=(),
+        recursionStops=(),
+        formatter=None
     ):
-        self.destinationDirectory = os.path.abspath( destinationDirectory)
+        self.destinationDirectory = os.path.abspath(destinationDirectory)
         self.exclusions = {}
         self.warnings = []
         self.baseSpecifiers = {}
@@ -319,47 +334,54 @@ class PackageDocumentationGenerator:
         self.recursionStops = {}
         self.recursion = recursion
         for stop in recursionStops:
-            self.recursionStops[ stop ] = 1
+            self.recursionStops[stop] = 1
         self.pending = []
         for exclusion in exclusions:
             try:
-                self.exclusions[ exclusion ]= pydoc.locate ( exclusion)
+                self.exclusions[exclusion] = pydoc.locate(exclusion)
             except pydoc.ErrorDuringImport as value:
-                self.warn( """Unable to import the module %s which was specified as an exclusion module"""% (repr(exclusion)))
+                self.warn("""Unable to import the module %s which was specified as an exclusion module""" % (
+                    repr(exclusion)))
         self.formatter = formatter or DefaultFormatter()
         for base in baseModules:
-            self.addBase( base )
-    def warn( self, message ):
+            self.addBase(base)
+
+    def warn(self, message):
         """Warnings are used for recoverable, but not necessarily ignorable conditions"""
-        self.warnings.append (message)
-    def info (self, message):
+        self.warnings.append(message)
+
+    def info(self, message):
         """Information/status report"""
         print(message)
+
     def addBase(self, specifier):
         """Set the base of the documentation set, only children of these modules will be documented"""
         try:
-            self.baseSpecifiers [specifier] = pydoc.locate ( specifier)
-            self.pending.append (specifier)
+            self.baseSpecifiers[specifier] = pydoc.locate(specifier)
+            self.pending.append(specifier)
         except pydoc.ErrorDuringImport as value:
-            self.warn( """Unable to import the module %s which was specified as a base module"""% (repr(specifier)))
-    def addInteresting( self, specifier):
+            self.warn("""Unable to import the module %s which was specified as a base module""" % (
+                repr(specifier)))
+
+    def addInteresting(self, specifier):
         """Add a module to the list of interesting modules"""
-        if self.checkScope( specifier):
-##			print "addInteresting", specifier
-            self.pending.append (specifier)
+        if self.checkScope(specifier):
+            # print "addInteresting", specifier
+            self.pending.append(specifier)
         else:
-            self.completed[ specifier] = 1
-    def checkScope (self, specifier):
+            self.completed[specifier] = 1
+
+    def checkScope(self, specifier):
         """Check that the specifier is "in scope" for the recursion"""
         if not self.recursion:
             return 0
         items = specifier.split(".")
-        stopCheck = items [:]
+        stopCheck = items[:]
         while stopCheck:
             name = ".".join(items)
-            if self.recursionStops.get( name):
+            if self.recursionStops.get(name):
                 return 0
-            elif self.completed.get (name):
+            elif self.completed.get(name):
                 return 0
             del stopCheck[-1]
         while items:
@@ -369,7 +391,7 @@ class PackageDocumentationGenerator:
         # was not within any given scope
         return 0
 
-    def process( self ):
+    def process(self):
         """Having added all of the base and/or interesting modules,
         proceed to generate the appropriate documentation for each
         module in the appropriate directory, doing the recursion
@@ -378,31 +400,34 @@ class PackageDocumentationGenerator:
             while self.pending:
                 try:
                     if self.pending[0] in self.completed:
-                        raise AlreadyDone( self.pending[0] )
-                    self.info( """Start %s"""% (repr(self.pending[0])))
-                    object = pydoc.locate ( self.pending[0] )
-                    self.info( """   ... found %s"""% (repr(object.__name__)))
+                        raise AlreadyDone(self.pending[0])
+                    self.info("""Start %s""" % (repr(self.pending[0])))
+                    object = pydoc.locate(self.pending[0])
+                    self.info("""   ... found %s""" % (repr(object.__name__)))
                 except AlreadyDone:
                     pass
                 except pydoc.ErrorDuringImport as value:
-                    self.info( """   ... FAILED %s"""% (repr( value)))
-                    self.warn( """Unable to import the module %s"""% (repr(self.pending[0])))
+                    self.info("""   ... FAILED %s""" % (repr(value)))
+                    self.warn("""Unable to import the module %s""" %
+                              (repr(self.pending[0])))
                 except (SystemError, SystemExit) as value:
-                    self.info( """   ... FAILED %s"""% (repr( value)))
-                    self.warn( """Unable to import the module %s"""% (repr(self.pending[0])))
+                    self.info("""   ... FAILED %s""" % (repr(value)))
+                    self.warn("""Unable to import the module %s""" %
+                              (repr(self.pending[0])))
                 except Exception as value:
-                    self.info( """   ... FAILED %s"""% (repr( value)))
-                    self.warn( """Unable to import the module %s"""% (repr(self.pending[0])))
+                    self.info("""   ... FAILED %s""" % (repr(value)))
+                    self.warn("""Unable to import the module %s""" %
+                              (repr(self.pending[0])))
                 else:
                     page = self.formatter.page(
                         pydoc.describe(object),
                         self.formatter.docmodule(
                             object,
                             object.__name__,
-                            packageContext = self,
+                            packageContext=self,
                         )
                     )
-                    file = open (
+                    file = open(
                         os.path.join(
                             self.destinationDirectory,
                             self.pending[0] + ".html",
@@ -411,32 +436,33 @@ class PackageDocumentationGenerator:
                     )
                     file.write(page)
                     file.close()
-                    self.completed[ self.pending[0]] = object
+                    self.completed[self.pending[0]] = object
                 del self.pending[0]
         finally:
             for item in self.warnings:
                 print(item)
-            
-    def clean (self, objectList, object):
+
+    def clean(self, objectList, object):
         """callback from the formatter object asking us to remove
         those items in the key, value pairs where the object is
         imported from one of the excluded modules"""
         for key, value in objectList[:]:
             for excludeObject in list(self.exclusions.values()):
-                if hasattr( excludeObject, key ) and excludeObject is not object:
+                if hasattr(excludeObject, key) and excludeObject is not object:
                     if (
-                        getattr( excludeObject, key) is value or
-                        (hasattr( excludeObject, '__name__') and
+                        getattr(excludeObject, key) is value or
+                        (hasattr(excludeObject, '__name__') and
                          excludeObject.__name__ == "Numeric"
                          )
                     ):
-                        objectList[:] = [ (k,o) for k,o in objectList if k != key ]
+                        objectList[:] = [(k, o)
+                                         for k, o in objectList if k != key]
+
     def recurseScan(self, objectList):
         """Process the list of modules trying to add each to the
         list of interesting modules"""
         for key, value in objectList:
-            self.addInteresting( value.__name__ )
-
+            self.addInteresting(value.__name__)
 
 
 if __name__ == "__main__":
@@ -454,13 +480,12 @@ if __name__ == "__main__":
 
     modules = [
         "OpenGLContext.debug",
-##		"wxPython.glcanvas",
-##		"OpenGL.Tk",
-##		"OpenGL",
-    ]	
+        # "wxPython.glcanvas",
+        # "OpenGL.Tk",
+        # "OpenGL",
+    ]
     PackageDocumentationGenerator(
-        baseModules = modules,
-        destinationDirectory = "z:\\temp",
-        exclusions = excludes,
-    ).process ()
-        
+        baseModules=modules,
+        destinationDirectory="z:\\temp",
+        exclusions=excludes,
+    ).process()

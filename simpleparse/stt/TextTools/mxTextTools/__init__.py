@@ -13,7 +13,7 @@ from simpleparse.stt.TextTools.mxTextTools.mxTextTools import __version__
 BMS = TextSearch
 BMSType = TextSearchType
 try:
-    TextSearch('',None,FASTSEARCH)
+    TextSearch('', None, FASTSEARCH)
 except:
     FS = BMS
     FSType = BMS

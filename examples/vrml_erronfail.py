@@ -17,7 +17,7 @@ from __future__ import print_function
 from simpleparse.parser import Parser
 from simpleparse.common import chartypes
 
-#print file
+# print file
 VRMLPARSERDEF = r'''header         := -[\n]*
 vrmlFile       := header, vrmlScene, EOF
 rootItem       := ts,(Proto/ExternProto/ROUTE/('USE',ts,USE,ts)/Script/Node),ts
@@ -60,19 +60,24 @@ ESCAPEDCHAR    := '\\"'/'\134\134'
 <ts>           :=  ( [ \011-\015,]+ / ('#',-'\012'*,'\n')+ )*
 '''
 
-def buildVRMLParser( declaration = VRMLPARSERDEF ):
-    return Parser( declaration, "vrmlFile" )
+
+def buildVRMLParser(declaration=VRMLPARSERDEF):
+    return Parser(declaration, "vrmlFile")
+
 
 if __name__ == "__main__":
-    import os, sys, time
+    import os
+    import sys
+    import time
     parser = buildVRMLParser()
     if sys.argv[1:]:
         filename = sys.argv[1]
         data = open(filename).read()
         t = time.time()
-        success, tags, next = parser.parse( data)
-        d = time.time()-t
-        print("parsed %s characters of %s in %s seconds (%scps)"%( next, len(data), d, next/(d or 0.000000001) ))
+        success, tags, next = parser.parse(data)
+        d = time.time() - t
+        print("parsed %s characters of %s in %s seconds (%scps)" %
+              (next, len(data), d, next / (d or 0.000000001)))
     # now show the error-generation
     print('''About to parse badly formatted VRML data''')
     badData = [
@@ -90,10 +95,11 @@ if __name__ == "__main__":
         field SFBool A "
 ]{   ''',
     ]
-        
+
     for bad in badData:
         try:
-            parser.parse( bad )
-            print("""\nWARNING: didn't get a syntax error for item %s\n"""%(repr(bad)))
+            parser.parse(bad)
+            print("""\nWARNING: didn't get a syntax error for item %s\n""" %
+                  (repr(bad)))
         except SyntaxError as err:
             print(err)

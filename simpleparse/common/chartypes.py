@@ -35,19 +35,20 @@ There are no interpreters provided (the types are considered
 too common to provide meaningful interpreters).
 """
 from simpleparse import objectgenerator, common
-import string, locale
-locale.setlocale(locale.LC_ALL, "" )
+import string
+import locale
+locale.setlocale(locale.LC_ALL, "")
 
 c = {}
 
 # string-module items...
 
-for source,single,repeat in [
-    ("digits","digit","digits"),
+for source, single, repeat in [
+    ("digits", "digit", "digits"),
     ("ascii_uppercase", "uppercasechar", "uppercase"),
     ("ascii_lowercase", "lowercasechar", "lowercase"),
-    ("ascii_letters", "letter", "letters" ),
-    ("ascii_letters", "ascii_letter", "ascii_letters" ), # alias
+    ("ascii_letters", "letter", "letters"),
+    ("ascii_letters", "ascii_letter", "ascii_letters"),  # alias
     ("ascii_lowercase", "ascii_lowercasechar", "ascii_lowercase"),
     ("ascii_uppercase", "ascii_uppercasechar", "ascii_uppercase"),
     ("whitespace", "whitespacechar", "whitespace"),
@@ -57,16 +58,17 @@ for source,single,repeat in [
     ("printable", "printablechar", "printable"),
 ]:
     try:
-        value = getattr( string, source )
-        c[ single ] = objectgenerator.Range( value = value )
-        c[ repeat ] = objectgenerator.Range( value = value, repeating =1 )
+        value = getattr(string, source)
+        c[single] = objectgenerator.Range(value=value)
+        c[repeat] = objectgenerator.Range(value=value, repeating=1)
     except AttributeError:
         pass
 
 # locale-module items
 _lc = locale.localeconv()
-c[ "locale_decimal_point" ] = objectgenerator.Literal( value = _lc["decimal_point"] )
-c[ "locale_thousands_seperator" ] = objectgenerator.Literal( value = _lc["thousands_sep"] )
+c["locale_decimal_point"] = objectgenerator.Literal(value=_lc["decimal_point"])
+c["locale_thousands_seperator"] = objectgenerator.Literal(
+    value=_lc["thousands_sep"])
 
 del _lc
 
@@ -76,8 +78,8 @@ del _lc
 # follow a \\ char.
 
 from simpleparse.stt import TextTools
-c[ "EOF" ] = objectgenerator.Prebuilt( value = (
+c["EOF"] = objectgenerator.Prebuilt(value=(
     (None, TextTools.EOF, TextTools.Here),
-) )
+))
 
-common.share( c )
+common.share(c)

@@ -18,7 +18,7 @@ sets := set*
 
 from simpleparse.parser import Parser
 
-p = Parser( declaration, 'set' )
+p = Parser(declaration, 'set')
 
 file1 = """This is first line
 This is second line
@@ -38,24 +38,24 @@ if __name__ == "__main__":
     import pprint
     import time
     pprint.pprint(
-        p.parse( file1)
+        p.parse(file1)
     )
     pprint.pprint(
-        p.parse( file2)
+        p.parse(file2)
     )
-    testData = "\n"*30000000 + file1
+    testData = "\n" * 30000000 + file1
     print('starting parse of file 1 with 1 match at end')
     t = time.clock()
-    success, results, next = p.parse( testData, "sets")
-    print('finished parse', time.clock()-t)
+    success, results, next = p.parse(testData, "sets")
+    print('finished parse', time.clock() - t)
     print('number of results', len(results))
     pprint.pprint(
         results
     )
     print()
-    testData = file1 * (30000000//len(file1))
+    testData = file1 * (30000000 // len(file1))
     print('starting parse of file 1 with ~230,000 matches (slow)')
     t = time.clock()
-    success, results, next = p.parse( testData, "sets")
-    print('finished parse', time.clock()-t)
+    success, results, next = p.parse(testData, "sets")
+    print('finished parse', time.clock() - t)
     print('number of results', len(results))
