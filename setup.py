@@ -54,10 +54,6 @@ if sys.platform == 'win32':
     )['define'] = 'BAD_STATIC_FORWARD'
 
 
-def abs_rel(path):
-    return os.path.normpath(os.path.abspath(path))
-
-
 if __name__ == "__main__":
     from sys import hexversion
     if hexversion >= 0x2030000:
@@ -99,15 +95,12 @@ largely deterministic grammars.""",
             Extension(
                 "simpleparse.stt.TextTools.mxTextTools.mxTextTools",
                 [
-                    abs_rel(f) for f in
-                    [
-                        'simpleparse/stt/TextTools/mxTextTools/mxTextTools.c',
-                        'simpleparse/stt/TextTools/mxTextTools/mxte.c',
-                        'simpleparse/stt/TextTools/mxTextTools/mxbmse.c',
-                    ]
+                    'simpleparse/stt/TextTools/mxTextTools/mxTextTools.c',
+                    'simpleparse/stt/TextTools/mxTextTools/mxte.c',
+                    'simpleparse/stt/TextTools/mxTextTools/mxbmse.c',
                 ],
                 include_dirs=[
-                    abs_rel('simpleparse/stt/TextTools/mxTextTools'),
+                    'simpleparse/stt/TextTools/mxTextTools',
                 ],
                 define_macros=[('MX_BUILDING_MXTEXTTOOLS', 1),
                                ('PY_SSIZE_T_CLEAN', 1), ],
