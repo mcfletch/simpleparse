@@ -28,6 +28,6 @@ loose=lips
 from simpleparse.parser import Parser
 import pprint
 
-parser = Parser( declaration, "file" )
-if __name__ =="__main__":
-    pprint.pprint( parser.parse( testdata))
+parser = Parser(declaration, "file")
+if __name__ == "__main__":
+    pprint.pprint(parser.parse(testdata))

@@ -36,11 +36,11 @@ comment   := -'\012'*
 >slashslash_comment< := '//', comment, EOL
 """
 
-_p = Parser( eolcomments )
+_p = Parser(eolcomments)
 for name in ["hash_comment", "semicolon_comment", "slashslash_comment"]:
-    c[ name ] = objectgenerator.LibraryElement(
-        generator = _p._generator,
-        production = name,
+    c[name] = objectgenerator.LibraryElement(
+        generator=_p._generator,
+        production=name,
     )
 
 ccomments = r"""
@@ -48,11 +48,11 @@ ccomments = r"""
 comment := -"*/"*
 >slashbang_comment< := '/*', comment, '*/'
 """
-_p = Parser( ccomments )
-for name in ["c_comment","slashbang_comment"]:
-    c[ name ] = objectgenerator.LibraryElement(
-        generator = _p._generator,
-        production = "slashbang_comment",
+_p = Parser(ccomments)
+for name in ["c_comment", "slashbang_comment"]:
+    c[name] = objectgenerator.LibraryElement(
+        generator=_p._generator,
+        production="slashbang_comment",
     )
 
 nccomments = r"""
@@ -62,11 +62,11 @@ nccomments = r"""
 comment                  := (-(comment_stop/comment_start)+/slashbang_nest_comment)*
 >slashbang_nest_comment< := comment_start, comment, comment_stop
 """
-_p = Parser( nccomments )
-for name in ["c_nest_comment","slashbang_nest_comment"]:
-    c[ name ] = objectgenerator.LibraryElement(
-        generator = _p._generator,
-        production = "slashbang_nest_comment",
+_p = Parser(nccomments)
+for name in ["c_nest_comment", "slashbang_nest_comment"]:
+    c[name] = objectgenerator.LibraryElement(
+        generator=_p._generator,
+        production="slashbang_nest_comment",
     )
 
 common.share(c)

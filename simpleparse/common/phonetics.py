@@ -53,24 +53,24 @@ Xray X-ray
 Yankee
 Zulu""".split()
 
-set1,set2 = [], []
+set1, set2 = [], []
 for item in _letters:
     set1.append(
-        objectgenerator.Literal( value=item)
+        objectgenerator.Literal(value=item)
     )
     set2.append(
-        objectgenerator.Literal( value=item.lower())
+        objectgenerator.Literal(value=item.lower())
     )
 
 military_alphabet_char = objectgenerator.FirstOfGroup(
-    children = set1
+    children=set1
 )
 military_alphabet_char_lower = objectgenerator.FirstOfGroup(
-    children = set2
+    children=set2
 )
 del set1, set2
 
-c[ "military_alphabet_char" ] = military_alphabet_char
-c[ "military_alphabet_char_lower" ] = military_alphabet_char_lower
+c["military_alphabet_char"] = military_alphabet_char
+c["military_alphabet_char_lower"] = military_alphabet_char_lower
 
-common.share( c )
+common.share(c)

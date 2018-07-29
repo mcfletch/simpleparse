@@ -1,27 +1,31 @@
 from __future__ import print_function
 
-import unittest, pprint, traceback
+import unittest
+import pprint
+import traceback
 from simpleparse.parser import Parser
 from simpleparse import printers
 
 
-def rcmp( table1, table2 ):
+def rcmp(table1, table2):
     """Silly utility function to get around text search object lack of __cmp__"""
     if len(table1) != len(table2):
         return 0
     else:
-        for x,y in zip(table1, table2):
-            if not _rcmp( x,y):
+        for x, y in zip(table1, table2):
+            if not _rcmp(x, y):
                 return 0
         return 1
-def _rcmp( item1, item2 ):
+
+
+def _rcmp(item1, item2):
     if len(item1) != len(item2):
         return 0
     if item1[1] in (204,):
         if cmp(item1[:2], item2[:2]) != 0:
             return 0
         try:
-            if not rcmp( item1[2][0][item1[2][1]], item2[2][0][item2[2][1]]):
+            if not rcmp(item1[2][0][item1[2][1]], item2[2][0][item2[2][1]]):
                 return 0
         except TypeError:
             print(item1)
@@ -29,21 +33,20 @@ def _rcmp( item1, item2 ):
     elif item1[1] == 207:
         if item2[:2] != item2[:2]:
             return 0
-        if not rcmp( item1[2], item2[2]):
+        if not rcmp(item1[2], item2[2]):
             return 0
     else:
-        for a,b in zip(item1, item2):
-            if hasattr(a,'match') and hasattr(b,'match'):
+        for a, b in zip(item1, item2):
+            if hasattr(a, 'match') and hasattr(b, 'match'):
                 if not (a.match == b.match and a.translate == b.translate):
                     return 0
             elif a != b:
                 return 0
     return 1
-            
-            
+
 
 class OptimisationTests(unittest.TestCase):
-    def testTermCompression( self ):
+    def testTermCompression(self):
         """Test that unreported productions are compressed
 
         Term compression is basically an inlining of terminal
@@ -83,45 +86,50 @@ class OptimisationTests(unittest.TestCase):
   table2 := 'b'
 """),
             ("""a:= b,c <b>:= -c* <c>:= '\n'""", """a := -'\n'*,'\n'"""),
-            
+
         ]:
-            pFirst = Parser( first, "a")
-            pSecond = Parser( second, "a")
+            pFirst = Parser(first, "a")
+            pSecond = Parser(second, "a")
             tFirst = pFirst.buildTagger()
             tSecond = pSecond.buildTagger()
-            if not rcmp( tFirst , tSecond):
+            if not rcmp(tFirst, tSecond):
                 tFirstRepr = pprint.pformat(tFirst)
                 tSecondRepr = pprint.pformat(tSecond)
-                failures.append( """%(first)r did not produce the same parser as %(second)r\n\t%(tFirstRepr)s\n\t%(tSecondRepr)s"""%locals())
+                failures.append(
+                    """%(first)r did not produce the same parser as %(second)r\n\t%(tFirstRepr)s\n\t%(tSecondRepr)s""" % locals())
         if failures:
-            raise ValueError( "\n".join(failures))
-    def testTermSharing( self ):
+            raise ValueError("\n".join(failures))
+
+    def testTermSharing(self):
         """Test that shared terminal productions are using the same parser"""
-        first =""" a := b,b >b<:= d d:= 'this'"""
-        pFirst = Parser( first, "a")
+        first = """ a := b,b >b<:= d d:= 'this'"""
+        pFirst = Parser(first, "a")
         tFirst = pFirst.buildTagger()
-        b,c = tFirst
+        b, c = tFirst
         assert b is c, """Not sharing the same tuple for b and c instances"""
-    def testNoReportPassDown( self ):
+
+    def testNoReportPassDown(self):
         """Test that a non-reporting production does not produce reporting sub-productions"""
-        first =""" a := b <b>:= d,e d:= e e:= 'this'"""
-        second =""" a := 'this' """
-        assert Parser( first, 'a').parse( 'thisthis' ) == (1,[
-        ],8)
-        
-    def testNameCollapseForSimple( self ):
+        first = """ a := b <b>:= d,e d:= e e:= 'this'"""
+        second = """ a := 'this' """
+        assert Parser(first, 'a').parse('thisthis') == (1, [
+        ], 8)
+
+    def testNameCollapseForSimple(self):
         """Test that a name reference, given a single-item reporting avoids extra table"""
-        first =""" a := b,b b:= 'this'"""
+        first = """ a := b,b b:= 'this'"""
         # The result should be...
-        expected = ( ('b',21,'this'),('b',21,'this'))
-        table = Parser( first, 'a').buildTagger( )
-        assert table == expected, "%s != %s"%(
-            pprint.pformat( table),
+        expected = (('b', 21, 'this'), ('b', 21, 'this'))
+        table = Parser(first, 'a').buildTagger()
+        assert table == expected, "%s != %s" % (
+            pprint.pformat(table),
             pprint.pformat(expected),
         )
-        
+
+
 def getSuite():
-    return unittest.makeSuite(OptimisationTests,'test')
+    return unittest.makeSuite(OptimisationTests, 'test')
+
 
 if __name__ == "__main__":
     unittest.main(defaultTest="getSuite")

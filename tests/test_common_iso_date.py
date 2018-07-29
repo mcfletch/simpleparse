@@ -1,4 +1,6 @@
-import unittest, string, logging
+import unittest
+import string
+import logging
 from simpleparse.parser import Parser
 from simpleparse.common import iso_date, iso_date_loose
 log = logging.getLogger(__name__)
@@ -9,50 +11,61 @@ except ImportError:
 else:
     import time
     try:
-        fulltrans = string.maketrans(b"",b"")
+        fulltrans = string.maketrans(b"", b"")
     except AttributeError:
-        fulltrans = bytes.maketrans(b"",b"")
-    tzOffset = DateTime.DateTimeDelta( 0,0,0, time.timezone )
+        fulltrans = bytes.maketrans(b"", b"")
+    tzOffset = DateTime.DateTimeDelta(0, 0, 0, time.timezone)
 
     class CommonTests(unittest.TestCase):
-        def testISODateLoose( self ):
+        def testISODateLoose(self):
             """Test the parsing of ISO date and time formats"""
             values = [
-                ("2002-02-03", DateTime.DateTime( 2002, 2,3)),
-                ("2002-02",DateTime.DateTime( 2002, 2)),
-                ("2002",DateTime.DateTime( 2002)),
-                ("2002-02-03 04:15", DateTime.DateTime( 2002, 2,3, 4,15)),
-                ("2002-02-03 04:15:16", DateTime.DateTime( 2002, 2,3, 4,15, 16)),
-                ("2002-02-03 04:15:16 +00:00", DateTime.DateTime( 2002, 2,3, 4,15, 16)-tzOffset),
-                ("2002-02-03 4:5", DateTime.DateTime( 2002, 2,3, 4,5)),
-                ("2002-02-03 4:5:16", DateTime.DateTime( 2002, 2,3, 4,5, 16)),
-                ("2002-02-03 4:5:16 +00:00", DateTime.DateTime( 2002, 2,3, 4, 5,16)-tzOffset),
+                ("2002-02-03", DateTime.DateTime(2002, 2, 3)),
+                ("2002-02", DateTime.DateTime(2002, 2)),
+                ("2002", DateTime.DateTime(2002)),
+                ("2002-02-03 04:15", DateTime.DateTime(2002, 2, 3, 4, 15)),
+                ("2002-02-03 04:15:16", DateTime.DateTime(2002, 2, 3, 4, 15, 16)),
+                ("2002-02-03 04:15:16 +00:00",
+                 DateTime.DateTime(2002, 2, 3, 4, 15, 16) - tzOffset),
+                ("2002-02-03 4:5", DateTime.DateTime(2002, 2, 3, 4, 5)),
+                ("2002-02-03 4:5:16", DateTime.DateTime(2002, 2, 3, 4, 5, 16)),
+                ("2002-02-03 4:5:16 +00:00",
+                 DateTime.DateTime(2002, 2, 3, 4, 5, 16) - tzOffset),
             ]
-            p = Parser ("d:= ISO_date_time_loose", "d")
+            p = Parser("d:= ISO_date_time_loose", "d")
             proc = iso_date_loose.MxInterpreter()
             for to_parse, date in values:
-                success, children, next = p.parse( to_parse, processor = proc)
-                assert success, """Unable to parse any of the string %s with the ISO date-time parser"""% (to_parse)
-                assert next == len(to_parse),"""Did not finish parsing string %s with the ISO date-time parser, remainder was %s, found was %s"""%( to_parse, to_parse [next:],children)
-                assert children [0] == date,"""Returned different date for string %s than expected, got %s, expected %s"""% (to_parse,children [0], date)
-        def testISODate( self ):
+                success, children, next = p.parse(to_parse, processor=proc)
+                assert success, """Unable to parse any of the string %s with the ISO date-time parser""" % (
+                    to_parse)
+                assert next == len(to_parse), """Did not finish parsing string %s with the ISO date-time parser, remainder was %s, found was %s""" % (
+                    to_parse, to_parse[next:], children)
+                assert children[0] == date, """Returned different date for string %s than expected, got %s, expected %s""" % (
+                    to_parse, children[0], date)
+
+        def testISODate(self):
             """Test the parsing of ISO date and time formats"""
             values = [
-                ("2002-02-03", DateTime.DateTime( 2002, 2,3)),
-                ("2002-02",DateTime.DateTime( 2002, 2)),
-                ("2002",DateTime.DateTime( 2002)),
-                ("2002-02-03T04:15", DateTime.DateTime( 2002, 2,3, 4,15)),
-                ("2002-02-03T04:15:16", DateTime.DateTime( 2002, 2,3, 4,15, 16)),
-                ("2002-02-03T04:15:16+00:00", DateTime.DateTime( 2002, 2,3, 4,15, 16)-tzOffset),
+                ("2002-02-03", DateTime.DateTime(2002, 2, 3)),
+                ("2002-02", DateTime.DateTime(2002, 2)),
+                ("2002", DateTime.DateTime(2002)),
+                ("2002-02-03T04:15", DateTime.DateTime(2002, 2, 3, 4, 15)),
+                ("2002-02-03T04:15:16", DateTime.DateTime(2002, 2, 3, 4, 15, 16)),
+                ("2002-02-03T04:15:16+00:00",
+                 DateTime.DateTime(2002, 2, 3, 4, 15, 16) - tzOffset),
             ]
-            p = Parser ("d:= ISO_date_time", "d")
+            p = Parser("d:= ISO_date_time", "d")
             proc = iso_date.MxInterpreter()
             for to_parse, date in values:
-                success, children, next = p.parse( to_parse, processor=proc)
-                assert success, """Unable to parse any of the string %s with the ISO date-time parser"""% (to_parse)
-                assert next == len(to_parse),"""Did not finish parsing string %s with the ISO date-time parser, remainder was %s, found was %s"""%( to_parse, to_parse [next:],children)
-                assert children [0] == date,"""Returned different date for string %s than expected, got %s, expected %s"""% (to_parse,children [0], date)
-        def testProductionsStrict( self ):
+                success, children, next = p.parse(to_parse, processor=proc)
+                assert success, """Unable to parse any of the string %s with the ISO date-time parser""" % (
+                    to_parse)
+                assert next == len(to_parse), """Did not finish parsing string %s with the ISO date-time parser, remainder was %s, found was %s""" % (
+                    to_parse, to_parse[next:], children)
+                assert children[0] == date, """Returned different date for string %s than expected, got %s, expected %s""" % (
+                    to_parse, children[0], date)
+
+        def testProductionsStrict(self):
             for to_parse, production in [
                 ("2002", "year"),
                 ("02", "month"),
@@ -79,10 +92,12 @@ else:
                 ("02:13:16", "ISO_time"),
                 ("2002-02-01T02:13-0500", "ISO_date_time"),
             ]:
-                success, children, next = iso_date._p.parse( to_parse,production)
-                assert next == len(to_parse), "couldn't parse %s as a %s"%( to_parse, production)
-            
-        def testProductions2( self ):
+                success, children, next = iso_date._p.parse(
+                    to_parse, production)
+                assert next == len(to_parse), "couldn't parse %s as a %s" % (
+                    to_parse, production)
+
+        def testProductions2(self):
             for to_parse, production in [
                 ("2002", "year"),
                 ("02", "month"),
@@ -116,7 +131,9 @@ else:
                 ("2002-2-1 2:13 -05:30", "ISO_date_time_loose"),
                 ("2002-2-1 2:13 +05:30", "ISO_date_time_loose"),
                 ("2002-2-1 2:13 +00:00", "ISO_date_time_loose"),
-                
+
             ]:
-                success, children, next = iso_date_loose._p.parse( to_parse,production )
-                assert next == len(to_parse), "couldn't parse %s as a %s"%( to_parse, production)
+                success, children, next = iso_date_loose._p.parse(
+                    to_parse, production)
+                assert next == len(to_parse), "couldn't parse %s as a %s" % (
+                    to_parse, production)

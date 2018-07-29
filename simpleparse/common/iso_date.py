@@ -35,7 +35,7 @@ from simpleparse.dispatchprocessor import *
 
 c = {}
 
-declaration ="""
+declaration = """
 year      := digit,digit,digit,digit
 month     := digit,digit
 day       := digit,digit
@@ -55,40 +55,41 @@ ISO_date_time  := ISO_date, ([T], ISO_time)?, offset?
 """
 
 
-
-
-_p = Parser( declaration )
-for name in ["ISO_time","ISO_date", "ISO_date_time"]:
-    c[ name ] = objectgenerator.LibraryElement(
-        generator = _p._generator,
-        production = name,
+_p = Parser(declaration)
+for name in ["ISO_time", "ISO_date", "ISO_date_time"]:
+    c[name] = objectgenerator.LibraryElement(
+        generator=_p._generator,
+        production=name,
     )
-common.share( c )
+common.share(c)
 
 if haveMX:
     class MxInterpreter(DispatchProcessor):
         """Interpret a parsed ISO_date_time_loose in GMT/UTC time or localtime
         """
+
         def __init__(
             self,
-            inputLocal = 1,
-            returnLocal = 1,
+            inputLocal=1,
+            returnLocal=1,
         ):
             self.inputLocal = inputLocal
             self.returnLocal = returnLocal
         dateName = 'ISO_date'
         timeName = 'ISO_time'
-        def ISO_date_time( self, info, buffer):
+
+        def ISO_date_time(self, info, buffer):
             """Interpret the loose ISO date + time format"""
             (tag, left, right, sublist) = info
-            set = singleMap( sublist, self, buffer )
+            set = singleMap(sublist, self, buffer)
             base, time, offset = (
                 set.get(self.dateName),
-                set.get(self.timeName) or DateTime.RelativeDateTime(hour=0,minute=0,second=0),
-                set.get( "offset" ),
+                set.get(self.timeName) or DateTime.RelativeDateTime(
+                    hour=0, minute=0, second=0),
+                set.get("offset"),
             )
             base = base + time
-            offset = set.get( "offset" )
+            offset = set.get("offset")
             if offset is not None:
                 # an explicit timezone was entered, convert to gmt and return as appropriate...
                 gmt = base - offset
@@ -106,48 +107,50 @@ if haveMX:
                 return base.gmtime()
             else:
                 return base.localtime()
-        def ISO_date( self, info, buffer):
+
+        def ISO_date(self, info, buffer):
             """Interpret the ISO date format"""
             (tag, left, right, sublist) = info
             set = {}
             for item in sublist:
-                set[ item[0] ] = dispatch( self, item, buffer)
+                set[item[0]] = dispatch(self, item, buffer)
             return DateTime.DateTime(
                 set.get("year") or now().year,
                 set.get("month") or 1,
                 set.get("day") or 1,
             )
-        def ISO_time( self, info, buffer):
+
+        def ISO_time(self, info, buffer):
             """Interpret the ISO time format"""
             (tag, left, right, sublist) = info
             set = {}
             for item in sublist:
-                set[ item[0] ] = dispatch( self, item, buffer)
+                set[item[0]] = dispatch(self, item, buffer)
             return DateTime.RelativeDateTime(
-                hour = set.get("hour") or 0,
-                minute = set.get("minute") or 0,
-                second = set.get("second") or 0,
+                hour=set.get("hour") or 0,
+                minute=set.get("minute") or 0,
+                second=set.get("second") or 0,
             )
 
         integer = numbers.IntInterpreter()
-        second =  offset_minute = offset_hour = year = month = day = hour =minute =integer
-        
-        def offset( self, info, buffer):
+        second = offset_minute = offset_hour = year = month = day = hour = minute = integer
+
+        def offset(self, info, buffer):
             """Calculate the time zone offset as a date-time delta"""
             (tag, left, right, sublist) = info
-            set = singleMap( sublist, self, buffer )
-            direction = set.get('offset_sign',1)
-            hour = set.get( "hour", 0)
-            minute = set.get( "minute", 0)
-            delta = DateTime.DateTimeDelta( 0, hour*direction, minute*direction)
+            set = singleMap(sublist, self, buffer)
+            direction = set.get('offset_sign', 1)
+            hour = set.get("hour", 0)
+            minute = set.get("minute", 0)
+            delta = DateTime.DateTimeDelta(
+                0, hour * direction, minute * direction)
             return delta
-            
-        def offset_sign( self , info, buffer):
+
+        def offset_sign(self, info, buffer):
             """Interpret the offset sign as a multiplier"""
             (tag, left, right, sublist) = info
-            v = buffer [left: right]
+            v = buffer[left: right]
             if v in ' +':
                 return 1
             else:
                 return -1
-                

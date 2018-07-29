@@ -12,8 +12,10 @@ this by specifying an explicit definitionSources
 parameter in its initialiser.
 """
 
-def share( dictionary ):
-    SOURCES.append( dictionary)
+
+def share(dictionary):
+    SOURCES.append(dictionary)
+
 
 SOURCES = [
 ]

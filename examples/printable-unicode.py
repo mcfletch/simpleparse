@@ -10,8 +10,7 @@ testdata = u'''\t ß ‧  æ č ☭  ° 漢字 —  '''
 from simpleparse.parser import Parser
 import pprint
 
-parser = Parser( declaration, "printable_inline" )
+parser = Parser(declaration, "printable_inline")
 
-if __name__ =="__main__":
-    pprint.pprint( parser.parse(testdata))
-    
+if __name__ == "__main__":
+    pprint.pprint(parser.parse(testdata))

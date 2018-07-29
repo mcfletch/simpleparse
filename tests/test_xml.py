@@ -6,116 +6,122 @@ try:
 except NameError:
     unicode = str
 
-p = Parser( xml_parser.declaration )
+p = Parser(xml_parser.declaration)
+
 
 class XMLProductionTests(unittest.TestCase):
     """Tests that XML grammar productions match appropriate values"""
-    ### ProductionTests will be added here by loop below...
+    # ProductionTests will be added here by loop below...
+
 
 class ProductionTest:
-    def __init__( self, production, should, shouldnot ):
+    def __init__(self, production, should, shouldnot):
         self.production = production
         self.should = should
         self.shouldnot = shouldnot
-    def __call__( self ):
+
+    def __call__(self):
         """Perform the test"""
         for item in self.should:
-            if isinstance(item,unicode):
+            if isinstance(item, unicode):
                 item = item.encode('utf-8')
-            success, children, next = p.parse( item, self.production )
-            assert success, """Didn't parse %s as a %s, should have"""%( repr(item), self.production)
-            assert next == len(item), """Didn't parse whole of %s as a %s, parsed %s of %s characters, results were:\n%s\nRest was:\n%s"""%( repr(item), self.production, next, len(item), children, item[next:])
+            success, children, next = p.parse(item, self.production)
+            assert success, """Didn't parse %s as a %s, should have""" % (
+                repr(item), self.production)
+            assert next == len(item), """Didn't parse whole of %s as a %s, parsed %s of %s characters, results were:\n%s\nRest was:\n%s""" % (
+                repr(item), self.production, next, len(item), children, item[next:])
         for item in shouldnot:
-            if isinstance(item,unicode):
+            if isinstance(item, unicode):
                 item = item.encode('utf-8')
-            success, children, next = p.parse( item, self.production )
-            assert not success, """Parsed %s chars of %s as a %s, shouldn't have, result was:\n%s"""%( next, repr(item), self.production, children)
+            success, children, next = p.parse(item, self.production)
+            assert not success, """Parsed %s chars of %s as a %s, shouldn't have, result was:\n%s""" % (
+                next, repr(item), self.production, children)
+
 
 def getSuite():
     return unittest.makeSuite(XMLProductionTests, 'test')
 
 
-
 testData = {
-    "CharData":(
-        [# should match
+    "CharData": (
+        [  # should match
             """Type """,
         ],
-        [# should not match
+        [  # should not match
         ],
     ),
-    "Attribute":(
-        [# should match
+    "Attribute": (
+        [  # should match
             """s=&this;""",
             '''s="&this;"''',
             """&this;""",
         ],
-        [# should not match
+        [  # should not match
             # unfinished elements
         ],
     ),
-        
-    "element":(
-        [# should match
+
+    "element": (
+        [  # should match
             """<key &this;/>""",
             """<key s=&this;/>""",
-            """<key &this;></key>""", 
+            """<key &this;></key>""",
             """<key s="&this;"/>""",
             """<key/>""",
         ],
-        [# should not match
+        [  # should not match
             # unfinished elements
             """<key>""",
-            """<key &this;>""", 
+            """<key &this;>""",
             """<key s=&this;>""",
             # end with no start...
             """</key>""",
             # malformed end tags
-            """<key></key &this;>""", 
+            """<key></key &this;>""",
             """<key></key s=&this;>""",
         ],
     ),
-        
-    "content":(
-        [# should match
+
+    "content": (
+        [  # should match
             """Type <key>less-than</key> (&#x3C;) to save options.
 This document was prepared on &docdate; and
 is classified &security-level;.""",
             """<key &this;/>""",
             """<key s=&this;/>""",
-            """<key &this;></key>""", 
+            """<key &this;></key>""",
             """<key s="&this;"/>""",
             """&this;""",
             """<key/>""",
         ],
-        [# should not match
+        [  # should not match
             # unfinished elements
             """<key>""",
-            """<key &this;>""", 
+            """<key &this;>""",
             """<key s=&this;>""",
             # end with no start...
             """</key>""",
             # malformed end tags
-            """<key></key &this;>""", 
+            """<key></key &this;>""",
             """<key></key s=&this;>""",
         ],
     ),
-    "AttValue":(
-        [# should match
+    "AttValue": (
+        [  # should match
             '''"&this;"''',
         ],
-        [# should not match
+        [  # should not match
         ],
     ),
-        
+
     "Name": (
-        [# should match
+        [  # should match
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-:._",
             "_a",
             ":a",
             ":a",
         ],
-        [# should not match
+        [  # should not match
             "-a",
             "0",
             "0.0",
@@ -123,7 +129,7 @@ is classified &security-level;.""",
         ],
     ),
     "Comment": (
-        [# should match
+        [  # should match
             "<!-- testing -->",
             "<!---->",
             "<!--- -->",
@@ -131,14 +137,14 @@ is classified &security-level;.""",
             "<!-- - - -->",
             "<!-- declarations for <head> & <body> -->",
         ],
-        [# should not match
+        [  # should not match
             "<!-- -- -->",
             "<!-->",
             "<!-- B+, B, or B--->",
         ],
     ),
     "prolog": (
-        [ # should match
+        [  # should match
             """<?xml version="1.0"?> <!DOCTYPE greeting SYSTEM "hello.dtd">""",
             """<?xml version="1.0" encoding="UTF-8" ?>
                 <!DOCTYPE greeting [
@@ -161,21 +167,21 @@ is classified &security-level;.""",
                 <!-- ... now reference it. -->
                 %ISOLat2;
             ]>""",
-            
+
         ],
-        [ # should not match
+        [  # should not match
         ],
     ),
-    
+
     "ExternalID": (
-        [# should match
+        [  # should match
             '''SYSTEM "hello.dtd"''',
         ],
-        [# should not match
+        [  # should not match
         ],
     ),
     "elementdecl": (
-        [# should match
+        [  # should match
             '''<!ELEMENT br EMPTY>''',
             """<!ELEMENT p (#PCDATA|emph)* >""",
             """<!ELEMENT container ANY >""",
@@ -185,32 +191,32 @@ is classified &security-level;.""",
             """<!ELEMENT %yada; (a|b|c|%others;) >""",
             """<!ELEMENT %yada; (a|b|c|%others;) >""",
         ],
-        [# should not match
+        [  # should not match
             """<!ELEMENT %yada;""",
             """%yada;""",
             """<!%yada;>""",
         ],
     ),
     "elementdecl_pe": (
-        [# should match
+        [  # should match
             """ %name.para; %content.para;""",
         ],
-        [# should not match
+        [  # should not match
         ],
     ),
-        
+
     "contentspec": (
-        [# should match
+        [  # should match
             '''EMPTY''',
             '''ANY''',
             '''%content.para;''',
         ],
-        [# should not match
+        [  # should not match
         ],
     ),
-        
+
     "AttlistDecl": (
-        [# should match
+        [  # should match
             '''<!ATTLIST termdef
           id      ID      #REQUIRED
           name    CDATA   #IMPLIED>''',
@@ -219,20 +225,20 @@ is classified &security-level;.""",
             """<!ATTLIST form
           method  CDATA   #FIXED "POST">""",
         ],
-        [# should not match
+        [  # should not match
         ],
     ),
     "AttDef": (
-        [# should match
+        [  # should match
             ''' id      ID      #REQUIRED''',
             """ name    CDATA   #IMPLIED""",
             ''' type    (bullets|ordered|glossary)  "ordered"''',
             ''' method  CDATA   #FIXED "POST"''',
         ],
-        [# should not match
+        [  # should not match
         ],
     ),
-        
+
     "EntityDecl": (
         [
             """<!ENTITY Pub-Status "This is a pre-release of the specification.">""",
@@ -245,27 +251,28 @@ is classified &security-level;.""",
          SYSTEM "../grafix/OpenHatch.gif"
          NDATA gif >""",
         ],
-        [# should not match
+        [  # should not match
         ],
     ),
-    "EntityDef":(
+    "EntityDef": (
         [
             '''PUBLIC "-//Textuality//TEXT Standard open-hatch boilerplate//EN"
          "http://www.textuality.com/boilerplate/OpenHatch.xml"''',
         ],
-        [# should not match
+        [  # should not match
         ],
     ),
-    "PubidLiteral":(
+    "PubidLiteral": (
         [
             '''"-//Textuality//TEXT Standard open-hatch boilerplate//EN"''',
         ],
-        [# should not match
+        [  # should not match
         ],
     ),
 }
-for production, (should,shouldnot) in list(testData.items()):
-    setattr( XMLProductionTests, 'test'+production, ProductionTest(production, should, shouldnot))
+for production, (should, shouldnot) in list(testData.items()):
+    setattr(XMLProductionTests, 'test' + production,
+            ProductionTest(production, should, shouldnot))
 
 if __name__ == "__main__":
     unittest.main(defaultTest="getSuite")

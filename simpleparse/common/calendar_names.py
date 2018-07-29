@@ -42,26 +42,28 @@ dn = calendar.day_name[:]
 ma = calendar.month_abbr[:]
 mn = calendar.month_name[:]
 
-def _build( name, set ):
+
+def _build(name, set):
     # make sure longest equal-prefix items are first
     set = set[:]
     set.sort()
     set.reverse()
-    l,u,r = [],[],[]
+    l, u, r = [], [], []
     for item in set:
-        l.append( objectgenerator.Literal( value = item.lower() ))
-        u.append( objectgenerator.Literal( value = item.upper() ))
-        r.append( objectgenerator.Literal( value = item ))
-    c[ name + '_lc' ] = objectgenerator.FirstOfGroup( children = l )
-    c[ name + '_uc' ] = objectgenerator.FirstOfGroup( children = u )
-    c[ name ] = objectgenerator.FirstOfGroup( children = r )
-
-_build( 'locale_day_names', dn )
-_build( 'locale_day_abbrs', da )
+        l.append(objectgenerator.Literal(value=item.lower()))
+        u.append(objectgenerator.Literal(value=item.upper()))
+        r.append(objectgenerator.Literal(value=item))
+    c[name + '_lc'] = objectgenerator.FirstOfGroup(children=l)
+    c[name + '_uc'] = objectgenerator.FirstOfGroup(children=u)
+    c[name] = objectgenerator.FirstOfGroup(children=r)
 
 
-_build( 'locale_month_names', mn )
-_build( 'locale_month_abbrs', ma )
+_build('locale_day_names', dn)
+_build('locale_day_abbrs', da)
+
+
+_build('locale_month_names', mn)
+_build('locale_month_abbrs', ma)
 
 da = [s.lower() for s in da]
 dn = [s.lower() for s in dn]
@@ -69,35 +71,42 @@ ma = [s.lower() for s in ma]
 mn = [s.lower() for s in mn]
 
 
-common.share( c )
+common.share(c)
+
 
 class NameInterpreter:
     offset = 1
-    def __init__( self, offset = 1 ):
+
+    def __init__(self, offset=1):
         self.offset = offset
-    def __call__( self, info, buffer ):
+
+    def __call__(self, info, buffer):
         (tag, left, right, children) = info
         value = buffer[left:right].lower()
         for table in self.tables:
             try:
-                return table.index( value )+ self.offset
+                return table.index(value) + self.offset
             except ValueError:
                 pass
-        raise ValueError( """Unrecognised (but parsed) %s name %s at character %s"""%( self.nameType, value, left))
+        raise ValueError("""Unrecognised (but parsed) %s name %s at character %s""" % (
+            self.nameType, value, left))
 
-class MonthNameInterpreter( NameInterpreter):
+
+class MonthNameInterpreter(NameInterpreter):
     """Interpret a month-of-year name as an integer index
 
     Pass an "offset" value to __init__ to use an offset other
     than 1 (Monday = 1), normally 0 (Monday = 0)
     """
     nameType = "Month"
-    tables = (mn,ma)
-class DayNameInterpreter( NameInterpreter ):
+    tables = (mn, ma)
+
+
+class DayNameInterpreter(NameInterpreter):
     """Interpret a day-of-week name as an integer index
 
     Pass an "offset" value to __init__ to use an offset other
     than 1 (January = 1), normally 0 (January = 0)
     """
     nameType = "Day"
-    tables = (dn,da)
+    tables = (dn, da)

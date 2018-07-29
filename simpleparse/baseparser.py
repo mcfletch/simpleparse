@@ -2,6 +2,7 @@
 from simpleparse.stt.TextTools.TextTools import *
 from simpleparse.generator import Generator
 
+
 class BaseParser:
     """Class on which real-world parsers build
 
@@ -10,7 +11,8 @@ class BaseParser:
     """
     _rootProduction = ""
     # primary API...
-    def parse( self, data, production=None, processor=None, start=0, stop=None):
+
+    def parse(self, data, production=None, processor=None, start=0, stop=None):
         """Parse data with production "production" of this parser
 
         data -- data to be parsed, a Python string, for now
@@ -27,13 +29,14 @@ class BaseParser:
             processor = self.buildProcessor()
         if stop is None:
             stop = len(data)
-        value = tag( data, self.buildTagger( production, processor), start, stop )
+        value = tag(data, self.buildTagger(production, processor), start, stop)
         if processor and callable(processor):
-            return processor( value, data )
+            return processor(value, data)
         else:
             return value
     # abstract methods
-    def buildProcessor( self ):
+
+    def buildProcessor(self):
         """Build default processor object for this parser class
 
         The default implementation returns None.  The processor
@@ -41,7 +44,7 @@ class BaseParser:
         information about Callouts and the like), or the processor
         API and the method-source API.  The processor API merely
         requires that the object be callable, and have the signature:
-        
+
             object( (success, children, nextPosition), buffer)
 
         (Note: your object can treat the first item as a single tuple
@@ -50,14 +53,17 @@ class BaseParser:
         See: simpleparse.processor module for details.
         """
         return None
-    def buildTagger( self, name, processor ):
+
+    def buildTagger(self, name, processor):
         """Build the tag-table for the parser
 
         This method must be implemented by your base class and _not_
         call the implementation here.
         """
-        raise NotImplementedError( """Parser sub-class %s hasn't implemented a buildTagger method"""%(self.__class__.__name__))
-    def resetBeforeParse( self ):
+        raise NotImplementedError(
+            """Parser sub-class %s hasn't implemented a buildTagger method""" % (self.__class__.__name__))
+
+    def resetBeforeParse(self):
         """Called just before the parser's parse method starts working,
 
         Allows you to set up special-purpose structures, such as stacks
