@@ -35,7 +35,7 @@ declaration = """
 # of the file, which is actually embedded in the
 # file :(
 
-<S>          := [\x20\x09\x0D\x0A]+
+<S>          := [ \t\r\n]+
 <letter>     := [a-zA-Z]
 <namestart>  := letter/[_:]
 <namechar>   := letter/digit/[-._:]
@@ -174,14 +174,14 @@ NotationDecl      :=    '<!NOTATION', TS, Name, TS, (ExternalID / PublicID), TS?
 ### elements (nodes/tags/you-know :) )
     # limitations in the SimpleParse engine mean that this
     # particular structure will be basically useless...
-    element    :=    EmptyElemTag / (STag, content, ETag)
+    element    :=    EmptyElemTag / (STag, content?, ETag)
 
     EmptyElemTag    :=    STagO, Name, (TS, Attribute)*, TS?, EmptyElemTagC
     
     STag       :=    STagO, Name, (TS, Attribute)*, TS?, STagC
     ETag       :=    ETagO, Name?, TS?, ETagC
 
-    content    :=    (element / Reference / CDSect / PI / Comment / CharData)*
+    content    :=    (element / Reference / CDSect / PI / Comment / CharData)+
 
     Attribute  :=    (Name, Eq, (AttValue/Reference))/(Reference,(Eq,(AttValue/Reference))?)
 

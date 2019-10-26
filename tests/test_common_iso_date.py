@@ -5,7 +5,7 @@ log = logging.getLogger(__name__)
 try:
     from mx import DateTime
 except ImportError:
-    log.warn("No mx.DateTime module available")
+    log.warning("No mx.DateTime module available")
 else:
     import time
     try:

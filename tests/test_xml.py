@@ -1,6 +1,7 @@
+from __future__ import unicode_literals
 from simpleparse.xmlparser import xml_parser
 from simpleparse.parser import Parser
-import unittest
+import unittest, sys
 try:
     unicode
 except NameError:
@@ -12,24 +13,25 @@ class XMLProductionTests(unittest.TestCase):
     """Tests that XML grammar productions match appropriate values"""
     ### ProductionTests will be added here by loop below...
 
-class ProductionTest:
-    def __init__( self, production, should, shouldnot ):
-        self.production = production
-        self.should = should
-        self.shouldnot = shouldnot
-    def __call__( self ):
+def production_test(production, should, shouldnot):
+    def test_final( self ):
         """Perform the test"""
-        for item in self.should:
+        for item in should:
             if isinstance(item,unicode):
                 item = item.encode('utf-8')
-            success, children, next = p.parse( item, self.production )
-            assert success, """Didn't parse %s as a %s, should have"""%( repr(item), self.production)
-            assert next == len(item), """Didn't parse whole of %s as a %s, parsed %s of %s characters, results were:\n%s\nRest was:\n%s"""%( repr(item), self.production, next, len(item), children, item[next:])
+            try:
+                success, children, next = p.parse( item, production )
+            except SystemError as err:
+                err.args += (item, production)
+                raise
+            assert success, """Didn't parse %s as a %s, should have"""%( repr(item), production)
+            assert next == len(item), """Didn't parse whole of %s as a %s, parsed %s of %s characters, results were:\n%s\nRest was:\n%s"""%( repr(item), production, next, len(item), children, item[next:])
         for item in shouldnot:
             if isinstance(item,unicode):
                 item = item.encode('utf-8')
-            success, children, next = p.parse( item, self.production )
-            assert not success, """Parsed %s chars of %s as a %s, shouldn't have, result was:\n%s"""%( next, repr(item), self.production, children)
+            success, children, next = p.parse( item, production )
+            assert not success, """Parsed %s chars of %s as a %s, shouldn't have, result was:\n%s"""%( next, repr(item), production, children)
+    return test_final
 
 def getSuite():
     return unittest.makeSuite(XMLProductionTests, 'test')
@@ -136,6 +138,14 @@ is classified &security-level;.""",
             "<!-->",
             "<!-- B+, B, or B--->",
         ],
+    ),
+    "XMLDecl": (
+        [
+            """<?xml version="1.0"?>""",
+            """<?xml version="1.0" standalone='yes'?>""",
+            """<?xml version="1.0" encoding="UTF-8" ?>""",
+        ],
+        []
     ),
     "prolog": (
         [ # should match
@@ -265,7 +275,7 @@ is classified &security-level;.""",
     ),
 }
 for production, (should,shouldnot) in list(testData.items()):
-    setattr( XMLProductionTests, 'test'+production, ProductionTest(production, should, shouldnot))
+    setattr( XMLProductionTests, 'test'+production, production_test(production, should, shouldnot))
 
 if __name__ == "__main__":
     unittest.main(defaultTest="getSuite")
