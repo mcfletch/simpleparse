@@ -63,11 +63,13 @@ init:
 install:
   - "powershell appveyor\\install.ps1"
   - "%CMD_IN_ENV% %PYTHON%\\python.exe -m pip install pytest"
-  - "%CMD_IN_ENV% %PYTHON%\\python.exe -m pip install dist/*.whl"
+  - "%CMD_IN_ENV% %PYTHON%\\python.exe setup.py install"
 
 build_script:
   - "ECHO %WITH_COMPILER% %PYTHON%/python.exe setup.py bdist_wheel"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py bdist_wheel"
+  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install dist\\*.whl"
+
 
 test_script:
   - "%CMD_IN_ENV% %PYTHON%/python.exe -m pytest -sv"
