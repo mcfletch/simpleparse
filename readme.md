@@ -15,3 +15,10 @@ in the `PyVRML97` package.
 See the [docs](http://simpleparse.sourceforge.net/) for usage.
 
 ```pip install SimpleParse```
+
+[![Appveyor Build](https://ci.appveyor.com/api/projects/status/MikeCFletcher/simpleparse?svg=True)](https://ci.appveyor.com/project/MikeCFletcher/simpleparse)
+
+[![PyPI download month](https://img.shields.io/pypi/v/simpleparse.svg)](https://pypi.python.org/pypi/simpleparse)
+
+[![PyPI download month](https://img.shields.io/pypi/dm/simpleparse.svg)](https://pypi.python.org/pypi/simpleparse/)
+
