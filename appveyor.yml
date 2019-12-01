@@ -70,7 +70,7 @@ build_script:
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py bdist_wheel"
 
 test_script:
-  - "%CMD_IN_ENV% pytest -sv"
+  - "%CMD_IN_ENV% %PYTHON%/python.exe -m pytest -sv"
 
 artifacts:
   - path: "dist\\*.whl"
