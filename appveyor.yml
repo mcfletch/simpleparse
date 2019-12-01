@@ -13,56 +13,67 @@ environment:
     # See: http://www.appveyor.com/docs/installed-software#python
 
     - PYTHON: "C:\\Python27"
-      PYTHON_VERSION: "2.7.9" # currently 2.7.9
-      PYTHON_ARCH: "32"
-
-    - PYTHON: "C:\\Python33"
-      PYTHON_VERSION: "3.3.5" # currently 3.3.5
-      PYTHON_ARCH: "32"
-
-    - PYTHON: "C:\\Python34"
-      PYTHON_VERSION: "3.4.3" # currently 3.4.3
+      PYTHON_VERSION: "2.7.14"
       PYTHON_ARCH: "32"
 
     - PYTHON: "C:\\Python27-x64"
-      PYTHON_VERSION: "2.7.9" # currently 2.7.9
+      PYTHON_VERSION: "2.7.14"
       PYTHON_ARCH: "64"
-      WINDOWS_SDK_VERSION: "v7.0"
 
-    - PYTHON: "C:\\Python33-x64"
-      PYTHON_VERSION: "3.3.5" # currently 3.3.5
+    - PYTHON: "C:\\Python35"
+      PYTHON_VERSION: "3.5.3"
+      PYTHON_ARCH: "32"
+
+    - PYTHON: "C:\\Python35-x64"
+      PYTHON_VERSION: "3.5.3"
+      PYTHON_ARCH: "64"    
+
+    - PYTHON: "C:\\Python36"
+      PYTHON_VERSION: "3.6.4"
+      PYTHON_ARCH: "32"
+
+    - PYTHON: "C:\\Python36-x64"
+      PYTHON_VERSION: "3.6.4"
+      PYTHON_ARCH: "64"    
+
+    - PYTHON: "C:\\Python37"
+      PYTHON_VERSION: "3.7.0"
+      PYTHON_ARCH: "32"
+
+    - PYTHON: "C:\\Python37-x64"
+      PYTHON_VERSION: "3.7.0"
+      PYTHON_ARCH: "64"    
+    
+    - PYTHON: "C:\\Python38"
+      PYTHON_VERSION: "3.8.0"
+      PYTHON_ARCH: "32"
+
+    - PYTHON: "C:\\Python38-x64"
+      PYTHON_VERSION: "3.8.0"
       PYTHON_ARCH: "64"
-      WINDOWS_SDK_VERSION: "v7.1"
 
-    - PYTHON: "C:\\Python34-x64"
-      PYTHON_VERSION: "3.4.3" # currently 3.4.3
-      PYTHON_ARCH: "64"
-      WINDOWS_SDK_VERSION: "v7.1"
+branches:
 
-    # Also build on a Python version not pre-installed by Appveyor.
-    # See: https://github.com/ogrisel/python-appveyor-demo/issues/10
-
-    #- PYTHON: "C:\\Python266"
-    #  PYTHON_VERSION: "2.6.6"
-    #  PYTHON_ARCH: "32"
-
+    only:
+        - master
+    
 init:
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
 
 install:
   - "powershell appveyor\\install.ps1"
+  - "%CMD_IN_ENV% %PYTHON%\\python.exe -m pip install pytest"
+  - "%CMD_IN_ENV% %PYTHON%\\python.exe setup.py install"
 
-build: off
+build_script:
+  - "ECHO %WITH_COMPILER% %PYTHON%/python.exe setup.py bdist_wheel"
+  - "%WITH_COMPILER% %PYTHON%/python.exe setup.py bdist_wheel"
 
 test_script:
-    #- "%WITH_COMPILER% %PYTHON%/python setup.py test"
-  - echo "Skipped"
-
-after_test:
-  - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"
+  - "%CMD_IN_ENV% pytest -sv"
 
 artifacts:
-  - path: dist\*
+  - path: "dist\\*.whl"
 
 #on_success:
 #  - TODO: upload the content of dist/*.whl to a public wheelhouse
