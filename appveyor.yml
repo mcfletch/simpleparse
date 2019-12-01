@@ -68,7 +68,6 @@ install:
 build_script:
   - "ECHO %WITH_COMPILER% %PYTHON%/python.exe setup.py bdist_wheel"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py bdist_wheel"
-  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install dist\\*.whl"
 
 
 test_script:
