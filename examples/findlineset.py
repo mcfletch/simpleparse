@@ -36,7 +36,14 @@ This is NOT fifth line
 """
 if __name__ == "__main__":
     import pprint
-    import time
+    if sys.platform == 'win32':
+        clock = time.perf_counter
+    else:
+
+        if hasattr(time,'process_time'):
+            clock = time.process_time
+        else:
+            clock = time.clock
     pprint.pprint(
         p.parse( file1)
     )
@@ -45,9 +52,9 @@ if __name__ == "__main__":
     )
     testData = "\n"*30000000 + file1
     print('starting parse of file 1 with 1 match at end')
-    t = time.clock()
+    t = clock()
     success, results, next = p.parse( testData, "sets")
-    print('finished parse', time.clock()-t)
+    print('finished parse', clock()-t)
     print('number of results', len(results))
     pprint.pprint(
         results
@@ -55,7 +62,7 @@ if __name__ == "__main__":
     print()
     testData = file1 * (30000000//len(file1))
     print('starting parse of file 1 with ~230,000 matches (slow)')
-    t = time.clock()
+    t = clock()
     success, results, next = p.parse( testData, "sets")
-    print('finished parse', time.clock()-t)
+    print('finished parse', clock()-t)
     print('number of results', len(results))

@@ -367,7 +367,14 @@ static void mx_Py_PRINT_REFCOUNT(PyObject *v,
 /* Add a C function/method cname to the module dict as pyname; the
    function takes one argument: the object is passed in directly
    (without wrapping it into a tuple first), i.e. don't use
-   the Py_GetArg-macros or PyArg_ParseTuple(). */
+   the Py_GetArg-macros or PyArg_ParseTuple(). 
+   
+   This breaks on Python 3.8, where functions get checked such that
+   we can't do this kind of hackery... but the real question is 
+   how did this work before? Like how could you call these functions
+   when the calling mechanism itself wasn't something Python
+   understood.
+   */
 #define Py_MethodListEntrySingleArg(pyname,cname) {pyname,(PyCFunction)cname,0,cname##_docstring}
 
 /* Add a C function/method that uses keywords to the module dict */

@@ -491,7 +491,17 @@ def splitwords(text,
 #
 
 # Taken from my hack.py module:
-import time
+import time, sys
+
+if sys.platform == 'win32':
+    clock = time.perf_counter
+else:
+
+    if hasattr(time,'process_time'):
+        clock = time.process_time
+    else:
+        clock = time.clock
+
 class _timer:
 
     """ timer class with a quite obvious interface
@@ -506,14 +516,14 @@ class _timer:
 
     def start(self,
               
-              clock=time.clock,time=time.time):
+              clock=clock,time=time.time):
         
         self.atime = time()
         self.utime = clock()
 
     def stop(self,
              
-             clock=time.clock,time=time.time):
+             clock=clock,time=time.time):
 
         self.utime = clock() - self.utime
         self.atime = time() - self.atime
@@ -521,7 +531,7 @@ class _timer:
 
     def usertime(self,
                  
-                 clock=time.clock,time=time.time):
+                 clock=clock,time=time.time):
         
         self.utime = clock() - self.utime
         self.atime = time() - self.atime
@@ -529,7 +539,7 @@ class _timer:
 
     def abstime(self,
                 
-                clock=time.clock,time=time.time):
+                clock=clock,time=time.time):
         
         self.utime = clock() - self.utime
         self.atime = time() - self.atime

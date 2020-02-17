@@ -4978,15 +4978,18 @@ static PyMethodDef Module_methods[] =
 #ifdef HAVE_UNICODE
     Py_MethodListEntry("UnicodeTagTable",mxTagTable_UnicodeTagTable),
 #endif
-    Py_MethodListEntrySingleArg("upper",mxTextTools_upper),
-    Py_MethodListEntrySingleArg("lower",mxTextTools_lower),
+	// Disabled because we don't actually use these functions
+	// and they are using a hack that tries to avoid the overhead
+	// of the single-value tuple creation/unpacking
+    // Py_MethodListEntrySingleArg("upper",mxTextTools_upper),
+    // Py_MethodListEntrySingleArg("lower",mxTextTools_lower),
     Py_MethodListEntry("charsplit",mxTextTools_charsplit),
     Py_MethodListEntry("splitat",mxTextTools_splitat),
     Py_MethodListEntry("suffix",mxTextTools_suffix),
     Py_MethodListEntry("prefix",mxTextTools_prefix),
     Py_MethodListEntry("hex2str",mxTextTools_hex2str),
     Py_MethodListEntry("str2hex",mxTextTools_str2hex),
-    Py_MethodListEntrySingleArg("isascii",mxTextTools_isascii),
+    // Py_MethodListEntrySingleArg("isascii",mxTextTools_isascii),
     {NULL,NULL} /* end of list */
 };
 
