@@ -35,11 +35,13 @@ This is NOT second line
 This is NOT fifth line
 """
 if __name__ == "__main__":
-    import pprint
+    import pprint, time
     if sys.platform == 'win32':
-        clock = time.perf_counter
+        if hasattr(time,'perf_counter'):
+            clock = time.perf_counter
+        else:
+            clock = time.clock
     else:
-
         if hasattr(time,'process_time'):
             clock = time.process_time
         else:

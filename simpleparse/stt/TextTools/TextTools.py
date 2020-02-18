@@ -494,7 +494,10 @@ def splitwords(text,
 import time, sys
 
 if sys.platform == 'win32':
-    clock = time.perf_counter
+    if hasattr(time,'perf_counter'):
+        clock = time.perf_counter
+    else:
+        clock = time.clock
 else:
 
     if hasattr(time,'process_time'):
