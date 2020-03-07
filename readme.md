@@ -12,7 +12,7 @@ tests for xml comments and prologues under python 3.6 and 3.7.
 You can see a full-featured [sample parser](https://github.com/mcfletch/pyvrml97/blob/master/vrml/vrml97/parser.py)
 in the `PyVRML97` package.
 
-See the [docs](http://simpleparse.sourceforge.net/) for usage.
+See the [docs](http://mcfletch.github.com/simpleparse) for usage.
 
 ```pip install SimpleParse```
 
