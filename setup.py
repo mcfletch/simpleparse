@@ -21,7 +21,7 @@ def findVersion( ):
     raise RuntimeError("Unable to find __version__ declaration")
 
 options = {
-    'sdist': { 'force_manifest':1,'formats':['gztar','zip'] },
+    'sdist': { 'force_manifest':1,'formats':['gztar'] },
 }
 if sys.platform == 'win32':
     options.setdefault(
