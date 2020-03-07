@@ -7,7 +7,7 @@ to install the packages from the source archive.
 """
 from setuptools import setup, Extension, find_packages
 import os, sys
-HERE = os.path.dirname(__file__)
+HERE = os.path.abspath(os.path.dirname(__file__))
 
 def findVersion( ):
     """Find the version declaration in the __init__.py file"""
@@ -29,6 +29,7 @@ if sys.platform == 'win32':
     )['define'] = 'BAD_STATIC_FORWARD'
 
 if __name__ == "__main__":
+    packages = find_packages(HERE)
     setup (
         name = "SimpleParse",
         version = findVersion(),
@@ -39,7 +40,7 @@ if __name__ == "__main__":
 
         options = options,
 
-        packages = find_packages(HERE),
+        packages = packages,
         ext_modules=[
             Extension(
                 "simpleparse.stt.TextTools.mxTextTools.mxTextTools", 
@@ -74,4 +75,5 @@ undesirable behaviours.
 Converts EBNF grammars directly to single-pass parsers for many
 largely deterministic grammars.""",
         platforms= ['Any'],
+        include_package_data=True,
     )
