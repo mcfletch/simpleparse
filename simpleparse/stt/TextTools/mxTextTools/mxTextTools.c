@@ -2835,7 +2835,7 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
 
 	o = PySequence_GetItem(seq, i);
 
-	if PyTuple_Check(o) {
+	if (PyTuple_Check(o)) {
 	    /* Tuple entry: (string,l,r,[...]) */
 	    register Py_ssize_t l,r;
 
@@ -2980,7 +2980,7 @@ PyObject *mxTextTools_Join(PyObject *seq,
 
 	o = PySequence_GetItem(seq, i);
 
-	if PyTuple_Check(o) {
+	if (PyTuple_Check(o)) {
 	    /* Tuple entry: (string,l,r,[...]) */
 	    register Py_ssize_t l,r;
 
