@@ -1,5 +1,4 @@
 environment:
-
   global:
     # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
@@ -7,7 +6,6 @@ environment:
     WITH_COMPILER: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_compiler.cmd"
 
   matrix:
-
     # Pre-installed Python versions, which Appveyor may upgrade to
     # a later point release.
     # See: http://www.appveyor.com/docs/installed-software#python
@@ -26,7 +24,7 @@ environment:
 
     - PYTHON: "C:\\Python35-x64"
       PYTHON_VERSION: "3.5.3"
-      PYTHON_ARCH: "64"    
+      PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python36"
       PYTHON_VERSION: "3.6.4"
@@ -34,7 +32,7 @@ environment:
 
     - PYTHON: "C:\\Python36-x64"
       PYTHON_VERSION: "3.6.4"
-      PYTHON_ARCH: "64"    
+      PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python37"
       PYTHON_VERSION: "3.7.0"
@@ -42,8 +40,8 @@ environment:
 
     - PYTHON: "C:\\Python37-x64"
       PYTHON_VERSION: "3.7.0"
-      PYTHON_ARCH: "64"    
-    
+      PYTHON_ARCH: "64"
+
     - PYTHON: "C:\\Python38"
       PYTHON_VERSION: "3.8.0"
       PYTHON_ARCH: "32"
@@ -52,11 +50,18 @@ environment:
       PYTHON_VERSION: "3.8.0"
       PYTHON_ARCH: "64"
 
-branches:
+    - PYTHON: "C:\\Python39"
+      PYTHON_VERSION: "3.9.0"
+      PYTHON_ARCH: "32"
 
-    only:
-        - master
-    
+    - PYTHON: "C:\\Python39-x64"
+      PYTHON_VERSION: "3.9.0"
+      PYTHON_ARCH: "64"
+
+branches:
+  only:
+    - master
+
 init:
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
 
@@ -69,12 +74,10 @@ build_script:
   - "ECHO %WITH_COMPILER% %PYTHON%/python.exe setup.py bdist_wheel"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py bdist_wheel"
 
-
 test_script:
   - "%CMD_IN_ENV% %PYTHON%/python.exe -m pytest -sv"
 
 artifacts:
   - path: "dist\\*.whl"
-
 #on_success:
 #  - TODO: upload the content of dist/*.whl to a public wheelhouse
