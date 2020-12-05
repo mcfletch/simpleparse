@@ -1,6 +1,3 @@
-image:
-  - Visual Studio 2013
-  - Visual Studio 2019
 environment:
   global:
     # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
@@ -52,13 +49,12 @@ environment:
       PYTHON_VERSION: "3.8.0"
       PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python39"
-      PYTHON_VERSION: "3.9.0"
-      PYTHON_ARCH: "32"
-
-    - PYTHON: "C:\\Python39-x64"
-      PYTHON_VERSION: "3.9.0"
-      PYTHON_ARCH: "64"
+    # - PYTHON: "C:\\Python39"
+    #   PYTHON_VERSION: "3.9.0"
+    #   PYTHON_ARCH: "32"
+    # - PYTHON: "C:\\Python39-x64"
+    #   PYTHON_VERSION: "3.9.0"
+    #   PYTHON_ARCH: "64"
 
 for:
   - matrix:
