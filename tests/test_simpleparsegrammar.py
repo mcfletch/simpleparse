@@ -287,11 +287,19 @@ class ParserGenerationTests(unittest.TestCase):
         )
     def testGenUnicodeRange( self ):
         self.doBasicTest(
-            '''s := [\u0600-\u06ff]+''',
+            r'''s := [\u0600-\u06ff]+''',
             's',
             u'\u0600\u06ff',
             (1,[],2)
         )
+    def testUnicodeMissing_r_flag( self ):
+        with self.assertRaises(ValueError):
+            self.doBasicTest(
+                '''s := [\u0600-\u06ff]+''',
+                's',
+                u'\u0600\u06ff',
+                (1,[],2)
+            )
     if sys.version_info[0] < 3:
         def testGenUnicodeRangeBroken( self ):
             self.assertRaises(
@@ -465,10 +473,10 @@ class NameTests(unittest.TestCase):
 class BasicMethodSource:
     def __init__( self ):
         self.results = []
-    def _m_a( self, taglist,text,l,r,subtags ):
-        self.results.append( ('a',text[l:r]))
-    def _m_b( self, taglist, text, l,r,subtags):
-        self.results.append( ('b',l,r) )
+    def _m_a( self, taglist,text,left,right,subtags ):
+        self.results.append( ('a',text[left:right]))
+    def _m_b( self, taglist, text, left,right,subtags):
+        self.results.append( ('b',left,right) )
     _m_c = TextTools.AppendMatch
     _m_d = TextTools.AppendTagobj
     _o_d = "hello world"
