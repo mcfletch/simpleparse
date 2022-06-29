@@ -473,10 +473,10 @@ class NameTests(unittest.TestCase):
 class BasicMethodSource:
     def __init__( self ):
         self.results = []
-    def _m_a( self, taglist,text,l,r,subtags ):
-        self.results.append( ('a',text[l:r]))
-    def _m_b( self, taglist, text, l,r,subtags):
-        self.results.append( ('b',l,r) )
+    def _m_a( self, taglist,text,left,right,subtags ):
+        self.results.append( ('a',text[left:right]))
+    def _m_b( self, taglist, text, left,right,subtags):
+        self.results.append( ('b',left,right) )
     _m_c = TextTools.AppendMatch
     _m_d = TextTools.AppendTagobj
     _o_d = "hello world"

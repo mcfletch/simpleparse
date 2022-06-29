@@ -731,7 +731,7 @@ class SPGrammarProcessorStr(SPGrammarProcessor):
         try:
             return str(buffer[tup[1]:tup[2]],'utf8')
         except UnicodeDecodeError:
-            sofar =  buffer[:tup[1]].decode('utf8')
+            sofar = buffer[:tup[1]].decode('utf8')
             lineNumber = lines(0, tup[1],buffer)
             seq = buffer[tup[1]]
             if (seq & 0x38) > 0x30 or (seq & 0xC0 != 0xC0 ):

@@ -881,7 +881,7 @@ class SimpleParseGrammarProcessorBytesTests(SimpleParseGrammarTests):
         while compare:
             expect,got = compare.popleft()
             assert type(expect) == type(got)
-            for attribute in (name_ts_attrs if ( isinstance(expect,Name) and expect.value == 'ts') or parserName == 'ts' else  attrnames):
+            for attribute in (name_ts_attrs if ( isinstance(expect,Name) and expect.value == 'ts') or parserName == 'ts' else attrnames):
                 assert getattr(expect,attribute,None) == getattr(got,attribute,None),'''\nexpected (flags missmatch):%s\n     got:%s\n'''%( expected_product, result )
             assert expect.terminal(SPGenerator) == got.terminal(processor.generator), '''\nexpected (terminal missmatch):%s\n     got:%s\n'''%( expected_product, result )
             expect_children = getattr(expect,'children',None)
