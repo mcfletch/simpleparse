@@ -15,3 +15,4 @@ global-exclude *.pyc
 prune examples/html.py
 prune examples/py*
 prune examples/rtf*
+prune .tox
