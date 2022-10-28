@@ -2898,13 +2898,21 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
 
 	/* Insert separator */
 	if (i > 0 && sep_len > 0) {
-	    Py_UNICODE_COPY(p, sep, sep_len);
+#if PY_MAJOR_VERSION == 3
+	    PyUnicode_CopyCharacters(p, 0, sep, 0, sep_len);
+#else
+        Py_UNICODE_COPY(p, sep, sep_len);
+#endif
 	    p += sep_len;
 	    current_len += sep_len;
 	}
 
 	/* Copy snippet into new string */
-	Py_UNICODE_COPY(p, st, len_st);
+#if PY_MAJOR_VERSION == 3
+	PyUnicode_CopyCharacters(p, 0, st, 0, len_st);
+#else
+    Py_UNICODE_COPY(p, st, len_st);
+#endif
 	p += len_st;
 	current_len += len_st;
 	
