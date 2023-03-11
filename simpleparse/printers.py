@@ -19,7 +19,7 @@ class Parser:
     '''
     def buildTagger( self, name=None, processor = None ):
         '''Build the tag-table for parsing the EBNF for this parser'''
-        return GENERATOR.buildParser( name, processor )
+        return GENERATOR.getBuilder( processor ).getParser(name)
 
 """
     ITEM = """GENERATOR.addDefinition(
@@ -45,7 +45,7 @@ class Parser:
                 for child in value:
                     childTemp.append(childTemplate%self.reprObject(child,depth+2))
                 childTemp.append( (indent*(depth+1))+']' )
-                
+
                 temp.append(
                     argTemplate% (key, '\n'.join(childTemp))
                 )

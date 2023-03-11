@@ -17,7 +17,7 @@ class Parser( baseparser.BaseParser ):
     """
     def __init__(
         self, declaration, root='root',
-        prebuilts=(), 
+        prebuilts=(),
         definitionSources=common.SOURCES,
     ):
         """Initialise the parser, creating the tagging table for it
@@ -42,8 +42,6 @@ class Parser( baseparser.BaseParser ):
             production = self._rootProduction
         if processor is None:
             processor = self.buildProcessor()
-        return self._generator.buildParser(
-            production,
-            methodSource=processor,
-        )
-    
+        builder = self._generator.getBuilder(methodSource=processor)
+        return builder.getParser(production)
+

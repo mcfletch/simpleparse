@@ -12,7 +12,7 @@ from simpleparse.stt.TextTools import TextTools
 import pprint
 
 
-parser = Parser( declaration ).generator.buildParser('testparser' )
+parser = Parser( declaration ).generator.getBuilder().getParser('testparser')
 result = TextTools.tag( testdata, parser )
 if result != expectedResult:
     print('backup-on-subtable-test failed')

@@ -19,7 +19,7 @@ Python-string-like operation as much as possible, this includes:
         i.e. generated with this grammar:
 
         string_triple_double/string_triple_single/string_double_quote/string_single_quote
-        
+
 
 Interpreters:
     StringInterpreter
@@ -85,7 +85,7 @@ string_special_escapes     := [\\\\abfnrtv"]
 for name, partial in _stringTypeData:
     _p = Parser( stringDeclaration + partial )
     c[ name ] = objectgenerator.LibraryElement(
-        generator = _p._generator,
+        builder = _p._generator.getBuilder(),
         production = "str",
     )
 common.share( c )
@@ -93,7 +93,7 @@ _p = Parser( """
 string :=  string_triple_double/string_triple_single/string_double_quote/string_single_quote
 """ )
 c[ "string"] = objectgenerator.LibraryElement(
-    generator = _p._generator,
+    builder = _p._generator.getBuilder(),
     production = "string",
 )
 
@@ -110,7 +110,7 @@ class StringInterpreter(DispatchProcessor):
 
         class MyProcessor( DispatchProcessor ):
             string = StringInterpreter()
-            
+
             # following would be used if you have, for instance,
             # used string_single_quote in an area where double
             # or triple-quoted strings are not allowed, but have
@@ -128,7 +128,7 @@ class StringInterpreter(DispatchProcessor):
     string_double_quote = string_single_quote
     string_triple_single = string_single_quote
     string_triple_double = string_single_quote
-        
+
     def char_no_quote( self, info, buffer):
         (tag, left, right, sublist) = info
         return buffer[left:right]
@@ -137,14 +137,14 @@ class StringInterpreter(DispatchProcessor):
     def escaped_char( self, info, buffer):
         (tag, left, right, sublist) = info
         return "".join(dispatchList(self,sublist,buffer))
-    
+
     def octal_escaped_char(self, info, buffer):
         (tag, left, right, sublist) = info
         return chr(int( buffer[left:right], 8 ))
     def hex_escaped_char( self, info, buffer):
         (tag, left, right, sublist) = info
         return chr(int( buffer[left:right], 16 ))
-    
+
     def backslash_char( self, info, buffer):
         return "\\"
 
@@ -165,4 +165,4 @@ class StringInterpreter(DispatchProcessor):
     '"':'"',
     "'":"'",
     }
-    
+

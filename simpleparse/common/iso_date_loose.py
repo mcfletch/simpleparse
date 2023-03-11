@@ -48,7 +48,7 @@ ISO_date_time_loose  := ISO_date_loose, ([T ], ISO_time_loose)?, [ ]?, offset?
 _p = Parser( declaration )
 for name in ["ISO_time_loose","ISO_date_time_loose", "ISO_date_loose"]:
     c[ name ] = objectgenerator.LibraryElement(
-        generator = _p._generator,
+        builder = _p._generator.getBuilder(),
         production = name,
     )
 common.share( c )
@@ -62,7 +62,7 @@ if haveMX:
 
         float = numbers.FloatInterpreter()
         second =  float
-        
+
         def __init__(
             self,
             inputLocal = 1,
@@ -119,7 +119,7 @@ if haveMX:
                 second = set.get("second") or 0,
             )
 
-        
+
         def offset( self, info, buffer):
             """Calculate the time zone offset as a date-time delta"""
             (tag, left, right, sublist) = info
@@ -129,7 +129,7 @@ if haveMX:
             minute = set.get( "offset_minute", 0)
             delta = DateTime.DateTimeDelta( 0, hour*direction, minute*direction)
             return delta
-            
+
         def offset_sign( self , info, buffer):
             """Interpret the offset sign as a multiplier"""
             (tag, left, right, sublist) = info
@@ -138,4 +138,4 @@ if haveMX:
                 return 1
             else:
                 return -1
-                
+

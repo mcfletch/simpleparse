@@ -4,7 +4,7 @@ import traceback
 
 class Generator:
     '''Abstract representation of an in-memory grammar that generates parsers
-    
+
     The generator class manages a collection of
     ElementToken objects.  These element token objects
     allow the generator to be separated from the
@@ -16,19 +16,19 @@ class Generator:
         """Initialise the Generator"""
         self.names = []
         self.rootObjects = []
-        self.methodSource = None
         self.definitionSources = []
+        self.terminalParserCache = {}
     def getNameIndex( self, name ):
         '''Return the index into the main list for the given name'''
         try:
             return self.names.index( name )
         except ValueError:
-            
+
             for source in self.definitionSources:
                 if name in source:
                     return self.addDefinition( name, source[name])
-##			import pdb
-##			pdb.set_trace()
+##          import pdb
+##          pdb.set_trace()
             raise NameError( '''The name %s is not defined within this generator'''%(repr(name)), self )
     def getRootObjects( self, ):
         '''Return the list of root generator objects'''
@@ -39,7 +39,7 @@ class Generator:
     def getRootObject( self, name ):
         """Get a particular root object by name"""
         return self.getRootObjects()[ self.getNameIndex(name)]
-    
+
     def addDefinition( self, name, rootElement ):
         '''Add a new definition (object) to the generator'''
         try:
@@ -49,48 +49,65 @@ class Generator:
             self.names.append( name )
             self.rootObjects.append( rootElement )
             return self.getNameIndex( name )
-    def buildParser( self, name, methodSource=None ):
-        '''Build the given parser definition, returning a TextTools parsing tuple'''
-        self.parserList = []
-        self.terminalParserCache = {}
-        self.methodSource = methodSource
-        i = 0
-        while i < len(self.rootObjects):
-            # XXX Note: rootObjects will grow in certain cases where
-            # a grammar is loading secondary grammars into itself
-            rootObject = self.rootObjects[i]
-            try:
-                if len(self.parserList) <= i or self.parserList[i] is None:
-                    parser = tuple(rootObject.toParser( self ))
-                    self.setTerminalParser( i, parser )
-            except NameError as err:
-                currentRuleName = self.names[i]
-                err.args = err.args + ('current declaration is %s'%(currentRuleName), )
-                raise
-            i = i + 1
-        assert None not in self.parserList, str( self.parserList)
-        return self.parserList [self.getNameIndex (name)]
-    def setTerminalParser( self, index, parser ):
-        """Explicitly set the parser value for given name"""
-        while index >= len(self.parserList):
-            self.parserList.append(None)
-        self.parserList[index] = parser
-    def getTerminalParser( self, index ):
-        """Try to retrieve a parser from the parser-list"""
-        try:
-            return self.parserList[ index ]
-        except IndexError:
-            return None
+
+    def getBuilder( self, methodSource=None ):
+        '''Return a Builder instance for building parsers.'''
+        builder = Builder(self, methodSource)
+        builder.fill_terminals(self.rootObjects)
+        return builder
+
     def cacheCustomTerminalParser( self, index, flags, parser ):
         """Optimization to reuse customized terminal parsers"""
         self.terminalParserCache[ (index,flags) ] = parser
     def getCustomTerminalParser( self, index, flags ):
         """Retrieved a cached customized terminal parser or None"""
         return self.terminalParserCache.get( (index, flags))
-        
+
+    def addDefinitionSource( self, item ):
+        """Add a source for definitions when the current grammar doesn't supply
+        a particular rule (effectively common/shared items for the grammar)."""
+        self.definitionSources.append( item )
+
+
+class Builder(object):
+
+    def __init__(self, generator, methodSource=None):
+        self.generator = generator
+        self.parserList = []
+        self.methodSource = methodSource
+
+    def fill_terminals(self, rootObjects):
+            # XXX Note: rootObjects will grow in certain cases where
+            # a grammar is loading secondary grammars into itself
+        for i, rootObject in enumerate(rootObjects):
+            try:
+                if len(self.parserList) <= i or self.parserList[i] is None:
+                    parser = tuple(rootObject.toParser( self ))
+                    self.setTerminalParser( i, parser )
+            except NameError as err:
+                err.args += (('current declaration is %s' % self.generator.names[i]), )
+                raise
+        assert None not in self.parserList, str(self.parserList)
+
+    def getParser(self, name):
+        """Return a TextTools parsing tuple for the given name."""
+        return self.parserList [self.generator.getNameIndex(name)]
+
+    def setTerminalParser( self, index, parser ):
+        """Explicitly set the parser value for given name"""
+        while index >= len(self.parserList):
+            self.parserList.append(None)
+        self.parserList[index] = parser
+
+    def getTerminalParser( self, index ):
+        """Try to retrieve a parser from the parser-list"""
+        try:
+            return self.parserList[ index ]
+        except IndexError:
+            return None
+
     def getParserList (self):
         return self.parserList
-
 
     def getObjectForName( self, name):
         """Determine whether our methodSource has a parsing method for the given name
@@ -113,6 +130,7 @@ class Generator:
             else:
                 raise ValueError( """Unrecognised command value %s (not callable, not one of the Append* constants) found in methodSource %s, name=%s"""%( repr(method),repr(methodSource),name))
         return 0, name
+
     def getTagObjectForName( self, name ):
         """Get any explicitly defined tag object for the given name"""
         testName = "_o_"+name
@@ -120,10 +138,6 @@ class Generator:
             object = getattr( self.methodSource, testName )
             return object
         return name
-    def addDefinitionSource( self, item ):
-        """Add a source for definitions when the current grammar doesn't supply
-        a particular rule (effectively common/shared items for the grammar)."""
-        self.definitionSources.append( item )
 
 
 ### Compatability API

@@ -60,7 +60,7 @@ ISO_date_time  := ISO_date, ([T], ISO_time)?, offset?
 _p = Parser( declaration )
 for name in ["ISO_time","ISO_date", "ISO_date_time"]:
     c[ name ] = objectgenerator.LibraryElement(
-        generator = _p._generator,
+        builder = _p._generator.getBuilder(),
         production = name,
     )
 common.share( c )
@@ -131,7 +131,7 @@ if haveMX:
 
         integer = numbers.IntInterpreter()
         second =  offset_minute = offset_hour = year = month = day = hour =minute =integer
-        
+
         def offset( self, info, buffer):
             """Calculate the time zone offset as a date-time delta"""
             (tag, left, right, sublist) = info
@@ -141,7 +141,7 @@ if haveMX:
             minute = set.get( "minute", 0)
             delta = DateTime.DateTimeDelta( 0, hour*direction, minute*direction)
             return delta
-            
+
         def offset_sign( self , info, buffer):
             """Interpret the offset sign as a multiplier"""
             (tag, left, right, sublist) = info
@@ -150,4 +150,4 @@ if haveMX:
                 return 1
             else:
                 return -1
-                
+
