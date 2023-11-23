@@ -210,7 +210,7 @@ def _replace2(text,what,with_what,start=0,stop=None,
               join=join,joinlist=joinlist,tag=tag,
               TextSearchType=TextSearchType,TextSearch=TextSearch):
 
-    """Analogon to string.replace; returns a string with_what all occurences
+    """Analogon to string.replace; returns a string with_what all occurrences
        of what in text[start:stop] replaced by with_what.
        
        This version uses a one entry tag-table and a
@@ -296,8 +296,8 @@ def find(text,what,start=0,stop=None,
     """ A faster replacement for string.find().
 
         Uses a search object for the task. Returns the position of the
-        first occurance of what in text[start:stop]. stop defaults to
-        len(text).  Returns -1 in case no occurance was found.
+        first occurrence of what in text[start:stop]. stop defaults to
+        len(text).  Returns -1 in case no occurrence was found.
         
     """
     if stop is not None:
@@ -309,12 +309,12 @@ def findall(text,what,start=0,stop=None,
 
             SearchObject=TextSearch):
 
-    """ Find all occurances of what in text.
+    """ Find all occurrences of what in text.
 
         Uses a search object for the task. Returns a list of slice
-        tuples (l,r) marking the all occurances in
+        tuples (l,r) marking the all occurrences in
         text[start:stop]. stop defaults to len(text).  Returns an
-        empty list in case no occurance was found.
+        empty list in case no occurrence was found.
         
     """
     if stop is not None:
@@ -330,7 +330,7 @@ def split(text,sep,start=0,stop=None,translate=None,
 
         Uses a search object for the task. Returns the result of
         cutting the text[start:stop] string into snippets at every sep
-        occurance in form of a list of substrings. translate is passed
+        occurrence in form of a list of substrings. translate is passed
         to the search object as translation string if given.
 
         XXX Undocumented.

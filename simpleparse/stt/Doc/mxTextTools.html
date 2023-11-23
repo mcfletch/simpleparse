@@ -505,13 +505,13 @@
 	    <TD>string</TD>
 
 	    <TD>
-	      Matches all characters up to the first occurance of
+	      Matches all characters up to the first occurrence of
 	      string in <CODE>text[x:stop]</CODE>.
 	      <P>
 		If string is not found, the command does not match and
 		the head position remains unchanged. Otherwise, the
 		head stays on the first character of string in the
-		found occurance.
+		found occurrence.
 	      <P>
 		At least one character must match.
 	    </TD>
@@ -523,13 +523,13 @@
 	    <TD>string</TD>
 
 	    <TD>
-	      Matches all characters up to the first occurance of
+	      Matches all characters up to the first occurrence of
 	      string in <CODE>text[x:stop]</CODE>. 
 	      <P>
 		If string is not found, the command does not match and
 		the head position remains unchanged.  Otherwise, the
 		head stays on the last character of string in the
-		found occurance.
+		found occurrence.
 	    </TD>
 	  </TR>
 
@@ -1611,7 +1611,7 @@
 
 	      <DD>
 		Returns a list of slices representing all
-		non-overlapping occurances of what in
+		non-overlapping occurrences of what in
 		text[start:stop]. The slices are given as 2-tuples
 		<CODE>(left,right)</CODE> meaning that
 		<CODE>what</CODE> can be found at text[left:right].
@@ -1640,7 +1640,7 @@
 
 	      <DD>
 		Returns a list that results from splitting
-		text[start:stop] at all occurances of the character
+		text[start:stop] at all occurrences of the character
 		given in char. 
 
 		<P>
@@ -1659,7 +1659,7 @@
 
 	      <DD>
 		Returns a 2-tuple that results from splitting
-		text[start:stop] at the nth occurance of char. 
+		text[start:stop] at the nth occurrence of char. 
 
 		<P>
 		  If the character is not found, the second string is
@@ -1858,7 +1858,7 @@
 	      <DD>
 		<B>DEPRECATED:</B> Use CharSet().find() instead.
 		<P>
-		  Find the first occurence of any character from set
+		  Find the first occurrence of any character from set
 		  in <CODE>text[start:stop]</CODE>. <CODE>set</CODE>
 		  must be a string obtained from <CODE>set()</CODE>.
 		<P>
