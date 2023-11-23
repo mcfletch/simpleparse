@@ -139,7 +139,7 @@ SPGenerator.addDefinition (
                 ]
             ),
             whitespace,
-            Name (value = "occurence_indicator", optional = 1),
+            Name (value = "occurrence_indicator", optional = 1),
             whitespace,
             Name (value = "error_on_fail", optional = 1),
         ]
@@ -156,7 +156,7 @@ SPGenerator.addDefinition (
 )	
 
 SPGenerator.addDefinition (
-    "occurence_indicator",
+    "occurrence_indicator",
     Range (value = "+*?" ),
 )	
 SPGenerator.addDefinition (
@@ -413,11 +413,11 @@ SPGenerator.addDefinition (
 declaration = r"""declarationset      :=  declaration+
 declaration         :=  ts, (unreportedname/expandedname/name) ,ts,':',':'?,'=',seq_group
 
-element_token       :=  lookahead_indicator?, ts, negpos_indicator?,ts, (literal/range/group/name),ts, occurence_indicator?, ts, error_on_fail?
+element_token       :=  lookahead_indicator?, ts, negpos_indicator?,ts, (literal/range/group/name),ts, occurrence_indicator?, ts, error_on_fail?
 
 negpos_indicator    :=  [-+]
 lookahead_indicator :=  "?"
-occurence_indicator :=  [+*?]
+occurrence_indicator :=  [+*?]
 error_on_fail       :=  "!", (ts,literal)?
 
 >group<             :=  '(',seq_group, ')'
@@ -541,7 +541,7 @@ class SPGrammarProcessor( DispatchProcessor ):
             result = dispatch( self, tup, buffer )
             if tup[0] == 'negpos_indicator':
                 negative = result
-            elif tup[0] == 'occurence_indicator':
+            elif tup[0] == 'occurrence_indicator':
                 optional, repeating = result
             elif tup[0] == 'lookahead_indicator':
                 lookahead = result
@@ -630,15 +630,15 @@ class SPGrammarProcessor( DispatchProcessor ):
             value = getString(tup, buffer),
         )
     ### simple translators
-    occurenceIndicatorMap = {
+    occurrenceIndicatorMap = {
         '*': (1,1),
         '+': (0,1),
         '?': (1,0),
     }
-    def occurence_indicator( self, tup, buffer):
+    def occurrence_indicator( self, tup, buffer):
         '''Return optional, repeating as a tuple of true/false values'''
         value = getString(tup, buffer)
-        return self.occurenceIndicatorMap[value]
+        return self.occurrenceIndicatorMap[value]
     def lookahead_indicator( self, tup, buffer ):
         """If present, the lookahead indictor just says "yes", so just return 1"""
         return 1

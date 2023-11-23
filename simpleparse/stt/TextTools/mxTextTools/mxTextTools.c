@@ -4630,7 +4630,7 @@ Py_C_Function( mxTextTools_charsplit,
 Py_C_Function( mxTextTools_splitat,
 	       "splitat(text,char,nth=1,start=0,stop=len(text))\n\n"
 	       "Split text[start:stop] into two substrings at the nth\n"
-	       "occurance of char and return the result as 2-tuple. If the\n"
+	       "occurrence of char and return the result as 2-tuple. If the\n"
 	       "character is not found, the second string is empty. nth may\n"
 	       "be negative: the search is then done from the right and the\n"
 	       "first string is empty in case the character is not found."
@@ -4744,7 +4744,7 @@ Py_C_Function( mxTextTools_set,
 
 Py_C_Function( mxTextTools_setfind,
 	       "setfind(text,set,start=0,stop=len(text))\n\n"
-	       "Find the first occurence of any character from set in\n"
+	       "Find the first occurrence of any character from set in\n"
 	       "text[start:stop]\n set must be a string obtained with set()\n"
 	       "DEPRECATED: use CharSet().search() instead."
 )

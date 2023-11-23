@@ -334,31 +334,31 @@ class SimpleParseGrammarTests(unittest.TestCase):
         )
     def testOccurenceIndicator1( self ):
         self.doBasicTest(
-            "occurence_indicator",
+            "occurrence_indicator",
             '*',
             (1, [], 1)
         )
     def testOccurenceIndicator2( self ):
         self.doBasicTest(
-            "occurence_indicator",
+            "occurrence_indicator",
             '+',
             (1, [], 1)
         )
     def testOccurenceIndicator3( self ):
         self.doBasicTest(
-            "occurence_indicator",
+            "occurrence_indicator",
             '?',
             (1, [], 1)
         )
     def testOccurenceIndicator4( self ):
         self.doBasicTest(
-            "occurence_indicator",
+            "occurrence_indicator",
             'hello',
             (0, [], AnyInt)
         )
     def testOccurenceIndicator5( self ):
         self.doBasicTest(
-            "occurence_indicator",
+            "occurrence_indicator",
             '',
             (0, [], AnyInt)
         )
@@ -619,7 +619,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
             (1, [
                 ("negpos_indicator",0,1,NullResult),
                 ("name",1,6,NullResult),
-                ("occurence_indicator",6,7,NullResult),
+                ("occurrence_indicator",6,7,NullResult),
             ], 7)
         )
     def testElementToken4( self ):
@@ -629,7 +629,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
             (1, [
                 ("negpos_indicator",0,1,NullResult),
                 ("name",2,7,NullResult),
-                ("occurence_indicator",8,9,NullResult),
+                ("occurrence_indicator",8,9,NullResult),
             ], 9)
         )
     def testElementToken5( self ):
@@ -639,7 +639,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
             (1, [
                 ("negpos_indicator",0,1,NullResult),
                 ("name",2,7,NullResult),
-                ("occurence_indicator",8,9,NullResult),
+                ("occurrence_indicator",8,9,NullResult),
             ], 9)
         )
     def testElementToken6( self ):
@@ -651,7 +651,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
                 ("lookahead_indicator",0,1,NullResult),
                 ("negpos_indicator",2,3,NullResult),
                 ("name",4,9,NullResult),
-                ("occurence_indicator",10,11,NullResult),
+                ("occurrence_indicator",10,11,NullResult),
             ], 11)
         )
     def testElementToken7( self ):
@@ -663,7 +663,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
                 ("lookahead_indicator",0,1,NullResult),
                 ("negpos_indicator",2,3,NullResult),
                 ("name",4,9,NullResult),
-                ("occurence_indicator",10,11,NullResult),
+                ("occurrence_indicator",10,11,NullResult),
             ], 11)
         )
     def testElementToken8( self ):
@@ -674,7 +674,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
             (1, [
                 ("lookahead_indicator",0,1,NullResult),
                 ("name",1,6,NullResult),
-                ("occurence_indicator",6,7,NullResult),
+                ("occurrence_indicator",6,7,NullResult),
             ], 7)
         )
     def testElementToken9( self ):
@@ -684,7 +684,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
             'hello+!',
             (1, [
                 ("name",0,5,NullResult),
-                ("occurence_indicator",5,6,NullResult),
+                ("occurrence_indicator",5,6,NullResult),
                 ("error_on_fail",6,7,NullResult),
             ], 7)
         )
@@ -695,7 +695,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
             'hello+! "Unable to complete parse, yikes!"',
             (1, [
                 ("name",0,5,NullResult),
-                ("occurence_indicator",5,6,NullResult),
+                ("occurrence_indicator",5,6,NullResult),
                 ("error_on_fail",6,42,[
                     ("literal",8,42,[
                         ("CHARNODBLQUOTE",9,41,NullResult),
