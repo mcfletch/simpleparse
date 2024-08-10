@@ -241,7 +241,7 @@ Py_ssize_t mxTextSearch_MatchLength(PyObject *self)
 	    return PyString_GET_SIZE(so->match);
 #ifdef HAVE_UNICODE
 	else if (PyUnicode_Check(so->match))
-	    return PyUnicode_GET_SIZE(so->match);
+	    return PyUnicode_GET_LENGTH(so->match);
 #endif
 	break;
 
@@ -446,14 +446,14 @@ Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
 	    if (PyUnicode_Check(so->match)) {
 		u = NULL;
 		match = PyUnicode_AS_UNICODE(so->match);
-		match_len = PyUnicode_GET_SIZE(so->match);
+		match_len = PyUnicode_GET_LENGTH(so->match);
 	    }
 	    else {
 		u = PyUnicode_FromEncodedObject(so->match, NULL, NULL);
 		if (u == NULL)
 		    goto onError;
 		match = PyUnicode_AS_UNICODE(u);
-		match_len = PyUnicode_GET_SIZE(u);
+		match_len = PyUnicode_GET_LENGTH(u);
 	    }
 	    nextpos = trivial_unicode_search(text,
 					     start,
@@ -937,7 +937,7 @@ int init_unicode_charset(mxCharSetObject *cs,
 {
     register Py_ssize_t i, j;
     Py_UNICODE *def = PyUnicode_AS_UNICODE(definition);
-    const Py_ssize_t len = PyUnicode_GET_SIZE(definition);
+    const Py_ssize_t len = PyUnicode_GET_LENGTH(definition);
     unicode_charset *lookup = 0;
     unsigned char bigmap[UNICODE_CHARSET_BIGMAP_SIZE];
     Py_ssize_t blocks;
@@ -1184,7 +1184,7 @@ int mxCharSet_Contains(PyObject *self,
     }
 #ifdef HAVE_UNICODE
     else if (PyUnicode_Check(other)) {
-	Py_Assert(PyUnicode_GET_SIZE(other) == 1,
+	Py_Assert(PyUnicode_GET_LENGTH(other) == 1,
 		  PyExc_TypeError,
 		  "expected a single unicode character");
 	return mxCharSet_ContainsUnicodeChar(self, 
@@ -2813,7 +2813,7 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
 	if (separator == NULL)
 	    goto onError;
 	sep = PyUnicode_AS_UNICODE(separator);
-	sep_len = PyUnicode_GET_SIZE(separator);
+	sep_len = PyUnicode_GET_LENGTH(separator);
     }
     else {
 	sep = NULL;
@@ -2849,7 +2849,7 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
 	    if (tempstr == NULL)
 		goto onError;
 	    st = PyUnicode_AS_UNICODE(tempstr);
-	    len_st = PyUnicode_GET_SIZE(tempstr);
+	    len_st = PyUnicode_GET_LENGTH(tempstr);
 	    l = PyInt_AS_LONG(PyTuple_GET_ITEM(o,1));
 	    r = PyInt_AS_LONG(PyTuple_GET_ITEM(o,2));
 
@@ -2883,7 +2883,7 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
 	    if (tempstr == NULL)
 		goto onError;
 	    st = PyUnicode_AS_UNICODE(tempstr);
-	    len_st = PyUnicode_GET_SIZE(tempstr);
+	    len_st = PyUnicode_GET_LENGTH(tempstr);
 	}
 
         Py_DECREF(o);
@@ -3190,7 +3190,7 @@ int mxTextTools_IsASCII(PyObject *text,
 	register Py_ssize_t i;
 	register Py_UNICODE *str = PyUnicode_AS_UNICODE(text);
 
-	len = PyUnicode_GET_SIZE(text);
+	len = PyUnicode_GET_LENGTH(text);
 	Py_CheckSequenceSlice(len, left, right);
 	for (i = left; i < right; i++)
 	    if (str[i] >= 128)
@@ -3375,7 +3375,7 @@ PyObject *mxTextTools_UnicodeCharSplit(PyObject *text,
 
     Py_CheckUnicodeSlice(text, start, text_len);
 
-    Py_Assert(PyUnicode_GET_SIZE(separator) == 1,
+    Py_Assert(PyUnicode_GET_LENGTH(separator) == 1,
 	      PyExc_TypeError,
 	      "separator must be a single character");
 
@@ -3535,7 +3535,7 @@ PyObject *mxTextTools_UnicodeSplitAt(PyObject *text,
 
     Py_CheckUnicodeSlice(text, start, text_len);
 
-    Py_Assert(PyUnicode_GET_SIZE(separator) == 1,
+    Py_Assert(PyUnicode_GET_LENGTH(separator) == 1,
 	      PyExc_TypeError,
 	      "separator must be a single character");
 
@@ -3738,7 +3738,7 @@ PyObject *mxTextTools_UnicodeSuffix(PyObject *text,
 	if (suffix == NULL) 
 	    goto onError;
 
-	start_cmp = text_len - PyUnicode_GET_SIZE(suffix);
+	start_cmp = text_len - PyUnicode_GET_LENGTH(suffix);
 	if (start_cmp >= start &&
 	    PyUnicode_AS_UNICODE(suffix)[0] == tx[start_cmp] &&
 	    memcmp(PyUnicode_AS_UNICODE(suffix),
@@ -4257,7 +4257,7 @@ PyObject *mxTextTools_UnicodeUpper(PyObject *text)
     if (text == NULL)
 	goto onError;
 
-    len = PyUnicode_GET_SIZE(text);
+    len = PyUnicode_GET_LENGTH(text);
     ntext = PyUnicode_FromUnicode(NULL, len);
     if (!ntext)
 	goto onError;
@@ -4323,7 +4323,7 @@ PyObject *mxTextTools_UnicodeLower(PyObject *text)
     if (text == NULL)
 	goto onError;
 
-    len = PyUnicode_GET_SIZE(text);
+    len = PyUnicode_GET_LENGTH(text);
     ntext = PyUnicode_FromUnicode(NULL, len);
     if (!ntext)
 	goto onError;

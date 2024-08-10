@@ -646,7 +646,7 @@ static void mx_Py_PRINT_REFCOUNT(PyObject *v,
    Py_CheckSequenceSlice(PyUnicode_GET_LENGTH(unicode), start, stop)
 #else
 #define Py_CheckUnicodeSlice(unicode, start, stop) \
-   Py_CheckSequenceSlice(PyUnicode_GET_SIZE(unicode), start, stop)
+   Py_CheckSequenceSlice(PyUnicode_GET_LENGTH(unicode), start, stop)
 #endif
 
 /* This assumes that fixed is a constant char array; the strcmp

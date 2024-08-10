@@ -28,5 +28,14 @@
 #define _PyString_Resize _PyBytes_Resize
 #endif
 
+#ifndef PyUnicode_GET_LENGTH
+#if PY_MAJOR_VERSION >= 3
+#define PyUnicode_GET_LENGTH PyUnicode_GetLength
+#else 
+#define PyUnicode_GET_LENGTH PyUnicode_GET_SIZE
+#endif
+#endif
+
+
 /* EOF */
 #endif

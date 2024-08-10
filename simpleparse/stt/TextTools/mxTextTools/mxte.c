@@ -52,7 +52,7 @@
 #undef TE_STRING_AS_STRING
 #define TE_STRING_AS_STRING(obj) PyUnicode_AS_UNICODE(obj)
 #undef TE_STRING_GET_SIZE
-#define TE_STRING_GET_SIZE(obj) PyUnicode_GET_SIZE(obj)
+#define TE_STRING_GET_SIZE(obj) PyUnicode_GET_LENGTH(obj)
 #undef TE_STRING_FROM_STRING
 #define TE_STRING_FROM_STRING(str, size) PyUnicode_FromUnicode(str, size)
 #undef TE_CHAR
