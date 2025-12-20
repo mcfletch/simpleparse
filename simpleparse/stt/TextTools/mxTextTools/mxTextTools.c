@@ -447,25 +447,39 @@ Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
     case MXTEXTSEARCH_TRIVIAL:
 	{
 	    PyObject *u;
-	    Py_UNICODE *match;
-
+	    PyObject *match_obj;
 	    if (PyUnicode_Check(so->match)) {
+		match_obj = so->match;
 		u = NULL;
-		match = mxte_get_unicode_data(so->match);
-		match_len = PyUnicode_GET_LENGTH(so->match);
 	    }
 	    else {
 		u = PyUnicode_FromEncodedObject(so->match, NULL, NULL);
 		if (u == NULL)
 		    goto onError;
-		match = mxte_get_unicode_data(u);
-		match_len = PyUnicode_GET_LENGTH(u);
+		match_obj = u;
 	    }
-	    nextpos = trivial_unicode_search(text,
-					     start,
-					     stop,
-					     match,
-					     match_len);
+	    /* Simple search implementation for legacy function */
+	    match_len = PyUnicode_GET_LENGTH(match_obj);
+	    if (match_len == 0) {
+		nextpos = start;
+	    } else {
+		nextpos = -1;
+		for (Py_ssize_t i = start; i <= stop - match_len; i++) {
+		    Py_ssize_t j;
+		    for (j = 0; j < match_len; j++) {
+			Py_UCS4 text_char = text[i + j];
+			Py_UCS4 match_char = PyUnicode_READ(PyUnicode_KIND(match_obj), 
+							    PyUnicode_DATA(match_obj), j);
+			if (text_char != match_char) {
+			    break;
+			}
+		    }
+		    if (j == match_len) {
+			nextpos = i;
+			break;
+		    }
+		}
+	    }
 	    Py_XDECREF(u);
 	}
 	break;
@@ -482,6 +496,115 @@ Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
 	if (sliceright)
 	    *sliceright = nextpos;
 	return 1;
+    }
+    /* Not found */
+    return 0;
+
+ onError:
+    return -1;
+}
+
+/* Modern version that works directly with PyObject text */
+Py_ssize_t mxTextSearch_SearchUnicode_Modern(PyObject *self,
+                                             PyObject *text,
+                                             Py_ssize_t start,
+                                             Py_ssize_t stop,
+                                             Py_ssize_t *sliceleft,
+                                             Py_ssize_t *sliceright)
+{
+    Py_ssize_t nextpos;
+
+    Py_Assert(mxTextSearch_Check(self),
+              PyExc_TypeError,
+              "expected a TextSearch object");
+    
+    if (!PyUnicode_Check(text)) {
+        PyErr_SetString(PyExc_TypeError, "text must be a Unicode string");
+        return -1;
+    }
+    
+    if (PyUnicode_READY(text) < 0) {
+        return -1;
+    }
+
+    switch (so->algorithm) {
+
+    case MXTEXTSEARCH_BOYERMOORE:
+        Py_Error(PyExc_TypeError,
+                 "Boyer-Moore search algorithm does not support Unicode");
+        break;
+
+    case MXTEXTSEARCH_TRIVIAL:
+        {
+            PyObject *u;
+            PyObject *match_obj;
+            
+            if (PyUnicode_Check(so->match)) {
+                match_obj = so->match;
+                u = NULL;
+            }
+            else {
+                u = PyUnicode_FromEncodedObject(so->match, NULL, NULL);
+                if (u == NULL)
+                    goto onError;
+                match_obj = u;
+            }
+            
+            if (PyUnicode_READY(match_obj) < 0) {
+                Py_XDECREF(u);
+                return -1;
+            }
+            
+            /* Use the modern trivial search helper function from mxte_modern.h */
+            nextpos = mxte_trivial_unicode_search_modern(text, start, stop, match_obj);
+            
+            Py_XDECREF(u);
+        }
+        break;
+
+    case MXTEXTSEARCH_FASTSEARCH:
+        /* Fall back to trivial search for now */
+        {
+            PyObject *u;
+            PyObject *match_obj;
+            
+            if (PyUnicode_Check(so->match)) {
+                match_obj = so->match;
+                u = NULL;
+            }
+            else {
+                u = PyUnicode_FromEncodedObject(so->match, NULL, NULL);
+                if (u == NULL)
+                    goto onError;
+                match_obj = u;
+            }
+            
+            if (PyUnicode_READY(match_obj) < 0) {
+                Py_XDECREF(u);
+                return -1;
+            }
+            
+            nextpos = mxte_trivial_unicode_search_modern(text, start, stop, match_obj);
+            
+            Py_XDECREF(u);
+        }
+        break;
+
+    default:
+        Py_Error(mxTextTools_Error,
+                 "unknown algorithm type in mxTextSearch_SearchUnicode");
+
+    }
+    
+    /* Found ? */
+    if (nextpos >= 0) {
+        if (sliceleft)
+            *sliceleft = nextpos;
+        if (sliceright) {
+            Py_ssize_t match_len = PyUnicode_GET_LENGTH(so->match);
+            *sliceright = nextpos + match_len;
+        }
+        return 1;
     }
     /* Not found */
     return 0;
@@ -520,12 +643,7 @@ Py_C_Function( mxTextSearch_search,
 #ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
 	Py_CheckUnicodeSlice(text, start, stop);
-	rc = mxTextSearch_SearchUnicode(self,
-					mxte_get_unicode_data(text),
-					start, 
-					stop, 
-					&sliceleft, 
-					&sliceright);
+	rc = mxte_search_unicode_modern(self, text, start, stop, &sliceleft, &sliceright);
     }
 #endif
     else
@@ -572,12 +690,7 @@ Py_C_Function( mxTextSearch_find,
 #ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
 	Py_CheckUnicodeSlice(text, start, stop);
-	rc = mxTextSearch_SearchUnicode(self,
-					mxte_get_unicode_data(text),
-					start, 
-					stop, 
-					&sliceleft, 
-					&sliceright);
+	rc = mxte_search_unicode_modern(self, text, start, stop, &sliceleft, &sliceright);
     }
 #endif
     else
@@ -648,12 +761,7 @@ Py_C_Function( mxTextSearch_findall,
 					   &sliceright);
 #ifdef HAVE_UNICODE
 	else if (PyUnicode_Check(text))
-	    rc = mxTextSearch_SearchUnicode(self,
-					    mxte_get_unicode_data(text),
-					    start, 
-					    stop, 
-					    &sliceleft, 
-					    &sliceright);
+	    rc = mxte_search_unicode_modern(self, text, start, stop, &sliceleft, &sliceright);
 #endif
 	else
 	    break;
@@ -942,15 +1050,18 @@ int init_unicode_charset(mxCharSetObject *cs,
 			 PyObject *definition)
 {
     register Py_ssize_t i, j;
-    Py_UNICODE *def = mxte_get_unicode_data(definition);
     const Py_ssize_t len = PyUnicode_GET_LENGTH(definition);
     unicode_charset *lookup = 0;
     unsigned char bigmap[UNICODE_CHARSET_BIGMAP_SIZE];
     Py_ssize_t blocks;
     int logic = 1;
 
+    /* Ensure Unicode object is ready for reading */
+    if (PyUnicode_READY(definition) < 0)
+        return -1;
+
     /* Handle logic change (first char is '^' for negative matching) */
-    if (len > 0 && def[0] == '^') {
+    if (len > 0 && PyUnicode_READ(PyUnicode_KIND(definition), PyUnicode_DATA(definition), 0) == '^') {
 	logic = 0;
 	i = 1;
     }
@@ -960,33 +1071,40 @@ int init_unicode_charset(mxCharSetObject *cs,
     /* Build bigmap */
     memset(bigmap, 0, sizeof(bigmap));
     for (; i < len; i++) {
+        Py_UCS4 ch = PyUnicode_READ(PyUnicode_KIND(definition), PyUnicode_DATA(definition), i);
 
 	/* Handle escapes: "b\-d", "\\" */
-	if (def[i] == '\\') {
-	    if (i < len - 1 && def[i+1] == '\\') {
-		j = (int)'\\';
-		bigmap[j >> 3] |= 1 << (j & 7);
-		i++;
-	    }
+	if (ch == '\\') {
+	    if (i < len - 1) {
+                Py_UCS4 next_ch = PyUnicode_READ(PyUnicode_KIND(definition), PyUnicode_DATA(definition), i+1);
+                if (next_ch == '\\') {
+                    j = (int)'\\';
+                    bigmap[j >> 3] |= 1 << (j & 7);
+                    i++;
+                }
+            }
 	    continue;
 	}
 
 	/* Handle ranges: "b-d", "\\-z", "\--z" */
-	if (i < len - 2 && def[i+1] == '-') {
-	    Py_UNICODE range_left = def[i];
-	    Py_UNICODE range_right = def[i+2];
+	if (i < len - 2) {
+            Py_UCS4 next_ch = PyUnicode_READ(PyUnicode_KIND(definition), PyUnicode_DATA(definition), i+1);
+            if (next_ch == '-') {
+                Py_UCS4 range_left = ch;
+                Py_UCS4 range_right = PyUnicode_READ(PyUnicode_KIND(definition), PyUnicode_DATA(definition), i+2);
 	    if (range_right >= UNICODE_CHARSET_SIZE) {
 		Py_Error(PyExc_ValueError,
 			 "unicode ordinal out of supported range");
 	    }
 	    for (j = range_left; j <= range_right; j++)
 		bigmap[j >> 3] |= 1 << (j & 7);
-	    i++;
+	    i += 2; /* Skip the '-' and range_right character */
 	    continue;
+            }
 	}
 
 	/* Normal processing */
-	j = def[i];
+	j = ch;
 	if (j >= UNICODE_CHARSET_SIZE) {
 	    Py_Error(PyExc_ValueError,
 		     "unicode ordinal out of supported range");
@@ -1444,12 +1562,7 @@ int mxCharSet_Search(PyObject *self,
 #ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
 	Py_CheckUnicodeSlice(text, start, stop);
-	position = mxCharSet_FindUnicodeChar(self,
-					     mxte_get_unicode_data(text),
-					     start,
-					     stop,
-					     1,
-					     direction);
+	position = mxte_charset_find_char(self, text, start, stop, 1, direction);
     }
 #endif
     else
@@ -1495,12 +1608,18 @@ Py_ssize_t mxCharSet_Match(PyObject *self,
 #ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
 	Py_CheckUnicodeSlice(text, start, stop);
-	position = mxCharSet_FindUnicodeChar(self,
-					     mxte_get_unicode_data(text),
-					     start,
-					     stop,
-					     0,
-					     direction);
+	
+	/* Simple fallback: convert to legacy format and use string search when possible */
+	if (PyUnicode_KIND(text) == PyUnicode_1BYTE_KIND && 
+	    PyUnicode_MAX_CHAR_VALUE(text) < 256) {
+	    /* 1-byte Unicode can be processed as string */
+	    position = mxCharSet_FindChar(self, 
+					  (unsigned char *)PyUnicode_DATA(text),
+					  start, stop, 0, direction);
+	} else {
+	    /* Use modern Unicode processing */
+	    position = mxte_charset_find_char(self, text, start, stop, 0, direction);
+	}
     }
 #endif
     else
@@ -1509,10 +1628,23 @@ Py_ssize_t mxCharSet_Match(PyObject *self,
 
     if (position < -1)
 	goto onError;
-    if (direction > 0)
-	return position - start;
-    else
-	return stop-1 - position;
+    if (direction > 0) {
+	Py_ssize_t result = position - start;
+	/* Debug: catch negative results */
+	if (result < 0) {
+	    /* This shouldn't happen - convert to error */
+	    goto onError;
+	}
+	return result;
+    } else {
+	Py_ssize_t result = stop-1 - position;
+	/* Debug: catch negative results */
+	if (result < 0) {
+	    /* This shouldn't happen - convert to error */
+	    goto onError;
+	}
+	return result;
+    }
 
  onError:
     return -1;
@@ -1581,12 +1713,7 @@ PyObject *mxCharSet_Strip(PyObject *self,
 
 	/* Strip left */
 	if (where <= 0) {
-	    left = mxCharSet_FindUnicodeChar(self, 
-					     mxte_get_unicode_data(text),
-					     start,
-					     stop,
-					     0,
-					     1);
+	    left = mxte_charset_find_char(self, text, start, stop, 0, 1);
 	    if (left < 0)
 		goto onError;
 	}
@@ -1595,12 +1722,7 @@ PyObject *mxCharSet_Strip(PyObject *self,
 
 	/* Strip right */
 	if (where >= 0) {
-	    right = mxCharSet_FindUnicodeChar(self, 
-					     mxte_get_unicode_data(text),
-					     start,
-					     stop,
-					     0,
-					     -1) + 1;
+	    right = mxte_charset_find_char(self, text, start, stop, 0, -1) + 1;
 	    if (right < 0)
 		goto onError;
 	}
@@ -1694,7 +1816,7 @@ PyObject *mxCharSet_Split(PyObject *self,
     }
 #ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
-	Py_UNICODE *tx = mxte_get_unicode_data(text);
+	/* tx variable eliminated - using modern Unicode operations directly */
 
 	Py_CheckUnicodeSlice(text, start, text_len);
 
@@ -1705,7 +1827,7 @@ PyObject *mxCharSet_Split(PyObject *self,
 	    /* Skip all text in set (include_splits == 0), not in set
     	       (include_splits == 1) */
 	    z = x;
-	    x = mxCharSet_FindUnicodeChar(self, tx, x, text_len, include_splits, 1);
+	    x = mxte_charset_find_char(self, text, x, text_len, include_splits, 1);
 
 	    /* Append the slice to list */
 	    if (include_splits) {
@@ -1727,7 +1849,7 @@ PyObject *mxCharSet_Split(PyObject *self,
 	    /* Skip all text in set (include_splits == 1), not in set
     	       (include_splits == 0) */
 	    z = x;
-	    x = mxCharSet_FindUnicodeChar(self, tx, x, text_len, !include_splits, 1);
+	    x = mxte_charset_find_char(self, text, x, text_len, !include_splits, 1);
 
 	    /* Append the slice to list if it is not empty */
 	    if (x > z) {
@@ -3193,13 +3315,19 @@ int mxTextTools_IsASCII(PyObject *text,
     else if (PyUnicode_Check(text)) {
 	Py_ssize_t len;
 	register Py_ssize_t i;
-	register Py_UNICODE *str = mxte_get_unicode_data(text);
+
+	if (PyUnicode_READY(text) < 0)
+	    return -1;
 
 	len = PyUnicode_GET_LENGTH(text);
 	Py_CheckSequenceSlice(len, left, right);
-	for (i = left; i < right; i++)
-	    if (str[i] >= 128)
+	
+	/* Use modern Unicode character access */
+	for (i = left; i < right; i++) {
+	    Py_UCS4 ch = PyUnicode_READ(PyUnicode_KIND(text), PyUnicode_DATA(text), i);
+	    if (ch >= 128)
 		return 0;
+	}
 	return 1;
     }
 #endif
@@ -3384,8 +3512,11 @@ PyObject *mxTextTools_UnicodeCharSplit(PyObject *text,
 	      PyExc_TypeError,
 	      "separator must be a single character");
 
-    tx = mxte_get_unicode_data(text);
-    sep = *mxte_get_unicode_data(separator);
+    if (PyUnicode_READY(text) < 0 || PyUnicode_READY(separator) < 0)
+        return NULL;
+    
+    /* Get separator character using modern API */
+    sep = PyUnicode_READ(PyUnicode_KIND(separator), PyUnicode_DATA(separator), 0);
 
     list = PyList_New(listsize);
     if (!list)
@@ -3398,9 +3529,11 @@ PyObject *mxTextTools_UnicodeCharSplit(PyObject *text,
 
 	/* Skip to next separator */
 	z = x;
-	for (;x < text_len; x++) 
-	    if (tx[x] == sep)
+	for (;x < text_len; x++) {
+	    Py_UCS4 ch = PyUnicode_READ(PyUnicode_KIND(text), PyUnicode_DATA(text), x);
+	    if (ch == sep)
 		break;
+	}
 
 	/* Append the slice to list */
 	s = mxte_unicode_slice(text, z, x - z);
@@ -3481,9 +3614,11 @@ PyObject *mxTextTools_CharSplit(PyObject *text,
 
 	/* Skip to next separator */
 	z = x;
-	for (;x < text_len; x++) 
-	    if (tx[x] == sep)
+	for (;x < text_len; x++) {
+	    Py_UCS4 ch = PyUnicode_READ(PyUnicode_KIND(text), PyUnicode_DATA(text), x);
+	    if (ch == sep)
 		break;
+	}
 
 	/* Append the slice to list */
 	s = PyString_FromStringAndSize(&tx[z], x - z);

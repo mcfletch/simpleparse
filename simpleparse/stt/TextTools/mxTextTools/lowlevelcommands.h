@@ -13,20 +13,25 @@
 	only childPosition should be updated otherwise
 
 */
-TE_CHAR *m = TE_STRING_AS_STRING(match);
-if (m == NULL) {
-	childReturnCode = ERROR_CODE;
-	errorType = PyExc_TypeError;
-	errorMessage = PyString_FromFormat(
-		 "Low-level command (%i) argument in entry %d couldn't be converted to a string object, is a %.50s",
-		 command,
-		 (unsigned int)index,
-		 Py_TYPE(textobj)->tp_name
-
-	);
-} else {
-
-switch (command) {
+/* Only convert to string for commands that actually expect string arguments */
+{
+    TE_CHAR *m = NULL;
+    if (command != MATCH_ALLINCHARSET && command != MATCH_ISINCHARSET) {
+        m = TE_STRING_AS_STRING(match);
+        if (m == NULL) {
+            childReturnCode = ERROR_CODE;
+            errorType = PyExc_TypeError;
+            errorMessage = PyString_FromFormat(
+                 "Low-level command (%i) argument in entry %d couldn't be converted to a string object, is a %.50s",
+                 command,
+                 (unsigned int)index,
+                 Py_TYPE(match)->tp_name
+            );
+        }
+    }
+    
+    if (childReturnCode == NULL_CODE) {
+        switch (command) {
 
 	case MATCH_ALLIN:
 
@@ -311,15 +316,16 @@ switch (command) {
 				 MATCH_MAX_LOWLEVEL
 			);
 		}
-/* end of the switch, this child is finished */
-}
-} /* end of the wrapping if-check */
-
-/* simple determination for these commands (hence calling them low-level) */
-if (childReturnCode == NULL_CODE) {
-	if (childPosition > childStart) {
-		childReturnCode = SUCCESS_CODE;
-	} else {
-		childReturnCode = FAILURE_CODE;
+	/* end of the switch, this child is finished */
+	}
+	}
+	
+	/* simple determination for these commands (hence calling them low-level) */
+	if (childReturnCode == NULL_CODE) {
+		if (childPosition > childStart) {
+			childReturnCode = SUCCESS_CODE;
+		} else {
+			childReturnCode = FAILURE_CODE;
+		}
 	}
 }

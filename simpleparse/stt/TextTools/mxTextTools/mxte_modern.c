@@ -30,14 +30,14 @@ static Py_ssize_t mxTextSearch_SearchBuffer_1BYTE(PyObject *self,
                                                   Py_ssize_t *sliceright);
 
 #ifdef HAVE_UNICODE
-static Py_ssize_t mxTextSearch_SearchUnicode_2BYTE(PyObject *self,
+Py_ssize_t mxTextSearch_SearchUnicode_2BYTE(PyObject *self,
                                                    TE_CHAR_2BYTE *text,
                                                    Py_ssize_t start,
                                                    Py_ssize_t stop,
                                                    Py_ssize_t *sliceleft,
                                                    Py_ssize_t *sliceright);
 
-static Py_ssize_t mxTextSearch_SearchUnicode_4BYTE(PyObject *self,
+Py_ssize_t mxTextSearch_SearchUnicode_4BYTE(PyObject *self,
                                                    TE_CHAR_4BYTE *text,
                                                    Py_ssize_t start,
                                                    Py_ssize_t stop,
@@ -216,27 +216,60 @@ static Py_ssize_t mxTextSearch_SearchBuffer_1BYTE(PyObject *self,
 
 #ifdef HAVE_UNICODE
 /* 2-byte search wrapper */
-static Py_ssize_t mxTextSearch_SearchUnicode_2BYTE(PyObject *self,
+Py_ssize_t mxTextSearch_SearchUnicode_2BYTE(PyObject *self,
                                                    TE_CHAR_2BYTE *text,
                                                    Py_ssize_t start,
                                                    Py_ssize_t stop,
                                                    Py_ssize_t *sliceleft,
                                                    Py_ssize_t *sliceright)
 {
-    /* Native 2-byte search implementation */
-    if (sizeof(TE_CHAR_2BYTE) == sizeof(Py_UNICODE)) {
-        /* Direct call when sizes match */
-        return mxTextSearch_SearchUnicode(self, (Py_UNICODE*)text, start, stop, sliceleft, sliceright);
-    } else {
-        /* Size mismatch - need conversion (should be rare) */
-        /* For safety, fall back to original function for now */
-        /* TODO: Implement full conversion if needed */
-        return mxTextSearch_SearchUnicode(self, (Py_UNICODE*)text, start, stop, sliceleft, sliceright);
+    /* For now, we'll implement a basic 2-byte search by creating a temporary 2-byte string
+       and using the Boyer-Moore or trivial search approach adapted for 2-byte chars */
+    
+    /* This is a simplified implementation - for production, we'd want optimized 
+       2-byte search algorithms */
+    
+    mxTextSearchObject *so = (mxTextSearchObject *)self;
+    
+    /* Get the match pattern from the search object */
+    if (!PyUnicode_Check(so->match)) {
+        return -1; /* Error: can't search for non-Unicode in Unicode text */
     }
+    
+    /* For now, fall back to trivial search implementation */
+    /* TODO: Implement optimized 2-byte search algorithms */
+    
+    Py_ssize_t match_len = PyUnicode_GET_LENGTH(so->match);
+    if (match_len == 0) {
+        return start; /* Empty pattern matches at start position */
+    }
+    
+    if (PyUnicode_READY(so->match) < 0) {
+        return -1;
+    }
+    
+    /* Simple brute force search for 2-byte characters */
+    for (Py_ssize_t i = start; i <= stop - match_len; i++) {
+        Py_ssize_t j;
+        for (j = 0; j < match_len; j++) {
+            Py_UCS4 text_char = text[i + j];
+            Py_UCS4 match_char = PyUnicode_READ(PyUnicode_KIND(so->match), PyUnicode_DATA(so->match), j);
+            if (text_char != match_char) {
+                break;
+            }
+        }
+        if (j == match_len) {
+            *sliceleft = i;
+            *sliceright = i + match_len;
+            return i;
+        }
+    }
+    
+    return -1; /* No match found */
 }
 
 /* 4-byte search wrapper */
-static Py_ssize_t mxTextSearch_SearchUnicode_4BYTE(PyObject *self,
+Py_ssize_t mxTextSearch_SearchUnicode_4BYTE(PyObject *self,
                                                    TE_CHAR_4BYTE *text,
                                                    Py_ssize_t start,
                                                    Py_ssize_t stop,
@@ -244,17 +277,42 @@ static Py_ssize_t mxTextSearch_SearchUnicode_4BYTE(PyObject *self,
                                                    Py_ssize_t *sliceright)
 {
     /* Native 4-byte search implementation */
-    if (sizeof(TE_CHAR_4BYTE) == sizeof(Py_UNICODE)) {
-        /* Direct call when sizes match */
-        return mxTextSearch_SearchUnicode(self, (Py_UNICODE*)text, start, stop, sliceleft, sliceright);
-    } else {
-        /* Size mismatch - need conversion */
-        /* For 4-byte chars on systems where Py_UNICODE is 2-byte, */
-        /* we need to check for characters outside BMP and handle appropriately */
-        
-        /* For now, fall back to original function - this will truncate */
-        /* characters outside BMP on narrow builds, but those are deprecated */
-        return mxTextSearch_SearchUnicode(self, (Py_UNICODE*)text, start, stop, sliceleft, sliceright);
+    mxTextSearchObject *so = (mxTextSearchObject *)self;
+    
+    /* Get the match pattern from the search object */
+    if (!PyUnicode_Check(so->match)) {
+        return -1; /* Error: can't search for non-Unicode in Unicode text */
     }
+    
+    /* For now, fall back to trivial search implementation */
+    /* TODO: Implement optimized 4-byte search algorithms */
+    
+    Py_ssize_t match_len = PyUnicode_GET_LENGTH(so->match);
+    if (match_len == 0) {
+        return start; /* Empty pattern matches at start position */
+    }
+    
+    if (PyUnicode_READY(so->match) < 0) {
+        return -1;
+    }
+    
+    /* Simple brute force search for 4-byte characters */
+    for (Py_ssize_t i = start; i <= stop - match_len; i++) {
+        Py_ssize_t j;
+        for (j = 0; j < match_len; j++) {
+            Py_UCS4 text_char = text[i + j];
+            Py_UCS4 match_char = PyUnicode_READ(PyUnicode_KIND(so->match), PyUnicode_DATA(so->match), j);
+            if (text_char != match_char) {
+                break;
+            }
+        }
+        if (j == match_len) {
+            *sliceleft = i;
+            *sliceright = i + match_len;
+            return i;
+        }
+    }
+    
+    return -1; /* No match found */
 }
 #endif
