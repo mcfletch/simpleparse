@@ -9,6 +9,11 @@ from setuptools import setup, Extension, find_packages
 import os, sys
 HERE = os.path.abspath(os.path.dirname(__file__))
 
+# Determine Python version for conditional compilation
+PY_MAJOR = sys.version_info.major
+PY_MINOR = sys.version_info.minor
+PYTHON_VERSION = (PY_MAJOR, PY_MINOR)
+
 def findVersion( ):
     """Find the version declaration in the __init__.py file"""
     for line in open( 
@@ -29,51 +34,43 @@ if sys.platform == 'win32':
     )['define'] = 'BAD_STATIC_FORWARD'
 
 if __name__ == "__main__":
-    packages = find_packages(HERE)
-    setup (
-        name = "SimpleParse",
-        version = findVersion(),
-        description = "A Parser Generator for Python (w/mxTextTools derivative)",
-        author = "Mike C. Fletcher",
-        author_email = "mcfletch@users.sourceforge.net",
-        url = "http://simpleparse.sourceforge.net/",
-
-        options = options,
-
-        packages = packages,
+    # Most metadata is now in pyproject.toml
+    # This setup.py is primarily for C extension configuration
+    
+    # Python 3.3+ only - use modern implementation with compatibility layer
+    print(f"Building for Python {PY_MAJOR}.{PY_MINOR}: Modern Unicode implementation")
+    
+    # Verify minimum Python version
+    if PYTHON_VERSION < (3, 3):
+        raise RuntimeError(f"SimpleParse requires Python 3.3 or later, got {PY_MAJOR}.{PY_MINOR}")
+    
+    # Use modern implementation with compatibility shims for deprecated APIs
+    sources = [
+        'simpleparse/stt/TextTools/mxTextTools/mxTextTools.c',
+        'simpleparse/stt/TextTools/mxTextTools/mxte_modern.c', 
+        'simpleparse/stt/TextTools/mxTextTools/mxbmse.c',
+    ]
+    
+    define_macros = [ 
+        ('MX_BUILDING_MXTEXTTOOLS', 1),
+        ('PY_SSIZE_T_CLEAN', 1),
+        ('DEBUG', 1),
+    ]
+    
+    # For all Python 3.3+, force use of modern APIs and eliminate legacy compatibility
+    define_macros.append(('MODERN_UNICODE_ONLY', 1))  # Enable modern Unicode-only build
+    define_macros.append(('FORCE_MODERN_UNICODE', 1))  # Force use of modern APIs
+    
+    setup(
         ext_modules=[
             Extension(
                 "simpleparse.stt.TextTools.mxTextTools.mxTextTools", 
-                [
-                    'simpleparse/stt/TextTools/mxTextTools/mxTextTools.c',
-                    'simpleparse/stt/TextTools/mxTextTools/mxte.c',
-                    'simpleparse/stt/TextTools/mxTextTools/mxbmse.c',
-                ],
+                sources,
                 include_dirs=[
                     'simpleparse/stt/TextTools/mxTextTools',
                 ],
-                define_macros=[ 
-                    ('MX_BUILDING_MXTEXTTOOLS',1),
-                    ('PY_SSIZE_T_CLEAN',1),
-                    ('DEBUG',1),
-                ],
+                define_macros=define_macros,
             ),
         ],
-        classifiers= [
-            """Programming Language :: Python""",
-            """Topic :: Software Development :: Libraries :: Python Modules""",
-            """Intended Audience :: Developers""",
-        ],
-        keywords= 'parse,parser,parsing,text,ebnf,grammar,generator',
-        long_description="""A Parser Generator for Python (w/mxTextTools derivative)
-
-Provides a moderately fast parser generator for use with Python,
-includes a forked version of the mxTextTools text-processing library
-modified to eliminate recursive operation and fix a number of 
-undesirable behaviours.
-
-Converts EBNF grammars directly to single-pass parsers for many
-largely deterministic grammars.""",
-        platforms= ['Any'],
-        include_package_data=True,
+        options=options,
     )

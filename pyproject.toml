@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "SimpleParse"
+dynamic = ["version"]
+description = "A Parser Generator for Python (w/mxTextTools derivative)"
+authors = [
+    {name = "Mike C. Fletcher", email = "mcfletch@users.sourceforge.net"},
+]
+readme = "readme.md"
+license = {text = "BSD-3-Clause"}
+keywords = ["parse", "parser", "parsing", "text", "ebnf", "grammar", "generator"]
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.3",
+    "Programming Language :: Python :: 3.4",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.3"
+
+[project.urls]
+Homepage = "http://simpleparse.sourceforge.net/"
+Source = "https://github.com/mcfletch/simpleparse"
+
+[tool.setuptools]
+packages = [
+    "simpleparse",
+    "simpleparse.common",
+    "simpleparse.stt",
+    "simpleparse.stt.Doc",
+    "simpleparse.stt.TextTools",
+    "simpleparse.stt.TextTools.Constants",
+    "simpleparse.stt.TextTools.mxTextTools",
+    "simpleparse.xmlparser",
+]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = {attr = "simpleparse.__version__"}
+
+[tool.setuptools.package-data]
+simpleparse = ["*.txt", "**/*.txt", "**/*.ebnf", "**/*.html", "**/*.pyx", "**/*.h", "**/*.def"]

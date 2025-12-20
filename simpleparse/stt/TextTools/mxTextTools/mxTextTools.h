@@ -187,6 +187,18 @@ int mxTextTools_UnicodeTaggingEngine(PyObject *textobj,
 				     PyObject *context,
 				     Py_ssize_t *next);
 
+#ifdef HAVE_MODERN_UNICODE
+/* Modern tri-engine implementation (from mxte_modern.c) */
+extern 
+int mxTextTools_TaggingEngine_Modern(PyObject *textobj,
+				     Py_ssize_t text_start,	
+				     Py_ssize_t text_stop,	
+				     mxTagTableObject *table,
+				     PyObject *taglist,
+				     PyObject *context,
+				     Py_ssize_t *next);
+#endif
+
 /* Command integers for cmd; see Constants/TagTable.py for details */
 
 /* Low-level string matching, using the same simple logic:

@@ -17,6 +17,7 @@
 
 #include "mx.h"
 #include "mxTextTools.h"
+#include "mxte_modern.h"  /* Modern Unicode engine implementation - Python 3.3+ */
 #include "structmember.h"
 #include <ctype.h>
 
@@ -66,6 +67,11 @@ static PyObject *mxTextTools_TagTables;	/* TagTable cache dictionary */
 
 /* Flag telling us whether the module was initialized or not. */
 static int mxTextTools_Initialized = 0;
+
+#ifdef HAVE_MODERN_UNICODE
+/* Flag to enable modern Unicode implementation */
+static int mxTextTools_UseModernEngine = 0;
+#endif
 
 /* --- forward declarations ----------------------------------------------- */
 
@@ -386,7 +392,7 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 		match = PyString_AS_STRING(so->match);
 		match_len = PyString_GET_SIZE(so->match);
 	    }
-	    else if (PyObject_AsCharBuffer(so->match, &match, &match_len))
+	    else if (mxte_get_char_buffer(so->match, &match, &match_len))
 		goto onError;
 	    nextpos = trivial_search(text,
 				     start,
@@ -445,14 +451,14 @@ Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
 
 	    if (PyUnicode_Check(so->match)) {
 		u = NULL;
-		match = PyUnicode_AS_UNICODE(so->match);
+		match = mxte_get_unicode_data(so->match);
 		match_len = PyUnicode_GET_LENGTH(so->match);
 	    }
 	    else {
 		u = PyUnicode_FromEncodedObject(so->match, NULL, NULL);
 		if (u == NULL)
 		    goto onError;
-		match = PyUnicode_AS_UNICODE(u);
+		match = mxte_get_unicode_data(u);
 		match_len = PyUnicode_GET_LENGTH(u);
 	    }
 	    nextpos = trivial_unicode_search(text,
@@ -515,7 +521,7 @@ Py_C_Function( mxTextSearch_search,
     else if (PyUnicode_Check(text)) {
 	Py_CheckUnicodeSlice(text, start, stop);
 	rc = mxTextSearch_SearchUnicode(self,
-					PyUnicode_AS_UNICODE(text),
+					mxte_get_unicode_data(text),
 					start, 
 					stop, 
 					&sliceleft, 
@@ -567,7 +573,7 @@ Py_C_Function( mxTextSearch_find,
     else if (PyUnicode_Check(text)) {
 	Py_CheckUnicodeSlice(text, start, stop);
 	rc = mxTextSearch_SearchUnicode(self,
-					PyUnicode_AS_UNICODE(text),
+					mxte_get_unicode_data(text),
 					start, 
 					stop, 
 					&sliceleft, 
@@ -643,7 +649,7 @@ Py_C_Function( mxTextSearch_findall,
 #ifdef HAVE_UNICODE
 	else if (PyUnicode_Check(text))
 	    rc = mxTextSearch_SearchUnicode(self,
-					    PyUnicode_AS_UNICODE(text),
+					    mxte_get_unicode_data(text),
 					    start, 
 					    stop, 
 					    &sliceleft, 
@@ -936,7 +942,7 @@ int init_unicode_charset(mxCharSetObject *cs,
 			 PyObject *definition)
 {
     register Py_ssize_t i, j;
-    Py_UNICODE *def = PyUnicode_AS_UNICODE(definition);
+    Py_UNICODE *def = mxte_get_unicode_data(definition);
     const Py_ssize_t len = PyUnicode_GET_LENGTH(definition);
     unicode_charset *lookup = 0;
     unsigned char bigmap[UNICODE_CHARSET_BIGMAP_SIZE];
@@ -1188,7 +1194,7 @@ int mxCharSet_Contains(PyObject *self,
 		  PyExc_TypeError,
 		  "expected a single unicode character");
 	return mxCharSet_ContainsUnicodeChar(self, 
-					     PyUnicode_AS_UNICODE(other)[0]);
+					     mxte_get_unicode_char(other, 0));
     }
 #endif
     else
@@ -1439,7 +1445,7 @@ int mxCharSet_Search(PyObject *self,
     else if (PyUnicode_Check(text)) {
 	Py_CheckUnicodeSlice(text, start, stop);
 	position = mxCharSet_FindUnicodeChar(self,
-					     PyUnicode_AS_UNICODE(text),
+					     mxte_get_unicode_data(text),
 					     start,
 					     stop,
 					     1,
@@ -1490,7 +1496,7 @@ Py_ssize_t mxCharSet_Match(PyObject *self,
     else if (PyUnicode_Check(text)) {
 	Py_CheckUnicodeSlice(text, start, stop);
 	position = mxCharSet_FindUnicodeChar(self,
-					     PyUnicode_AS_UNICODE(text),
+					     mxte_get_unicode_data(text),
 					     start,
 					     stop,
 					     0,
@@ -1576,7 +1582,7 @@ PyObject *mxCharSet_Strip(PyObject *self,
 	/* Strip left */
 	if (where <= 0) {
 	    left = mxCharSet_FindUnicodeChar(self, 
-					     PyUnicode_AS_UNICODE(text),
+					     mxte_get_unicode_data(text),
 					     start,
 					     stop,
 					     0,
@@ -1590,7 +1596,7 @@ PyObject *mxCharSet_Strip(PyObject *self,
 	/* Strip right */
 	if (where >= 0) {
 	    right = mxCharSet_FindUnicodeChar(self, 
-					     PyUnicode_AS_UNICODE(text),
+					     mxte_get_unicode_data(text),
 					     start,
 					     stop,
 					     0,
@@ -1601,8 +1607,7 @@ PyObject *mxCharSet_Strip(PyObject *self,
 	else
 	    right = stop;
 	
-	return PyUnicode_FromUnicode(PyUnicode_AS_UNICODE(text) + left, 
-				     max(right - left, 0));
+	return mxte_unicode_slice(text, left, max(right - left, 0));
     }
 #endif
     else
@@ -1689,7 +1694,7 @@ PyObject *mxCharSet_Split(PyObject *self,
     }
 #ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
-	Py_UNICODE *tx = PyUnicode_AS_UNICODE(text);
+	Py_UNICODE *tx = mxte_get_unicode_data(text);
 
 	Py_CheckUnicodeSlice(text, start, text_len);
 
@@ -1704,7 +1709,7 @@ PyObject *mxCharSet_Split(PyObject *self,
 
 	    /* Append the slice to list */
 	    if (include_splits) {
-		s = PyUnicode_FromUnicode(&tx[z], x - z);
+		s = mxte_unicode_slice(text, z, x - z);
 		if (!s)
 		    goto onError;
 		if (listitem < listsize)
@@ -1726,7 +1731,7 @@ PyObject *mxCharSet_Split(PyObject *self,
 
 	    /* Append the slice to list if it is not empty */
 	    if (x > z) {
-		s = PyUnicode_FromUnicode(&tx[z], x - z);
+		s = mxte_unicode_slice(text, z, x - z);
 		if (!s)
 		    goto onError;
 		if (listitem < listsize)
@@ -2812,7 +2817,7 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
 	separator = PyUnicode_FromObject(separator);
 	if (separator == NULL)
 	    goto onError;
-	sep = PyUnicode_AS_UNICODE(separator);
+	sep = mxte_get_unicode_data(separator);
 	sep_len = PyUnicode_GET_LENGTH(separator);
     }
     else {
@@ -2822,10 +2827,10 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
     
     /* Create an empty new string */
     newstring_len = (10 + sep_len) * (stop - start);
-    newstring = PyUnicode_FromUnicode(NULL, newstring_len);
+    newstring = PyUnicode_New(newstring_len, 1114111);
     if (newstring == NULL) 
 	goto onError;
-    p = PyUnicode_AS_UNICODE(newstring);
+    p = mxte_get_unicode_data(newstring);
 
     /* Join with separator */
     for (i = start; i < stop; i++) {
@@ -2848,7 +2853,7 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
 	    tempstr = PyUnicode_FromObject(PyTuple_GET_ITEM(o,0));
 	    if (tempstr == NULL)
 		goto onError;
-	    st = PyUnicode_AS_UNICODE(tempstr);
+	    st = mxte_get_unicode_data(tempstr);
 	    len_st = PyUnicode_GET_LENGTH(tempstr);
 	    l = PyInt_AS_LONG(PyTuple_GET_ITEM(o,1));
 	    r = PyInt_AS_LONG(PyTuple_GET_ITEM(o,2));
@@ -2882,7 +2887,7 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
 	    tempstr = PyUnicode_FromObject(o);
 	    if (tempstr == NULL)
 		goto onError;
-	    st = PyUnicode_AS_UNICODE(tempstr);
+	    st = mxte_get_unicode_data(tempstr);
 	    len_st = PyUnicode_GET_LENGTH(tempstr);
 	}
 
@@ -2893,7 +2898,7 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
 	    newstring_len += newstring_len >> 1;
 	    if (PyUnicode_Resize(&newstring, newstring_len))
 		goto onError;
-	    p = PyUnicode_AS_UNICODE(newstring) + current_len;
+	    p = mxte_get_unicode_data(newstring) + current_len;
 	}
 
 	/* Insert separator */
@@ -3188,7 +3193,7 @@ int mxTextTools_IsASCII(PyObject *text,
     else if (PyUnicode_Check(text)) {
 	Py_ssize_t len;
 	register Py_ssize_t i;
-	register Py_UNICODE *str = PyUnicode_AS_UNICODE(text);
+	register Py_UNICODE *str = mxte_get_unicode_data(text);
 
 	len = PyUnicode_GET_LENGTH(text);
 	Py_CheckSequenceSlice(len, left, right);
@@ -3379,8 +3384,8 @@ PyObject *mxTextTools_UnicodeCharSplit(PyObject *text,
 	      PyExc_TypeError,
 	      "separator must be a single character");
 
-    tx = PyUnicode_AS_UNICODE(text);
-    sep = *PyUnicode_AS_UNICODE(separator);
+    tx = mxte_get_unicode_data(text);
+    sep = *mxte_get_unicode_data(separator);
 
     list = PyList_New(listsize);
     if (!list)
@@ -3398,7 +3403,7 @@ PyObject *mxTextTools_UnicodeCharSplit(PyObject *text,
 		break;
 
 	/* Append the slice to list */
-	s = PyUnicode_FromUnicode(&tx[z], x - z);
+	s = mxte_unicode_slice(text, z, x - z);
 	if (!s)
 	    goto onError;
 	if (listitem < listsize)
@@ -3539,8 +3544,8 @@ PyObject *mxTextTools_UnicodeSplitAt(PyObject *text,
 	      PyExc_TypeError,
 	      "separator must be a single character");
 
-    tx = PyUnicode_AS_UNICODE(text);
-    sep = *PyUnicode_AS_UNICODE(separator);
+    tx = mxte_get_unicode_data(text);
+    sep = *mxte_get_unicode_data(separator);
 
     tuple = PyTuple_New(2);
     if (!tuple)
@@ -3576,9 +3581,9 @@ PyObject *mxTextTools_UnicodeSplitAt(PyObject *text,
     
     /* Add to tuple */
     if (x < start)
-	s = PyUnicode_FromUnicode((Py_UNICODE *)"", 0);
+	s = PyUnicode_FromString("");
     else
-	s = PyUnicode_FromUnicode(&tx[start], x - start);
+	s = mxte_unicode_slice(text, start, x - start);
     if (!s)
 	goto onError;
     PyTuple_SET_ITEM(tuple,0,s);
@@ -3587,9 +3592,9 @@ PyObject *mxTextTools_UnicodeSplitAt(PyObject *text,
     x++;
 
     if (x >= text_len)
-	s = PyUnicode_FromUnicode((Py_UNICODE *)"", 0);
+	s = PyUnicode_FromString("");
     else
-	s = PyUnicode_FromUnicode(&tx[x], text_len - x);
+	s = mxte_unicode_slice(text, x, text_len - x);
     if (!s)
 	goto onError;
     PyTuple_SET_ITEM(tuple,1,s);
@@ -3728,7 +3733,7 @@ PyObject *mxTextTools_UnicodeSuffix(PyObject *text,
 	      PyExc_TypeError,
 	      "translate is not supported for Unicode suffix()es");
 
-    tx = PyUnicode_AS_UNICODE(text);
+    tx = mxte_get_unicode_data(text);
 
     for (i = 0; i < PyTuple_GET_SIZE(suffixes); i++) {
 	PyObject *suffix = PyTuple_GET_ITEM(suffixes,i);
@@ -3740,10 +3745,10 @@ PyObject *mxTextTools_UnicodeSuffix(PyObject *text,
 
 	start_cmp = text_len - PyUnicode_GET_LENGTH(suffix);
 	if (start_cmp >= start &&
-	    PyUnicode_AS_UNICODE(suffix)[0] == tx[start_cmp] &&
-	    memcmp(PyUnicode_AS_UNICODE(suffix),
+	    mxte_get_unicode_data(suffix)[0] == tx[start_cmp] &&
+	    memcmp(mxte_get_unicode_data(suffix),
 		   &tx[start_cmp],
-		   PyUnicode_GET_DATA_SIZE(suffix)) == 0) {
+		   mxte_get_unicode_data_size(suffix)) == 0) {
 	    Py_DECREF(text);
 	    return suffix;
 	}
@@ -3883,7 +3888,7 @@ PyObject *mxTextTools_UnicodePrefix(PyObject *text,
 	      PyExc_TypeError,
 	      "translate is not supported for Unicode prefix()es");
 
-    tx = PyUnicode_AS_UNICODE(text);
+    tx = mxte_get_unicode_data(text);
 
     for (i = 0; i < PyTuple_GET_SIZE(prefixes); i++) {
 	PyObject *prefix = PyTuple_GET_ITEM(prefixes,i);
@@ -3894,10 +3899,10 @@ PyObject *mxTextTools_UnicodePrefix(PyObject *text,
 
 	/* Compare without translate table */
 	if (start + PyString_GET_SIZE(prefix) <= text_len &&
-	    PyUnicode_AS_UNICODE(prefix)[0] == tx[start] &&
-	    memcmp(PyUnicode_AS_UNICODE(prefix),
+	    mxte_get_unicode_data(prefix)[0] == tx[start] &&
+	    memcmp(mxte_get_unicode_data(prefix),
 		   &tx[start],
-		   PyUnicode_GET_DATA_SIZE(prefix)) == 0) {
+		   mxte_get_unicode_data_size(prefix)) == 0) {
 	    Py_INCREF(prefix);
 	    return prefix;
 	}
@@ -4258,13 +4263,13 @@ PyObject *mxTextTools_UnicodeUpper(PyObject *text)
 	goto onError;
 
     len = PyUnicode_GET_LENGTH(text);
-    ntext = PyUnicode_FromUnicode(NULL, len);
+    ntext = PyUnicode_New(len, 1114111);
     if (!ntext)
 	goto onError;
     
     /* Translate */
-    orig = (Py_UNICODE *)PyUnicode_AS_UNICODE(text);
-    s = (Py_UNICODE *)PyUnicode_AS_UNICODE(ntext);
+    orig = (Py_UNICODE *)mxte_get_unicode_data(text);
+    s = (Py_UNICODE *)mxte_get_unicode_data(ntext);
     for (i = 0; i < len; i++, s++, orig++)
 	*s = Py_UNICODE_TOUPPER(*orig);
     
@@ -4324,13 +4329,13 @@ PyObject *mxTextTools_UnicodeLower(PyObject *text)
 	goto onError;
 
     len = PyUnicode_GET_LENGTH(text);
-    ntext = PyUnicode_FromUnicode(NULL, len);
+    ntext = PyUnicode_New(len, 1114111);
     if (!ntext)
 	goto onError;
     
     /* Translate */
-    orig = (Py_UNICODE *)PyUnicode_AS_UNICODE(text);
-    s = (Py_UNICODE *)PyUnicode_AS_UNICODE(ntext);
+    orig = (Py_UNICODE *)mxte_get_unicode_data(text);
+    s = (Py_UNICODE *)mxte_get_unicode_data(ntext);
     for (i = 0; i < len; i++, s++, orig++)
 	*s = Py_UNICODE_TOLOWER(*orig);
     
