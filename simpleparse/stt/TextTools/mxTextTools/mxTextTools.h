@@ -69,6 +69,36 @@ Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
 			       Py_ssize_t stop,
 			       Py_ssize_t *sliceleft,
 			       Py_ssize_t *sliceright);
+
+/* Character type definitions for different string kinds */
+typedef unsigned char TE_CHAR_1BYTE;
+typedef Py_UCS2 TE_CHAR_2BYTE;
+typedef Py_UCS4 TE_CHAR_4BYTE;
+
+/* Modern search functions for different character widths */
+extern
+Py_ssize_t mxTextSearch_SearchBuffer_1BYTE(PyObject *self,
+			      TE_CHAR_1BYTE *text,
+			      Py_ssize_t start,
+			      Py_ssize_t stop,
+			      Py_ssize_t *sliceleft,
+			      Py_ssize_t *sliceright);
+
+extern
+Py_ssize_t mxTextSearch_SearchUnicode_2BYTE(PyObject *self,
+			       TE_CHAR_2BYTE *text,
+			       Py_ssize_t start,
+			       Py_ssize_t stop,
+			       Py_ssize_t *sliceleft,
+			       Py_ssize_t *sliceright);
+
+extern
+Py_ssize_t mxTextSearch_SearchUnicode_4BYTE(PyObject *self,
+			       TE_CHAR_4BYTE *text,
+			       Py_ssize_t start,
+			       Py_ssize_t stop,
+			       Py_ssize_t *sliceleft,
+			       Py_ssize_t *sliceright);
 #endif
 
 /* --- Character Set Object -------------------------------------*/
@@ -104,7 +134,7 @@ int mxCharSet_ContainsChar(PyObject *self,
 #ifdef HAVE_UNICODE
 extern
 int mxCharSet_ContainsUnicodeChar(PyObject *self,
-				  register Py_UNICODE ch);
+				  register Py_UCS4 ch);
 #endif
 
 extern
@@ -180,6 +210,16 @@ int mxTextTools_TaggingEngine(PyObject *textobj,
 
 extern 
 int mxTextTools_UnicodeTaggingEngine(PyObject *textobj,
+				     Py_ssize_t text_start,	
+				     Py_ssize_t text_stop,	
+				     mxTagTableObject *table,
+				     PyObject *taglist,
+				     PyObject *context,
+				     Py_ssize_t *next);
+
+/* Smart routing engine (from mxte_smart.c) */
+extern 
+int mxTextTools_SmartTaggingEngine(PyObject *textobj,
 				     Py_ssize_t text_start,	
 				     Py_ssize_t text_stop,	
 				     mxTagTableObject *table,

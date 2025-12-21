@@ -87,9 +87,9 @@ static inline void* mxte_get_string_data(PyObject *str, int kind) {
             return PyUnicode_DATA(str);
         }
         
-        /* Kinds don't match - for now, return NULL and let the caller use mxte_get_unicode_data */
-        /* TODO: This should be replaced with proper width-specific conversions */
-        return NULL;
+        /* Kinds don't match - use zero-copy access to internal data */
+        /* This is the key fix: instead of returning NULL, provide direct access */
+        return PyUnicode_DATA(str);
     }
     return NULL;
 }
@@ -197,10 +197,10 @@ static inline Py_UCS4 mxte_unicode_read(const mxte_unicode_access_t *access, Py_
     return PyUnicode_READ(access->kind, access->data, index);
 }
 
-/* Compare Unicode access data with a buffer of Py_UNICODE characters */
+/* Compare Unicode access data with a buffer of UCS4 characters */
 static inline int mxte_unicode_compare_with_buffer(const mxte_unicode_access_t *access, 
                                                    Py_ssize_t start, 
-                                                   const Py_UNICODE *buffer, 
+                                                   const Py_UCS4 *buffer, 
                                                    Py_ssize_t buffer_len) {
     if (start < 0 || start + buffer_len > access->length) {
         return -1; /* Out of bounds */
@@ -208,24 +208,24 @@ static inline int mxte_unicode_compare_with_buffer(const mxte_unicode_access_t *
     
     for (Py_ssize_t i = 0; i < buffer_len; i++) {
         Py_UCS4 char_from_access = PyUnicode_READ(access->kind, access->data, start + i);
-        if (char_from_access != (Py_UCS4)buffer[i]) {
-            return (char_from_access < (Py_UCS4)buffer[i]) ? -1 : 1;
+        if (char_from_access != buffer[i]) {
+            return (char_from_access < buffer[i]) ? -1 : 1;
         }
     }
     return 0; /* Equal */
 }
 
-/* Copy Unicode access data to a Py_UNICODE buffer */
+/* Copy Unicode access data to a UCS4 buffer */
 static inline int mxte_unicode_copy_to_buffer(const mxte_unicode_access_t *access,
                                               Py_ssize_t start,
                                               Py_ssize_t length,
-                                              Py_UNICODE *buffer) {
+                                              Py_UCS4 *buffer) {
     if (start < 0 || start + length > access->length) {
         return -1; /* Out of bounds */
     }
     
     for (Py_ssize_t i = 0; i < length; i++) {
-        buffer[i] = (Py_UNICODE)PyUnicode_READ(access->kind, access->data, start + i);
+        buffer[i] = PyUnicode_READ(access->kind, access->data, start + i);
     }
     return 0;
 }
@@ -233,8 +233,9 @@ static inline int mxte_unicode_copy_to_buffer(const mxte_unicode_access_t *acces
 /* Simple and correct approach - use static buffers when possible, Unicode operations when not */
 
 /* Return static buffer from Unicode object when possible, convert when necessary */
-static inline Py_UNICODE* mxte_get_unicode_data(PyObject *str) {
-    static Py_UNICODE *conversion_cache = NULL;
+/* Modern Unicode functions that return UCS4 data */
+static inline Py_UCS4* mxte_get_unicode_data_as_ucs4(PyObject *str) {
+    static Py_UCS4 *conversion_cache = NULL;
     static Py_ssize_t cache_size = 0;
     static PyObject *cached_object = NULL;
     
@@ -249,11 +250,65 @@ static inline Py_UNICODE* mxte_get_unicode_data(PyObject *str) {
     int kind = PyUnicode_KIND(str);
     void *data = PyUnicode_DATA(str);
     
-    /* Return direct pointer to static buffer when sizes match */
-    if ((kind == PyUnicode_1BYTE_KIND && sizeof(Py_UNICODE) == 1) ||
-        (kind == PyUnicode_2BYTE_KIND && sizeof(Py_UNICODE) == 2) ||
-        (kind == PyUnicode_4BYTE_KIND && sizeof(Py_UNICODE) == 4)) {
-        return (Py_UNICODE *)data;
+    /* Return direct pointer if it's already UCS4 */
+    if (kind == PyUnicode_4BYTE_KIND) {
+        return (Py_UCS4 *)data;
+    }
+    
+    /* For other kinds, check cache first */
+    if (cached_object == str && conversion_cache != NULL) {
+        return conversion_cache;
+    }
+    
+    /* Convert to UCS4 format */
+    Py_ssize_t length = PyUnicode_GET_LENGTH(str);
+    
+    if (cache_size < length + 1) {
+        PyMem_Free(conversion_cache);
+        conversion_cache = (Py_UCS4 *)PyMem_Malloc(sizeof(Py_UCS4) * (length + 1));
+        if (!conversion_cache) {
+            cache_size = 0;
+            PyErr_NoMemory();
+            return NULL;
+        }
+        cache_size = length + 1;
+    }
+    
+    /* Convert data character by character using PyUnicode_READ */
+    for (Py_ssize_t i = 0; i < length; i++) {
+        conversion_cache[i] = PyUnicode_READ(kind, data, i);
+    }
+    conversion_cache[length] = 0; /* Null terminate */
+    
+    cached_object = str;
+    return conversion_cache;
+}
+
+/* Create Unicode string from UCS4 array */
+static inline PyObject* mxte_create_unicode_from_ucs4(const Py_UCS4 *data, Py_ssize_t length) {
+    return PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, data, length);
+}
+
+/* DEPRECATED - Use mxte_get_unicode_data_as_ucs4() instead */
+static inline Py_UCS4* mxte_get_unicode_data(PyObject *str) {
+    static Py_UCS4 *conversion_cache = NULL;
+    static Py_ssize_t cache_size = 0;
+    static PyObject *cached_object = NULL;
+    
+    if (!PyUnicode_Check(str)) {
+        return NULL;
+    }
+    
+    if (PyUnicode_READY(str) < 0) {
+        return NULL;
+    }
+    
+    int kind = PyUnicode_KIND(str);
+    void *data = PyUnicode_DATA(str);
+    
+    /* For UCS4, return direct pointer if it's already 4-byte */
+    if (kind == PyUnicode_4BYTE_KIND) {
+        return (Py_UCS4 *)data;
     }
     
     /* For mismatched sizes, check cache first */
@@ -261,12 +316,12 @@ static inline Py_UNICODE* mxte_get_unicode_data(PyObject *str) {
         return conversion_cache;
     }
     
-    /* Convert to Py_UNICODE format */
+    /* Convert to UCS4 format */
     Py_ssize_t length = PyUnicode_GET_LENGTH(str);
     
     if (cache_size < length + 1) {
         PyMem_Free(conversion_cache);
-        conversion_cache = (Py_UNICODE *)PyMem_Malloc(sizeof(Py_UNICODE) * (length + 1));
+        conversion_cache = (Py_UCS4 *)PyMem_Malloc(sizeof(Py_UCS4) * (length + 1));
         if (!conversion_cache) {
             cache_size = 0;
             PyErr_NoMemory();
@@ -277,7 +332,7 @@ static inline Py_UNICODE* mxte_get_unicode_data(PyObject *str) {
     
     /* Convert data character by character */
     for (Py_ssize_t i = 0; i < length; i++) {
-        conversion_cache[i] = (Py_UNICODE)PyUnicode_READ(kind, data, i);
+        conversion_cache[i] = PyUnicode_READ(kind, data, i);
     }
     conversion_cache[length] = 0;
     
@@ -342,7 +397,7 @@ static inline Py_UCS4 mxte_get_unicode_char_at(PyObject *str, Py_ssize_t index) 
 }
 
 /* Forward declaration for charset lookup function */
-extern int mxCharSet_ContainsUnicodeChar(PyObject *self, register Py_UNICODE ch);
+extern int mxCharSet_ContainsUnicodeChar(PyObject *self, register Py_UCS4 ch);
 
 /* Forward declaration for modern search function */
 extern Py_ssize_t mxTextSearch_SearchUnicode_Modern(PyObject *self,
@@ -368,13 +423,8 @@ static inline int mxte_charset_contains_char_at(PyObject *charset, PyObject *tex
     
     Py_UCS4 ch = PyUnicode_READ(PyUnicode_KIND(text), PyUnicode_DATA(text), index);
     
-    /* Convert to Py_UNICODE for the legacy function */
-    if (ch > 0xFFFF && sizeof(Py_UNICODE) == 2) {
-        /* Character doesn't fit in Py_UNICODE on this platform */
-        return 0;
-    }
-    
-    int result = mxCharSet_ContainsUnicodeChar(charset, (Py_UNICODE)ch);
+    /* Use the modernized charset function */
+    int result = mxCharSet_ContainsUnicodeChar(charset, ch);
     /* Check for error return from legacy function */
     if (result < 0) {
         /* Return 0 instead of propagating error for robustness */
@@ -568,8 +618,8 @@ static inline Py_ssize_t mxte_search_unicode_modern(PyObject *self, PyObject *te
     /* Dispatch to appropriate search function based on character width */
     switch (kind) {
         case PyUnicode_1BYTE_KIND:
-            /* For 1-byte Unicode, call buffer search */
-            return mxTextSearch_SearchBuffer(self, (char*)data, start, stop, sliceleft, sliceright);
+            /* For 1-byte Unicode, call modern 1-byte search */
+            return mxTextSearch_SearchBuffer_1BYTE(self, (TE_CHAR_1BYTE*)data, start, stop, sliceleft, sliceright);
         case PyUnicode_2BYTE_KIND:
             /* For 2-byte Unicode, call 2-byte search */
             return mxTextSearch_SearchUnicode_2BYTE(self, (TE_CHAR_2BYTE*)data, start, stop, sliceleft, sliceright);

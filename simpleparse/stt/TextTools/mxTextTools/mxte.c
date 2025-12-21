@@ -43,29 +43,5 @@
 
 #include "mxte_impl.h"
 
-/* --- Tagging Engine --- Unicode version --------------------------------- */
-
-#ifdef HAVE_UNICODE
-
-#undef TE_STRING_CHECK 
-#define TE_STRING_CHECK(obj) PyUnicode_Check(obj)
-#undef TE_STRING_AS_STRING
-#define TE_STRING_AS_STRING(obj) PyUnicode_AS_UNICODE(obj)
-#undef TE_STRING_GET_SIZE
-#define TE_STRING_GET_SIZE(obj) PyUnicode_GET_LENGTH(obj)
-#undef TE_STRING_FROM_STRING
-#define TE_STRING_FROM_STRING(str, size) PyUnicode_FromUnicode(str, size)
-#undef TE_CHAR
-#define TE_CHAR Py_UNICODE
-#undef TE_HANDLE_MATCH
-#define TE_HANDLE_MATCH unicode_handle_match
-#undef TE_ENGINE_API
-#define TE_ENGINE_API mxTextTools_UnicodeTaggingEngine
-#undef TE_TABLETYPE
-#define TE_TABLETYPE MXTAGTABLE_UNICODETYPE
-#undef TE_SEARCHAPI
-#define TE_SEARCHAPI mxTextSearch_SearchUnicode
-
-#include "mxte_impl.h"
-
-#endif
+/* --- Old Unicode Engine DISABLED - using modern engines only --- */
+/* All Unicode processing now goes through the modern tri-engine system */

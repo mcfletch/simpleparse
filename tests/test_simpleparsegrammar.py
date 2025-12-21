@@ -287,9 +287,9 @@ class ParserGenerationTests(unittest.TestCase):
         )
     def testGenUnicodeRange( self ):
         self.doBasicTest(
-            '''s := [\u0600-\u06ff]+''',
+            r'''s := [\u0600-\u06ff]+''',
             's',
-            u'\u0600\u06ff',
+            '\u0600\u06ff',
             (1,[],2)
         )
     if sys.version_info[0] < 3:

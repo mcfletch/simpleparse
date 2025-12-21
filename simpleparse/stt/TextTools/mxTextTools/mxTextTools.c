@@ -392,6 +392,35 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 		match = PyString_AS_STRING(so->match);
 		match_len = PyString_GET_SIZE(so->match);
 	    }
+	    else if (PyUnicode_Check(so->match)) {
+		/* Handle Unicode patterns by doing character-by-character comparison */
+		if (PyUnicode_READY(so->match) < 0)
+		    goto onError;
+		match_len = PyUnicode_GET_LENGTH(so->match);
+		if (match_len == 0) {
+		    /* Empty pattern matches at start position */
+		    *sliceleft = start;
+		    *sliceright = start;
+		    return 1;
+		}
+		/* Do Unicode-aware search */
+		for (Py_ssize_t i = start; i <= stop - match_len; i++) {
+		    Py_ssize_t j;
+		    for (j = 0; j < match_len; j++) {
+			Py_UCS4 text_char = (Py_UCS4)text[i + j];
+			Py_UCS4 match_char = PyUnicode_READ(PyUnicode_KIND(so->match), PyUnicode_DATA(so->match), j);
+			if (text_char != match_char) {
+			    break;
+			}
+		    }
+		    if (j == match_len) {
+			*sliceleft = i;
+			*sliceright = i + match_len;
+			return 1;
+		    }
+		}
+		return 0; /* No match found */
+	    }
 	    else if (mxte_get_char_buffer(so->match, &match, &match_len))
 		goto onError;
 	    nextpos = trivial_search(text,
@@ -421,6 +450,8 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
  onError:
     return -1;
 }
+
+
 
 #ifdef HAVE_UNICODE
 Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
@@ -1267,7 +1298,7 @@ int mxCharSet_ContainsChar(PyObject *self,
 #ifdef HAVE_UNICODE
 
 int mxCharSet_ContainsUnicodeChar(PyObject *self,
-				  register Py_UNICODE ch)
+				  register Py_UCS4 ch)
 {
     if (!mxCharSet_Check(self)) {
 	PyErr_BadInternalCall();
@@ -2728,7 +2759,8 @@ Py_C_Function( mxTagTable_TagTable,
     int cacheable = 1;
 
     Py_Get2Args("O|i:TagTable", definition, cacheable);
-    return mxTagTable_New(definition, 0, cacheable);
+    /* For Python 3.3+, default to Unicode table type since Unicode is the primary string type */
+    return mxTagTable_New(definition, MXTAGTABLE_UNICODETYPE, cacheable);
 
  onError:
     return NULL;
@@ -4570,7 +4602,7 @@ Py_C_Function_WithKeywords(
 	Py_CheckUnicodeSlice(text, sliceleft, sliceright);
 
         if (!mxTagTable_Check(tagtable)) {
-	    tagtable = mxTagTable_New(tagtable, 1, 1);
+	    tagtable = mxTagTable_New(tagtable, MXTAGTABLE_UNICODETYPE, 1);
 	    if (tagtable == NULL)
 		goto onError;
 	}
@@ -4581,8 +4613,8 @@ Py_C_Function_WithKeywords(
 	else
 	    Py_INCREF(tagtable);
 
-	/* Call the Tagging Engine */
-	result = mxTextTools_UnicodeTaggingEngine(text,
+	/* Call the Modern Tagging Engine - route Unicode through modern engines */
+	result = mxTextTools_SmartTaggingEngine(text,
 						  sliceleft,
 						  sliceright,
 						  (mxTagTableObject *)tagtable,

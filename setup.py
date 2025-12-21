@@ -47,7 +47,8 @@ if __name__ == "__main__":
     # Use modern implementation with compatibility shims for deprecated APIs
     sources = [
         'simpleparse/stt/TextTools/mxTextTools/mxTextTools.c',
-        'simpleparse/stt/TextTools/mxTextTools/mxte_modern.c', 
+        'simpleparse/stt/TextTools/mxTextTools/mxte_modern.c',
+        'simpleparse/stt/TextTools/mxTextTools/mxte_smart.c', 
         'simpleparse/stt/TextTools/mxTextTools/mxbmse.c',
     ]
     

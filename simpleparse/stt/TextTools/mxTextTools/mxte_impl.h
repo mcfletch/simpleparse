@@ -465,10 +465,17 @@ int TE_ENGINE_API(
 									the string, not a tuple wrapping the string.  That is,
 									everywhere else we use tuples, here we don't
 									*/
-									parameter = TE_STRING_FROM_STRING(
-										TE_STRING_AS_STRING(textobj) + childStart,
-										childPosition - childStart
-									);
+									/* Create result with same type as input textobj */
+									if (PyUnicode_Check(textobj)) {
+										/* Input is Unicode, return Unicode substring */
+										parameter = PyUnicode_Substring(textobj, childStart, childPosition);
+									} else {
+										/* Input is bytes, return bytes substring */
+										parameter = TE_STRING_FROM_STRING(
+											TE_STRING_AS_STRING(textobj) + childStart,
+											childPosition - childStart
+										);
+									}
 									if (parameter == NULL) {
 										/* error occured getting parameter, report the exception */
 										returnCode = ERROR_CODE;

@@ -22,12 +22,12 @@
 #include "mxte_modern.h"
 
 /* Forward declarations for search API functions */
-static Py_ssize_t mxTextSearch_SearchBuffer_1BYTE(PyObject *self,
-                                                  TE_CHAR_1BYTE *text,
-                                                  Py_ssize_t start,
-                                                  Py_ssize_t stop,
-                                                  Py_ssize_t *sliceleft,
-                                                  Py_ssize_t *sliceright);
+Py_ssize_t mxTextSearch_SearchBuffer_1BYTE(PyObject *self,
+                                           TE_CHAR_1BYTE *text,
+                                           Py_ssize_t start,
+                                           Py_ssize_t stop,
+                                           Py_ssize_t *sliceleft,
+                                           Py_ssize_t *sliceright);
 
 #ifdef HAVE_UNICODE
 Py_ssize_t mxTextSearch_SearchUnicode_2BYTE(PyObject *self,
@@ -203,14 +203,56 @@ int mxTextTools_TaggingEngine(PyObject *text,
 /* --- Search API wrappers ------------------------------------------------ */
 
 /* 1-byte search wrapper */
-static Py_ssize_t mxTextSearch_SearchBuffer_1BYTE(PyObject *self,
-                                                  TE_CHAR_1BYTE *text,
-                                                  Py_ssize_t start,
-                                                  Py_ssize_t stop,
-                                                  Py_ssize_t *sliceleft,
-                                                  Py_ssize_t *sliceright)
+Py_ssize_t mxTextSearch_SearchBuffer_1BYTE(PyObject *self,
+                                           TE_CHAR_1BYTE *text,
+                                           Py_ssize_t start,
+                                           Py_ssize_t stop,
+                                           Py_ssize_t *sliceleft,
+                                           Py_ssize_t *sliceright)
 {
-    /* Call the original implementation for 1-byte strings */
+    mxTextSearchObject *so = (mxTextSearchObject *)self;
+    
+    /* If the TextSearch was created with a Unicode pattern, we need to handle this specially */
+    if (PyUnicode_Check(so->match)) {
+        /* For Unicode patterns, use Unicode-aware search */
+        Py_ssize_t match_len = PyUnicode_GET_LENGTH(so->match);
+        if (match_len == 0) {
+            /* Empty pattern matches at start position */
+            *sliceleft = start;
+            *sliceright = start;
+            return 1;
+        }
+        
+        if (PyUnicode_READY(so->match) < 0) {
+            return -1;
+        }
+        
+        /* Handle edge cases */
+        if (start > stop || start < 0) {
+            return 0; /* No match possible */
+        }
+        
+        /* Simple brute force search for 1-byte characters with Unicode pattern */
+        for (Py_ssize_t i = start; i <= stop - match_len; i++) {
+            Py_ssize_t j;
+            for (j = 0; j < match_len; j++) {
+                Py_UCS4 text_char = (Py_UCS4)text[i + j];
+                Py_UCS4 match_char = PyUnicode_READ(PyUnicode_KIND(so->match), PyUnicode_DATA(so->match), j);
+                if (text_char != match_char) {
+                    break;
+                }
+            }
+            if (j == match_len) {
+                *sliceleft = i;
+                *sliceright = i + match_len;
+                return 1;
+            }
+        }
+        
+        return 0; /* No match found */
+    }
+    
+    /* Call the original implementation for byte-based searches */
     return mxTextSearch_SearchBuffer(self, (char*)text, start, stop, sliceleft, sliceright);
 }
 
@@ -241,11 +283,19 @@ Py_ssize_t mxTextSearch_SearchUnicode_2BYTE(PyObject *self,
     
     Py_ssize_t match_len = PyUnicode_GET_LENGTH(so->match);
     if (match_len == 0) {
-        return start; /* Empty pattern matches at start position */
+        /* Empty pattern matches at start position */
+        *sliceleft = start;
+        *sliceright = start;
+        return 1;
     }
     
     if (PyUnicode_READY(so->match) < 0) {
         return -1;
+    }
+    
+    /* Handle edge cases */
+    if (start > stop || start < 0) {
+        return 0; /* No match possible */
     }
     
     /* Simple brute force search for 2-byte characters */
@@ -261,11 +311,11 @@ Py_ssize_t mxTextSearch_SearchUnicode_2BYTE(PyObject *self,
         if (j == match_len) {
             *sliceleft = i;
             *sliceright = i + match_len;
-            return i;
+            return 1;
         }
     }
     
-    return -1; /* No match found */
+    return 0; /* No match found */
 }
 
 /* 4-byte search wrapper */
@@ -289,11 +339,19 @@ Py_ssize_t mxTextSearch_SearchUnicode_4BYTE(PyObject *self,
     
     Py_ssize_t match_len = PyUnicode_GET_LENGTH(so->match);
     if (match_len == 0) {
-        return start; /* Empty pattern matches at start position */
+        /* Empty pattern matches at start position */
+        *sliceleft = start;
+        *sliceright = start;
+        return 1;
     }
     
     if (PyUnicode_READY(so->match) < 0) {
         return -1;
+    }
+    
+    /* Handle edge cases */
+    if (start > stop || start < 0) {
+        return 0; /* No match possible */
     }
     
     /* Simple brute force search for 4-byte characters */
@@ -309,10 +367,10 @@ Py_ssize_t mxTextSearch_SearchUnicode_4BYTE(PyObject *self,
         if (j == match_len) {
             *sliceleft = i;
             *sliceright = i + match_len;
-            return i;
+            return 1;
         }
     }
     
-    return -1; /* No match found */
+    return 0; /* No match found */
 }
 #endif

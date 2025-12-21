@@ -10,7 +10,6 @@
 #include "mx.h"
 #include "mxstdlib.h"
 #include "mxTextTools.h"
-#include "mxpy3compat.h"
 
 /* Determine string kind and call appropriate engine */
 int mxTextTools_SmartTaggingEngine(PyObject *textobj,
