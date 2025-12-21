@@ -21,6 +21,9 @@
 #include "structmember.h"
 #include <ctype.h>
 
+/* Thread safety support for Python 3.3+ */
+#include "pythread.h"
+
 #define VERSION "2.1.0"
 
 /* Initial list size used by e.g. setsplit(), setsplitx(),... */
@@ -65,6 +68,9 @@ static PyObject *mxTextTools_Error;	/* mxTextTools specific error */
 
 static PyObject *mxTextTools_TagTables;	/* TagTable cache dictionary */
 
+/* Thread safety for TagTable cache */
+static PyThread_type_lock mxTextTools_TagTables_lock = NULL;
+
 /* Flag telling us whether the module was initialized or not. */
 static int mxTextTools_Initialized = 0;
 
@@ -92,6 +98,56 @@ PyObject *mxTextTools_ToLower(void)
     for (i = 0; i < 256; i++)
 	tr[i] = tolower((char)i);
     return PyString_FromStringAndSize(tr,sizeof(tr));
+}
+
+/* --- Thread-safe TagTable cache helpers ---------------------------------- */
+
+/* Thread-safe cache lookup - returns borrowed reference or NULL */
+static PyObject *mxTextTools_TagTables_GetItem(PyObject *key)
+{
+    PyObject *result = NULL;
+    
+    if (!key) {
+        PyErr_BadInternalCall();
+        return NULL;
+    }
+    
+    if (!mxTextTools_TagTables_lock)
+        return NULL;  /* Cache not initialized */
+        
+    PyThread_acquire_lock(mxTextTools_TagTables_lock, WAIT_LOCK);
+    if (mxTextTools_TagTables) {
+        result = PyDict_GetItem(mxTextTools_TagTables, key);
+    }
+    PyThread_release_lock(mxTextTools_TagTables_lock);
+    
+    return result;
+}
+
+/* Thread-safe cache insertion - returns 0 on success, -1 on error */
+static int mxTextTools_TagTables_SetItem(PyObject *key, PyObject *value)
+{
+    int result = -1;
+    
+    if (!key || !value) {
+        PyErr_BadInternalCall();
+        return -1;
+    }
+    
+    if (!mxTextTools_TagTables_lock)
+        return -1;  /* Cache not initialized */
+        
+    PyThread_acquire_lock(mxTextTools_TagTables_lock, WAIT_LOCK);
+    if (mxTextTools_TagTables) {
+        /* Hard-limit the cache size */
+        if (PyDict_Size(mxTextTools_TagTables) >= MAX_TAGTABLES_CACHE_SIZE)
+            PyDict_Clear(mxTextTools_TagTables);
+        
+        result = PyDict_SetItem(mxTextTools_TagTables, key, value);
+    }
+    PyThread_release_lock(mxTextTools_TagTables_lock);
+    
+    return result;
 }
 
 /* Create an exception object, insert it into the module dictionary
@@ -2441,10 +2497,12 @@ PyObject *consult_tagtable_cache(PyObject *definition,
     if (v == NULL)
 	goto onError;
     PyTuple_SET_ITEM(key, 1, v);
-    tt = PyDict_GetItem(mxTextTools_TagTables, key);
+    tt = mxTextTools_TagTables_GetItem(key);
+    if (tt != NULL) {
+	Py_INCREF(tt);  /* Convert borrowed reference to owned */
+    }
     Py_DECREF(key);
     if (tt != NULL) {
-	Py_INCREF(tt);
 	return tt;
     }
     return Py_None;
@@ -2480,11 +2538,7 @@ int add_to_tagtable_cache(PyObject *definition,
 	goto onError;
     PyTuple_SET_ITEM(key, 1, v);
 
-    /* Hard-limit the cache size */
-    if (PyDict_Size(mxTextTools_TagTables) >= MAX_TAGTABLES_CACHE_SIZE)
-	PyDict_Clear(mxTextTools_TagTables);
-
-    rc = PyDict_SetItem(mxTextTools_TagTables, key, tagtable);
+    rc = mxTextTools_TagTables_SetItem(key, tagtable);
     Py_DECREF(key);
     if (rc)
 	goto onError;
@@ -4697,12 +4751,17 @@ static
 void mxTextToolsModule_Cleanup(void)
 {
     mxTextTools_TagTables = NULL;
+    
+    /* Cleanup the TagTable cache lock */
+    if (mxTextTools_TagTables_lock) {
+        PyThread_free_lock(mxTextTools_TagTables_lock);
+        mxTextTools_TagTables_lock = NULL;
+    }
 
     /* Reset mxTextTools_Initialized flag */
     mxTextTools_Initialized = 0;
 }
 
-#if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef mxTextTools_ModuleDef = {
     PyModuleDef_HEAD_INIT,
     MXTEXTTOOLS_MODULE,
@@ -4710,7 +4769,6 @@ static struct PyModuleDef mxTextTools_ModuleDef = {
     -1,
     Module_methods
 };
-#endif
 
 static PyObject* mxTextToolsModule_Initialize(void)
 {
@@ -4731,21 +4789,18 @@ static PyObject* mxTextToolsModule_Initialize(void)
         return NULL;
 
     /* create module */
-#if PY_MAJOR_VERSION >= 3
     module = PyModule_Create(&mxTextTools_ModuleDef);
-#else
-    module = Py_InitModule4(MXTEXTTOOLS_MODULE, /* Module name */
-                Module_methods, /* Method list */
-                Module_docstring, /* Module doc-string */
-                (PyObject *)NULL, /* always pass this as *self */
-                PYTHON_API_VERSION); /* API Version */
-#endif
     if (!module)
         return NULL;
 
     /* Init TagTable cache */
     mxTextTools_TagTables = PyDict_New();
     if (!mxTextTools_TagTables)
+        return NULL;
+        
+    /* Initialize TagTable cache lock for thread safety */
+    mxTextTools_TagTables_lock = PyThread_allocate_lock();
+    if (!mxTextTools_TagTables_lock)
         return NULL;
 
     /* Register cleanup function */
