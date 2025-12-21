@@ -61,7 +61,7 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 			      Py_ssize_t *sliceleft,
 			      Py_ssize_t *sliceright);
 
-#ifdef HAVE_UNICODE
+/* Unicode support - always available in Python 3.3+ */
 extern
 Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
 			       Py_UCS4 *text,
@@ -99,7 +99,6 @@ Py_ssize_t mxTextSearch_SearchUnicode_4BYTE(PyObject *self,
 			       Py_ssize_t stop,
 			       Py_ssize_t *sliceleft,
 			       Py_ssize_t *sliceright);
-#endif
 
 /* --- Character Set Object -------------------------------------*/
 
@@ -131,11 +130,10 @@ extern
 int mxCharSet_ContainsChar(PyObject *self,
 			   register unsigned char ch);
     
-#ifdef HAVE_UNICODE
+/* Unicode support - always available in Python 3.3+ */
 extern
 int mxCharSet_ContainsUnicodeChar(PyObject *self,
 				  register Py_UCS4 ch);
-#endif
 
 extern
 Py_ssize_t mxCharSet_Match(PyObject *self,
@@ -227,7 +225,7 @@ int mxTextTools_SmartTaggingEngine(PyObject *textobj,
 				     PyObject *context,
 				     Py_ssize_t *next);
 
-#ifdef HAVE_MODERN_UNICODE
+/* Modern tri-engine - always available in Python 3.3+ */
 /* Modern tri-engine implementation (from mxte_modern.c) */
 extern 
 int mxTextTools_TaggingEngine_Modern(PyObject *textobj,
@@ -237,7 +235,6 @@ int mxTextTools_TaggingEngine_Modern(PyObject *textobj,
 				     PyObject *taglist,
 				     PyObject *context,
 				     Py_ssize_t *next);
-#endif
 
 /* Command integers for cmd; see Constants/TagTable.py for details */
 
@@ -315,4 +312,4 @@ int mxTextTools_TaggingEngine_Modern(PyObject *textobj,
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif /* MXTEXTTOOLS_H */

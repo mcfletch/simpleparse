@@ -26,7 +26,6 @@ int mxTextTools_SmartTaggingEngine(PyObject *textobj,
                                         tagtable, taglist, context, next);
     }
     
-#ifdef HAVE_UNICODE
     /* For Unicode, we need to ensure the tag table matches the text format */
     if (PyUnicode_Check(textobj)) {
         /* For now, just use the Unicode engine - the tag table conversion
@@ -35,7 +34,6 @@ int mxTextTools_SmartTaggingEngine(PyObject *textobj,
         return mxTextTools_UnicodeTaggingEngine(textobj, text_start, text_stop,
                                                tagtable, taglist, context, next);
     }
-#endif
     
     /* Unknown type */
     PyErr_SetString(PyExc_TypeError, "text must be bytes or unicode");
@@ -70,7 +68,6 @@ PyObject *mxTextTools_SmartTag(PyObject *text,
             Py_INCREF(tagtable);
         }
     }
-#ifdef HAVE_UNICODE    
     else if (PyUnicode_Check(text)) {
         if (!mxTagTable_Check(tagtable_obj)) {
             tagtable = (mxTagTableObject*)mxTagTable_New(tagtable_obj, MXTAGTABLE_UNICODETYPE, 1);
@@ -85,7 +82,6 @@ PyObject *mxTextTools_SmartTag(PyObject *text,
             Py_INCREF(tagtable);
         }
     }
-#endif
     else {
         PyErr_SetString(PyExc_TypeError, "text must be bytes or unicode");
         return NULL;

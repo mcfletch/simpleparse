@@ -68,11 +68,6 @@ static PyObject *mxTextTools_TagTables;	/* TagTable cache dictionary */
 /* Flag telling us whether the module was initialized or not. */
 static int mxTextTools_Initialized = 0;
 
-#ifdef HAVE_MODERN_UNICODE
-/* Flag to enable modern Unicode implementation */
-static int mxTextTools_UseModernEngine = 0;
-#endif
-
 /* --- forward declarations ----------------------------------------------- */
 
 /* --- module helper ------------------------------------------------------ */
@@ -245,10 +240,8 @@ Py_ssize_t mxTextSearch_MatchLength(PyObject *self)
     case MXTEXTSEARCH_TRIVIAL:
 	if (PyString_Check(so->match))
 	    return PyString_GET_SIZE(so->match);
-#ifdef HAVE_UNICODE
 	else if (PyUnicode_Check(so->match))
 	    return PyUnicode_GET_LENGTH(so->match);
-#endif
 	break;
 
     }
@@ -413,7 +406,6 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 
 
 
-#ifdef HAVE_UNICODE
 Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
 			       Py_UCS4 *text,
 			       Py_ssize_t start,
@@ -603,7 +595,6 @@ Py_ssize_t mxTextSearch_SearchUnicode_Modern(PyObject *self,
  onError:
     return -1;
 }
-#endif
 
 /* methods */
 
@@ -631,12 +622,10 @@ Py_C_Function( mxTextSearch_search,
 				       &sliceleft, 
 				       &sliceright);
     }
-#ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
 	Py_CheckUnicodeSlice(text, start, stop);
 	rc = mxte_search_unicode_modern(self, text, start, stop, &sliceleft, &sliceright);
     }
-#endif
     else
 	Py_Error(PyExc_TypeError,
 		 "expected string or unicode");
@@ -678,12 +667,10 @@ Py_C_Function( mxTextSearch_find,
 				       &sliceleft, 
 				       &sliceright);
     }
-#ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
 	Py_CheckUnicodeSlice(text, start, stop);
 	rc = mxte_search_unicode_modern(self, text, start, stop, &sliceleft, &sliceright);
     }
-#endif
     else
 	Py_Error(PyExc_TypeError,
 		 "expected string or unicode");
@@ -719,11 +706,9 @@ Py_C_Function( mxTextSearch_findall,
     if (PyString_Check(text)) {
 	Py_CheckStringSlice(text, start, stop);
     }
-#ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
 	Py_CheckUnicodeSlice(text, start, stop);
     }
-#endif
     else
 	Py_Error(PyExc_TypeError,
 		 "expected string or unicode");
@@ -750,10 +735,8 @@ Py_C_Function( mxTextSearch_findall,
 					   stop, 
 					   &sliceleft, 
 					   &sliceright);
-#ifdef HAVE_UNICODE
 	else if (PyUnicode_Check(text))
 	    rc = mxte_search_unicode_modern(self, text, start, stop, &sliceleft, &sliceright);
-#endif
 	else
 	    break;
 	if (rc < 0)
@@ -1000,7 +983,6 @@ int init_string_charset(mxCharSetObject *cs,
     return -1;
 }
 
-#ifdef HAVE_UNICODE
 
 /* Unicode character sets are implemented using two step indexing
    which is a good compromise between lookup speed and memory usage.
@@ -1162,7 +1144,6 @@ int init_unicode_charset(mxCharSetObject *cs,
     return -1;
 }
 
-#endif
 
 /* allocation */
 
@@ -1183,12 +1164,10 @@ PyObject *mxCharSet_New(PyObject *definition)
 	if (init_string_charset(cs, definition))
 	    goto onError;
     }
-#ifdef HAVE_UNICODE
     else if (PyUnicode_Check(definition)) {
 	if (init_unicode_charset(cs, definition))
 	    goto onError;
     }
-#endif
     else
 	Py_Error(PyExc_TypeError,
 		 "character set definition must be string or unicode");
@@ -1239,13 +1218,11 @@ int mxCharSet_ContainsChar(PyObject *self,
 	unsigned char *bitmap = ((string_charset *)cs->lookup)->bitmap;
 	return ((bitmap[ch >> 3] & (1 << (ch & 7))) != 0);
     }
-#ifdef HAVE_UNICODE
     else if (cs->mode == MXCHARSET_UCS2MODE) {
 	unicode_charset *lookup = (unicode_charset *)cs->lookup;
 	unsigned char *bitmap = lookup->bitmaps[lookup->bitmapindex[0]];
 	return ((bitmap[ch >> 3] & (1 << (ch & 7))) != 0);
     }
-#endif
     else {
 	Py_Error(mxTextTools_Error,
 		 "unsupported character set mode");
@@ -1255,7 +1232,6 @@ int mxCharSet_ContainsChar(PyObject *self,
     return -1;
 }
 
-#ifdef HAVE_UNICODE
 
 int mxCharSet_ContainsUnicodeChar(PyObject *self,
 				  register Py_UCS4 ch)
@@ -1285,7 +1261,6 @@ int mxCharSet_ContainsUnicodeChar(PyObject *self,
     return -1;
 }
 
-#endif
 
 static
 int mxCharSet_Contains(PyObject *self,
@@ -1297,7 +1272,6 @@ int mxCharSet_Contains(PyObject *self,
 		  "expected a single character");
 	return mxCharSet_ContainsChar(self, PyString_AS_STRING(other)[0]);
     }
-#ifdef HAVE_UNICODE
     else if (PyUnicode_Check(other)) {
 	Py_Assert(PyUnicode_GET_LENGTH(other) == 1,
 		  PyExc_TypeError,
@@ -1305,7 +1279,6 @@ int mxCharSet_Contains(PyObject *self,
 	return mxCharSet_ContainsUnicodeChar(self, 
 					     mxte_get_unicode_char(other, 0));
     }
-#endif
     else
 	Py_Error(PyExc_TypeError,
 		 "expected string or unicode character");
@@ -1348,12 +1321,10 @@ int mxCharSet_FindChar(PyObject *self,
     
     if (cs->mode == MXCHARSET_8BITMODE)
 	bitmap = ((string_charset *)cs->lookup)->bitmap;
-#ifdef HAVE_UNICODE
     else if (cs->mode == MXCHARSET_UCS2MODE) {
 	unicode_charset *lookup = (unicode_charset *)cs->lookup;
 	bitmap = lookup->bitmaps[lookup->bitmapindex[0]];
     }
-#endif
     else {
 	Py_Error(mxTextTools_Error,
 		 "unsupported character set mode");
@@ -1425,12 +1396,10 @@ int mxCharSet_Search(PyObject *self,
 				      1,
 				      direction);
     }
-#ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
 	Py_CheckUnicodeSlice(text, start, stop);
 	position = mxte_charset_find_char(self, text, start, stop, 1, direction);
     }
-#endif
     else
 	Py_Error(PyExc_TypeError,
 		 "expected string or unicode");
@@ -1471,7 +1440,6 @@ Py_ssize_t mxCharSet_Match(PyObject *self,
 				      0,
 				      direction);
     }
-#ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
 	Py_CheckUnicodeSlice(text, start, stop);
 	
@@ -1487,7 +1455,6 @@ Py_ssize_t mxCharSet_Match(PyObject *self,
 	    position = mxte_charset_find_char(self, text, start, stop, 0, direction);
 	}
     }
-#endif
     else
 	Py_Error(PyExc_TypeError,
 		 "expected string or unicode");
@@ -1573,7 +1540,6 @@ PyObject *mxCharSet_Strip(PyObject *self,
 	return PyString_FromStringAndSize(PyString_AS_STRING(text) + left, 
 					  max(right - left, 0));
     }
-#ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
         Py_CheckUnicodeSlice(text, start, stop);
 
@@ -1597,7 +1563,6 @@ PyObject *mxCharSet_Strip(PyObject *self,
 	
 	return mxte_unicode_slice(text, left, max(right - left, 0));
     }
-#endif
     else
 	Py_Error(PyExc_TypeError,
 		 "expected string or unicode");
@@ -1680,7 +1645,6 @@ PyObject *mxCharSet_Split(PyObject *self,
 	}
 	
     }
-#ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
 	/* tx variable eliminated - using modern Unicode operations directly */
 
@@ -1732,7 +1696,6 @@ PyObject *mxCharSet_Split(PyObject *self,
 	    }
 	}
     }
-#endif    
     else
 	Py_Error(PyExc_TypeError,
 		 "expected string or unicode");
@@ -2041,7 +2004,6 @@ PyObject *tc_convert_string_arg(PyObject *arg,
     if (tabletype == MXTAGTABLE_STRINGTYPE) {
 	if (PyString_Check(arg))
 	    return arg;
-#ifdef HAVE_UNICODE
 	else if (PyUnicode_Check(arg)) {
 	    Py_DECREF(arg);
 	    arg = PyUnicode_AsEncodedString(arg,
@@ -2053,7 +2015,6 @@ PyObject *tc_convert_string_arg(PyObject *arg,
 				"conversion from Unicode to "
 				"string failed", (unsigned int)tableposition);
 	}
-#endif
 	else
 	    Py_ErrorWithArg(PyExc_TypeError,
 			    "tag table entry %d: "
@@ -2061,7 +2022,6 @@ PyObject *tc_convert_string_arg(PyObject *arg,
 			    "string or unicode", (unsigned int)tableposition);
     }
 
-#ifdef HAVE_UNICODE
     /* Convert to Unicode */
     else if (tabletype == MXTAGTABLE_UNICODETYPE) {
 	if (PyUnicode_Check(arg))
@@ -2084,7 +2044,6 @@ PyObject *tc_convert_string_arg(PyObject *arg,
 			    "command argument must be a "
 			    "string or unicode", (unsigned int)tableposition);
     }
-#endif
 
     else
 	Py_Error(mxTextTools_Error,
@@ -2601,7 +2560,6 @@ Py_C_Function( mxTagTable_TagTable,
     return NULL;
 }
 
-#ifdef HAVE_UNICODE
 Py_C_Function( mxTagTable_UnicodeTagTable,
 	       "TagTable(definition[,cachable=1])\n\n"
 	       )
@@ -2615,7 +2573,6 @@ Py_C_Function( mxTagTable_UnicodeTagTable,
  onError:
     return NULL;
 }
-#endif
 
 static 
 void mxTagTable_Free(mxTagTableObject *tagtable)
@@ -2785,7 +2742,6 @@ PyTypeObject mxTagTable_Type = {
 
 /* --- Internal functions ----------------------------------------------*/
 
-#ifdef HAVE_UNICODE
 
 /* Same as mxTextTools_Join() for Unicode objects. */
 
@@ -2920,7 +2876,6 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
     return NULL;
 }
 
-#endif
 
 /* Enhanced string join: also excepts tuple (text, left, right,...)
    entries which then cause text[left:right] to be used as string
@@ -2944,10 +2899,8 @@ PyObject *mxTextTools_Join(PyObject *seq,
     Py_ssize_t sep_len;
 
     if (separator) {
-#ifdef HAVE_UNICODE
 	if (PyUnicode_Check(separator))
 	    return mxTextTools_UnicodeJoin(seq, start, stop, separator);
-#endif
 	Py_Assert(PyString_Check(separator),
 		  PyExc_TypeError,
 		  "separator must be a string");
@@ -2984,7 +2937,6 @@ PyObject *mxTextTools_Join(PyObject *seq,
 		      PyInt_Check(PyTuple_GET_ITEM(o,2)),
 		      PyExc_TypeError,
 		      "tuples must be of the format (string,int,int[,...])");
-#ifdef HAVE_UNICODE
 	    if (PyUnicode_Check(PyTuple_GET_ITEM(o,0))) {
 		/* Redirect to Unicode implementation; all previous work
 		   is lost. */
@@ -2992,7 +2944,6 @@ PyObject *mxTextTools_Join(PyObject *seq,
 		Py_DECREF(newstring);
 		return mxTextTools_UnicodeJoin(seq, start, stop, separator);
 	    }
-#endif
 	    Py_Assert(PyString_Check(PyTuple_GET_ITEM(o,0)),
 		      PyExc_TypeError,
 		      "tuples must be of the format (string,int,int[,...])");
@@ -3030,7 +2981,6 @@ PyObject *mxTextTools_Join(PyObject *seq,
 	    st = PyString_AS_STRING(o);
 	    len_st = PyString_GET_SIZE(o);
 	}
-#ifdef HAVE_UNICODE
 	else if (PyUnicode_Check(o)) {
 	    /* Redirect to Unicode implementation; all previous work
 	       is lost. */
@@ -3038,7 +2988,6 @@ PyObject *mxTextTools_Join(PyObject *seq,
 	    Py_DECREF(newstring);
 	    return mxTextTools_UnicodeJoin(seq, start, stop, separator);
 	}
-#endif
 	else {
 	    Py_DECREF(o);
 	    Py_Error(PyExc_TypeError,
@@ -3182,11 +3131,9 @@ PyObject *mxTextTools_Joinlist(PyObject *text,
     if (PyString_Check(text)) {
 	Py_CheckStringSlice(text, pos, text_len);
     }
-#ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
 	Py_CheckUnicodeSlice(text, pos, text_len);
     }
-#endif
     else
 	Py_Error(PyExc_TypeError,
 		 "expected string or unicode");
@@ -3304,7 +3251,6 @@ PyObject *mxTextTools_Joinlist(PyObject *text,
     return NULL;
 }
 
-#ifdef HAVE_UNICODE
 static 
 PyObject *mxTextTools_UnicodeCharSplit(PyObject *text,
 				       PyObject *separator,
@@ -3388,7 +3334,6 @@ PyObject *mxTextTools_UnicodeCharSplit(PyObject *text,
     Py_XDECREF(separator);
     return NULL;
 }
-#endif
 
 static 
 PyObject *mxTextTools_CharSplit(PyObject *text,
@@ -3403,11 +3348,9 @@ PyObject *mxTextTools_CharSplit(PyObject *text,
     char *tx;
     char sep;
 
-#ifdef HAVE_UNICODE
     if (PyUnicode_Check(text) || PyUnicode_Check(separator))
 	return mxTextTools_UnicodeCharSplit(text, separator, 
 					    start, text_len);
-#endif
 
     if (PyString_Check(text) && PyString_Check(separator)) {
 	Py_CheckStringSlice(text, start, text_len);
@@ -3470,7 +3413,6 @@ PyObject *mxTextTools_CharSplit(PyObject *text,
     return NULL;
 }
 
-#ifdef HAVE_UNICODE
 static 
 PyObject *mxTextTools_UnicodeSplitAt(PyObject *text,
 				     PyObject *separator,
@@ -3564,7 +3506,6 @@ PyObject *mxTextTools_UnicodeSplitAt(PyObject *text,
     Py_XDECREF(separator);
     return NULL;
 }
-#endif
 
 static 
 PyObject *mxTextTools_SplitAt(PyObject *text,
@@ -3579,11 +3520,9 @@ PyObject *mxTextTools_SplitAt(PyObject *text,
     char *tx;
     char sep;
 
-#ifdef HAVE_UNICODE
     if (PyUnicode_Check(text) || PyUnicode_Check(separator))
 	return mxTextTools_UnicodeSplitAt(text, separator, 
 					  nth, start, text_len);
-#endif
 
     if (PyString_Check(text) && PyString_Check(separator)) {
 	Py_CheckStringSlice(text, start, text_len);
@@ -3658,7 +3597,6 @@ PyObject *mxTextTools_SplitAt(PyObject *text,
     return NULL;
 }
 
-#ifdef HAVE_UNICODE
 static 
 PyObject *mxTextTools_UnicodeSuffix(PyObject *text,
 				    PyObject *suffixes,
@@ -3718,7 +3656,6 @@ PyObject *mxTextTools_UnicodeSuffix(PyObject *text,
     Py_XDECREF(text);
     return NULL;
 }
-#endif
 
 static 
 PyObject *mxTextTools_Suffix(PyObject *text,
@@ -3730,12 +3667,10 @@ PyObject *mxTextTools_Suffix(PyObject *text,
     Py_ssize_t i;
     char *tx;
 
-#ifdef HAVE_UNICODE
     if (PyUnicode_Check(text))
 	return mxTextTools_UnicodeSuffix(text, suffixes, 
 					 start, text_len,
 					 translate);
-#endif
 
     if (PyString_Check(text)) {
 	Py_CheckStringSlice(text, start, text_len);
@@ -3813,7 +3748,6 @@ PyObject *mxTextTools_Suffix(PyObject *text,
     return NULL;
 }
 
-#ifdef HAVE_UNICODE
 static 
 PyObject *mxTextTools_UnicodePrefix(PyObject *text,
 				    PyObject *prefixes,
@@ -3872,7 +3806,6 @@ PyObject *mxTextTools_UnicodePrefix(PyObject *text,
     Py_XDECREF(text);
     return NULL;
 }
-#endif
 
 static 
 PyObject *mxTextTools_Prefix(PyObject *text,
@@ -3884,12 +3817,10 @@ PyObject *mxTextTools_Prefix(PyObject *text,
     Py_ssize_t i;
     char *tx;
 
-#ifdef HAVE_UNICODE
     if (PyUnicode_Check(text))
 	return mxTextTools_UnicodePrefix(text, prefixes, 
 					 start, text_len,
 					 translate);
-#endif
 
     if (PyString_Check(text)) {
 	Py_CheckStringSlice(text, start, text_len);
@@ -4256,7 +4187,6 @@ Py_C_Function_WithKeywords(
 	Py_DECREF(tagtable);
 
     }
-#ifdef HAVE_UNICODE
     else if (PyUnicode_Check(text)) {
 
 	Py_CheckUnicodeSlice(text, sliceleft, sliceright);
@@ -4284,7 +4214,6 @@ Py_C_Function_WithKeywords(
 	Py_DECREF(tagtable);
 
     }
-#endif
     else
 	Py_Error(PyExc_TypeError,
 		 "text must be a string or unicode");
@@ -4747,9 +4676,7 @@ static PyMethodDef Module_methods[] =
     Py_MethodWithKeywordsListEntry("TextSearch",mxTextSearch_TextSearch),
     Py_MethodListEntry("CharSet",mxCharSet_CharSet),
     Py_MethodListEntry("TagTable",mxTagTable_TagTable),
-#ifdef HAVE_UNICODE
     Py_MethodListEntry("UnicodeTagTable",mxTagTable_UnicodeTagTable),
-#endif
 	// Disabled because we don't actually use these functions
 	// and they are using a hack that tries to avoid the overhead
 	// of the single-value tuple creation/unpacking
@@ -4930,9 +4857,7 @@ static PyObject* mxTextToolsModule_Initialize(void)
     ADD_INT_CONSTANT("_const_Reset", MATCH_LOOPCONTROL_RESET);
 
     DPRINTF("sizeof(string_charset)=%i bytes\n", sizeof(string_charset));
-#ifdef HAVE_UNICODE
     DPRINTF("sizeof(unicode_charset)=%i bytes\n", sizeof(unicode_charset));
-#endif
 
     /* We are now initialized */
     mxTextTools_Initialized = 1;

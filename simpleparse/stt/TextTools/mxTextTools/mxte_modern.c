@@ -29,7 +29,6 @@ Py_ssize_t mxTextSearch_SearchBuffer_1BYTE(PyObject *self,
                                            Py_ssize_t *sliceleft,
                                            Py_ssize_t *sliceright);
 
-#ifdef HAVE_UNICODE
 Py_ssize_t mxTextSearch_SearchUnicode_2BYTE(PyObject *self,
                                                    TE_CHAR_2BYTE *text,
                                                    Py_ssize_t start,
@@ -43,7 +42,6 @@ Py_ssize_t mxTextSearch_SearchUnicode_4BYTE(PyObject *self,
                                                    Py_ssize_t stop,
                                                    Py_ssize_t *sliceleft,
                                                    Py_ssize_t *sliceright);
-#endif
 
 /* --- Tagging Engine --- 1-byte version (bytes and 1-byte unicode) ------- */
 
@@ -71,8 +69,6 @@ Py_ssize_t mxTextSearch_SearchUnicode_4BYTE(PyObject *self,
 #include "mxte_impl.h"
 
 /* --- Tagging Engine --- 2-byte Unicode version -------------------------- */
-
-#ifdef HAVE_UNICODE
 
 #undef TE_STRING_CHECK 
 #define TE_STRING_CHECK(obj) (PyUnicode_Check(obj) && mxte_get_string_kind(obj) == TE_KIND_2BYTE)
@@ -122,8 +118,6 @@ Py_ssize_t mxTextSearch_SearchUnicode_4BYTE(PyObject *self,
 
 #include "mxte_impl.h"
 
-#endif /* HAVE_UNICODE */
-
 /* --- Dispatcher function ------------------------------------------------ */
 
 /* This function determines the string kind and calls the appropriate engine */
@@ -144,14 +138,12 @@ int mxTextTools_TaggingEngine_Modern(PyObject *text,
         case TE_KIND_1BYTE:
             return mxTextTools_TaggingEngine_1BYTE(text, start, text_len, 
                                                    tagtable, taglist, context, next);
-#ifdef HAVE_UNICODE
         case TE_KIND_2BYTE:
             return mxTextTools_TaggingEngine_2BYTE(text, start, text_len,
                                                    tagtable, taglist, context, next);
         case TE_KIND_4BYTE:
             return mxTextTools_TaggingEngine_4BYTE(text, start, text_len,
                                                    tagtable, taglist, context, next);
-#endif
         default:
             PyErr_SetString(PyExc_TypeError, 
                            "text must be a bytes or unicode string");
@@ -160,7 +152,6 @@ int mxTextTools_TaggingEngine_Modern(PyObject *text,
 }
 
 /* Unicode-specific dispatcher for backward compatibility */
-#ifdef HAVE_UNICODE
 int mxTextTools_UnicodeTaggingEngine_Modern(PyObject *text,
                                             Py_ssize_t start,
                                             Py_ssize_t text_len,
@@ -185,7 +176,6 @@ int mxTextTools_UnicodeTaggingEngine(PyObject *text,
     return mxTextTools_TaggingEngine_Modern(text, start, text_len,
                                            tagtable, taglist, context, next);
 }
-#endif
 
 /* Non-Unicode tagging engine for backward compatibility */
 int mxTextTools_TaggingEngine(PyObject *text,
@@ -256,7 +246,6 @@ Py_ssize_t mxTextSearch_SearchBuffer_1BYTE(PyObject *self,
     return mxTextSearch_SearchBuffer(self, (char*)text, start, stop, sliceleft, sliceright);
 }
 
-#ifdef HAVE_UNICODE
 /* 2-byte search wrapper */
 Py_ssize_t mxTextSearch_SearchUnicode_2BYTE(PyObject *self,
                                                    TE_CHAR_2BYTE *text,
@@ -373,4 +362,3 @@ Py_ssize_t mxTextSearch_SearchUnicode_4BYTE(PyObject *self,
     
     return 0; /* No match found */
 }
-#endif

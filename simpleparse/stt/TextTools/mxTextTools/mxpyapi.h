@@ -11,9 +11,7 @@
 
 */
 
-#define HAVE_UNICODE TRUE
-
-#if PY_MAJOR_VERSION >= 3
+/* Python 3+ always uses these mappings */
 #define PyInt_FromLong PyLong_FromLong
 #define PyInt_Check PyLong_Check
 #define PyInt_AS_LONG PyLong_AS_LONG
@@ -26,14 +24,10 @@
 #define PyString_GET_SIZE PyBytes_GET_SIZE
 #define PyString_AS_STRING PyBytes_AS_STRING
 #define _PyString_Resize _PyBytes_Resize
-#endif
 
+/* Unicode length - always use modern API in Python 3.3+ */
 #ifndef PyUnicode_GET_LENGTH
-#if PY_MAJOR_VERSION >= 3
 #define PyUnicode_GET_LENGTH PyUnicode_GetLength
-#else 
-#define PyUnicode_GET_LENGTH PyUnicode_GET_SIZE
-#endif
 #endif
 
 
