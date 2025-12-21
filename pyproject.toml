@@ -9,7 +9,7 @@ description = "A Parser Generator for Python (w/mxTextTools derivative)"
 authors = [
     {name = "Mike C. Fletcher", email = "mcfletch@users.sourceforge.net"},
 ]
-readme = "readme.md"
+readme = "README.md"
 license = {text = "BSD-3-Clause"}
 keywords = ["parse", "parser", "parsing", "text", "ebnf", "grammar", "generator"]
 classifiers = [
