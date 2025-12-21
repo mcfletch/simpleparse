@@ -509,25 +509,18 @@ static inline Py_ssize_t mxte_charset_find_char(PyObject *charset,
     return i; /* Return the position (may be stop/start-1 if not found) */
 }
 
-/* Create Unicode string from Py_UNICODE array using modern API */
-static inline PyObject* mxte_create_unicode_from_unicode(const Py_UNICODE *data, Py_ssize_t length) {
+/* Create Unicode string from UCS4 array using modern API */
+static inline PyObject* mxte_create_unicode_from_unicode(const Py_UCS4 *data, Py_ssize_t length) {
     if (!data) {
         return PyUnicode_New(length, 0);
     }
     
-    /* Use modern API to create from Py_UNICODE data */
-    if (sizeof(Py_UNICODE) == 2) {
-        return PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, data, length);
-    } else if (sizeof(Py_UNICODE) == 4) {
-        return PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, data, length);
-    } else {
-        PyErr_SetString(PyExc_SystemError, "Unsupported Py_UNICODE size");
-        return NULL;
-    }
+    /* Use modern API to create from UCS4 data */
+    return PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, data, length);
 }
 
 /* Get single Unicode character using modern API */
-static inline Py_UNICODE mxte_get_unicode_char(PyObject *str, Py_ssize_t index) {
+static inline Py_UCS4 mxte_get_unicode_char(PyObject *str, Py_ssize_t index) {
     if (!PyUnicode_Check(str)) {
         return 0;
     }
@@ -536,7 +529,7 @@ static inline Py_UNICODE mxte_get_unicode_char(PyObject *str, Py_ssize_t index) 
         return 0;
     }
     
-    return (Py_UNICODE)PyUnicode_READ(PyUnicode_KIND(str), PyUnicode_DATA(str), index);
+    return PyUnicode_READ(PyUnicode_KIND(str), PyUnicode_DATA(str), index);
 }
 
 /* String slice using modern API */
@@ -553,7 +546,7 @@ static inline PyObject* mxte_unicode_slice(PyObject *str, Py_ssize_t start, Py_s
 }
 
 /* Create substring from buffer offset and length (for legacy pointer arithmetic) */
-static inline PyObject* mxte_unicode_substring_from_buffer(PyObject *str, Py_UNICODE *buffer_start, Py_ssize_t buffer_offset, Py_ssize_t length) {
+static inline PyObject* mxte_unicode_substring_from_buffer(PyObject *str, Py_UCS4 *buffer_start, Py_ssize_t buffer_offset, Py_ssize_t length) {
     if (!PyUnicode_Check(str)) {
         return NULL;
     }

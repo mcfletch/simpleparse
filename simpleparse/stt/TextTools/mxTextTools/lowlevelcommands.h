@@ -14,6 +14,13 @@
 
 */
 /* Character access macros for Unicode vs bytes engines */
+#ifdef GET_TEXT_CHAR
+#undef GET_TEXT_CHAR
+#endif
+#ifdef GET_MATCH_CHAR
+#undef GET_MATCH_CHAR
+#endif
+
 #if (TE_TABLETYPE == MXTAGTABLE_UNICODETYPE)
 #define GET_TEXT_CHAR(obj, pos) PyUnicode_READ(PyUnicode_KIND(obj), PyUnicode_DATA(obj), pos)
 #define GET_MATCH_CHAR(obj, pos) PyUnicode_READ(PyUnicode_KIND(obj), PyUnicode_DATA(obj), pos)

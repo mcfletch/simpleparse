@@ -64,7 +64,7 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 #ifdef HAVE_UNICODE
 extern
 Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
-			       Py_UNICODE *text,
+			       Py_UCS4 *text,
 			       Py_ssize_t start,
 			       Py_ssize_t stop,
 			       Py_ssize_t *sliceleft,

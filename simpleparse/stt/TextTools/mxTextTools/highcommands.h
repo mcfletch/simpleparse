@@ -219,7 +219,7 @@ case MATCH_CALLARG:
 						PyTuple_SET_ITEM(args, 3 + argIndex, w);
 					}
 					/* now actually call the object */
-					w = PyEval_CallObject(fct, args);
+					w = PyObject_CallObject(fct, args);
 					Py_DECREF(args);
 					if (w == NULL)
 					{

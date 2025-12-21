@@ -299,46 +299,6 @@ Py_ssize_t trivial_search(const char *text,
     return start;
 }
 
-#ifdef HAVE_UNICODE
-static
-Py_ssize_t trivial_unicode_search(const Py_UNICODE *text,
-			   Py_ssize_t start,
-			   Py_ssize_t stop,
-			   const Py_UNICODE *match,
-			   Py_ssize_t match_len)
-{
-    Py_ssize_t ml1 = match_len - 1;
-    register const Py_UNICODE *tx = &text[start];
-    register Py_ssize_t x = start;
-
-    if (ml1 < 0) 
-	return start;
-
-    /* Brute-force method; from right to left */
-    for (;;) {
-	register Py_ssize_t j = ml1;
-	register const Py_UNICODE *mj = &match[j];
-
-	if (x + j >= stop)
-	    /* reached eof: no match */
-	    return start;
-
-	/* scan from right to left */
-	for (tx += j; j >= 0 && *tx == *mj; 
-	     tx--, mj--, j--) ;
-
-	if (j < 0) {
-	    /* found */
-	    x += ml1 + 1;
-	    return x;
-	}
-	/* not found: rewind and advance one char */
-	tx -= j - 1;
-	x++;
-    }
-    return start;
-}
-#endif
 
 /* Search for the match in text[start:stop]. 
 
@@ -455,7 +415,7 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 
 #ifdef HAVE_UNICODE
 Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
-			       Py_UNICODE *text,
+			       Py_UCS4 *text,
 			       Py_ssize_t start,
 			       Py_ssize_t stop,
 			       Py_ssize_t *sliceleft,
@@ -1441,131 +1401,6 @@ int mxCharSet_FindChar(PyObject *self,
     return -2;
 }
 
-#ifdef HAVE_UNICODE
-
-static
-int mxCharSet_FindUnicodeChar(PyObject *self,
-			      Py_UNICODE *text,
-			      Py_ssize_t start,
-			      Py_ssize_t stop,
-			      const int mode,
-			      const int direction)
-{
-    register int i;
-    register unsigned int c;
-    register unsigned int block;
-    unsigned char *bitmap;
-
-    if (!mxCharSet_Check(self)) {
-	PyErr_BadInternalCall();
-	goto onError;
-    }
-    
-    if (cs->mode == MXCHARSET_8BITMODE) {
-	bitmap = ((string_charset *)cs->lookup)->bitmap;
-	if (direction > 0) {
-	    if (mode)
-		/* Find first char in set */
-		for (i = start; i < stop; i++) {
-		    c = text[i];
-		    if (c > 256)
-			continue;
-		    block = bitmap[c >> 3];
-		    if (block && ((block & (1 << (c & 7))) != 0))
-			break;
-		}
-	    else
-		/* Find first char not in set */
-		for (i = start; i < stop; i++) {
-		    c = text[i];
-		    if (c > 256)
-			break;
-		    block = bitmap[c >> 3];
-		    if (!block || ((block & (1 << (c & 7))) == 0))
-			break;
-		}
-        }
-	else {
-	    if (mode)
-		/* Find first char in set, searching from the end */
-		for (i = stop - 1; i >= start; i--) {
-		    c = text[i];
-		    if (c > 256)
-			continue;
-		    block = bitmap[c >> 3];
-		    if (block && ((block & (1 << (c & 7))) != 0))
-			break;
-		}
-	    else
-		/* Find first char not in set, searching from the end */
-		for (i = stop - 1; i >= start; i--) {
-		    c = text[i];
-		    if (c > 256)
-			break;
-		    block = bitmap[c >> 3];
-		    if (!block || ((block & (1 << (c & 7))) == 0))
-			break;
-		}
-	}
-	return i;
-    }
-
-#ifdef HAVE_UNICODE
-    else if (cs->mode == MXCHARSET_UCS2MODE) {
-	unicode_charset *lookup = (unicode_charset *)cs->lookup;
-	if (direction > 0) {
-	    if (mode)
-		/* Find first char in set */
-		for (i = start; i < stop; i++) {
-		    c = text[i];
-		    bitmap = lookup->bitmaps[lookup->bitmapindex[c >> 8]];
-		    block = bitmap[(c >> 3) & 31];
-		    if (block && ((block & (1 << (c & 7))) != 0))
-			break;
-		}
-	    else
-		/* Find first char not in set */
-		for (i = start; i < stop; i++) {
-		    c = text[i];
-		    bitmap = lookup->bitmaps[lookup->bitmapindex[c >> 8]];
-		    block = bitmap[(c >> 3) & 31];
-		    if (!block || ((block & (1 << (c & 7))) == 0))
-			break;
-		}
-	}
-	else {
-	    if (mode)
-		/* Find first char in set, searching from the end */
-		for (i = stop - 1; i >= start; i--) {
-		    c = text[i];
-		    bitmap = lookup->bitmaps[lookup->bitmapindex[c >> 8]];
-		    block = bitmap[(c >> 3) & 31];
-		    if (block && ((block & (1 << (c & 7))) != 0))
-			break;
-		}
-	    else
-		/* Find first char not in set, searching from the end */
-		for (i = stop - 1; i >= start; i--) {
-		    c = text[i];
-		    bitmap = lookup->bitmaps[lookup->bitmapindex[c >> 8]];
-		    block = bitmap[(c >> 3) & 31];
-		    if (!block || ((block & (1 << (c & 7))) == 0))
-			break;
-		}
-	}
-	return i;
-    }
-#endif
-    else {
-	Py_Error(mxTextTools_Error,
-		 "unsupported character set mode");
-    }
-
- onError:
-    return -2;
-}
-
-#endif
 
 /* Return the position of the first character in text[start:stop]
    occurring in set or -1 in case no such character exists.
@@ -2962,9 +2797,9 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
 {
     PyObject *newstring = 0, *tempstr = 0;
     Py_ssize_t newstring_len,current_len = 0;
-    Py_UNICODE *p;
+    Py_UCS4 *p;
     Py_ssize_t i;
-    Py_UNICODE *sep;
+    Py_UCS4 *sep;
     Py_ssize_t sep_len;
     
     if (separator) {
@@ -2989,7 +2824,7 @@ PyObject *mxTextTools_UnicodeJoin(PyObject *seq,
     /* Join with separator */
     for (i = start; i < stop; i++) {
 	register PyObject *o;
-	Py_UNICODE *st;
+	Py_UCS4 *st;
 	Py_ssize_t len_st;
 
 	o = PySequence_GetItem(seq, i);
@@ -3325,52 +3160,6 @@ PyObject *mxTextTools_StringFromHexString(char *hex,
     return NULL;
 }
 
-static 
-int mxTextTools_IsASCII(PyObject *text,
-			Py_ssize_t left,
-			Py_ssize_t right)
-{
-    if (PyString_Check(text)) {
-	Py_ssize_t len;
-	register Py_ssize_t i;
-	register unsigned char *str = (unsigned char *)PyString_AS_STRING(text);
-
-	len = PyString_GET_SIZE(text);
-	Py_CheckSequenceSlice(len, left, right);
-	for (i = left; i < right; i++)
-	    if (str[i] >= 128)
-		return 0;
-	return 1;
-    }
-
-#ifdef HAVE_UNICODE
-    else if (PyUnicode_Check(text)) {
-	Py_ssize_t len;
-	register Py_ssize_t i;
-
-	if (PyUnicode_READY(text) < 0)
-	    return -1;
-
-	len = PyUnicode_GET_LENGTH(text);
-	Py_CheckSequenceSlice(len, left, right);
-	
-	/* Use modern Unicode character access */
-	for (i = left; i < right; i++) {
-	    Py_UCS4 ch = PyUnicode_READ(PyUnicode_KIND(text), PyUnicode_DATA(text), i);
-	    if (ch >= 128)
-		return 0;
-	}
-	return 1;
-    }
-#endif
-
-    else
-	Py_Error(PyExc_TypeError,
-		 "need string object");
-    
- onError:
-    return -1;
-}
 
 /* Takes a list of tuples (replacement,l,r,...) and produces a taglist
    suitable for mxTextTools_Join() which creates a copy of
@@ -3526,8 +3315,7 @@ PyObject *mxTextTools_UnicodeCharSplit(PyObject *text,
     register Py_ssize_t x;
     Py_ssize_t listitem = 0;
     Py_ssize_t listsize = INITIAL_LIST_SIZE;
-    Py_UNICODE *tx;
-    Py_UNICODE sep;
+    Py_UCS4 sep;
 
     text = PyUnicode_FromObject(text);
     if (text == NULL) {
@@ -3647,7 +3435,7 @@ PyObject *mxTextTools_CharSplit(PyObject *text,
 	/* Skip to next separator */
 	z = x;
 	for (;x < text_len; x++) {
-	    Py_UCS4 ch = PyUnicode_READ(PyUnicode_KIND(text), PyUnicode_DATA(text), x);
+	    char ch = tx[x];
 	    if (ch == sep)
 		break;
 	}
@@ -3693,8 +3481,8 @@ PyObject *mxTextTools_UnicodeSplitAt(PyObject *text,
     PyObject *tuple = 0;
     register Py_ssize_t x;
     PyObject *s;
-    Py_UNICODE *tx;
-    Py_UNICODE sep;
+    Py_UCS4 *tx;
+    Py_UCS4 sep;
 
     text = PyUnicode_FromObject(text);
     if (text == NULL) {
@@ -3879,7 +3667,7 @@ PyObject *mxTextTools_UnicodeSuffix(PyObject *text,
 				    PyObject *translate)
 {
     Py_ssize_t i;
-    Py_UNICODE *tx;
+    Py_UCS4 *tx;
 
     text = PyUnicode_FromObject(text);
     if (text == NULL)
@@ -4034,7 +3822,7 @@ PyObject *mxTextTools_UnicodePrefix(PyObject *text,
 				    PyObject *translate)
 {
     Py_ssize_t i;
-    Py_UNICODE *tx;
+    Py_UCS4 *tx;
 
     text = PyUnicode_FromObject(text);
     if (text == NULL)
@@ -4383,137 +4171,9 @@ PyObject *mxTextTools_SetSplitX(char *tx,
     return NULL;
 }
 
-static 
-PyObject *mxTextTools_Upper(PyObject *text)
-{
-    PyObject *ntext;
-    register unsigned char *s;
-    register unsigned char *orig;
-    register Py_ssize_t i;
-    unsigned char *tr;
-    Py_ssize_t len;
-    
-    Py_Assert(PyString_Check(text),
-	      PyExc_TypeError,
-	      "expected a Python string");
 
-    len = PyString_GET_SIZE(text);
-    ntext = PyString_FromStringAndSize(NULL,len);
-    if (!ntext)
-	goto onError;
-    
-    /* Translate */
-    tr = (unsigned char *)PyString_AS_STRING(mx_ToUpper);
-    orig = (unsigned char *)PyString_AS_STRING(text);
-    s = (unsigned char *)PyString_AS_STRING(ntext);
-    for (i = 0; i < len; i++, s++, orig++)
-	*s = tr[*orig];
-    
-    return ntext;
-    
- onError:
-    return NULL;
-}
 
-#ifdef HAVE_UNICODE
-static 
-PyObject *mxTextTools_UnicodeUpper(PyObject *text)
-{
-    PyObject *ntext;
-    register Py_UNICODE *s;
-    register Py_UNICODE *orig;
-    register Py_ssize_t i;
-    Py_ssize_t	len;
-    
-    text = PyUnicode_FromObject(text);
-    if (text == NULL)
-	goto onError;
 
-    len = PyUnicode_GET_LENGTH(text);
-    ntext = PyUnicode_New(len, 1114111);
-    if (!ntext)
-	goto onError;
-    
-    /* Translate */
-    orig = (Py_UNICODE *)mxte_get_unicode_data(text);
-    s = (Py_UNICODE *)mxte_get_unicode_data(ntext);
-    for (i = 0; i < len; i++, s++, orig++)
-	*s = Py_UNICODE_TOUPPER(*orig);
-    
-    Py_DECREF(text);
-    return ntext;
-    
- onError:
-    Py_XDECREF(text);
-    return NULL;
-}
-#endif
-
-static 
-PyObject *mxTextTools_Lower(PyObject *text)
-{
-    PyObject *ntext;
-    register unsigned char *s;
-    register unsigned char *orig;
-    register Py_ssize_t i;
-    unsigned char *tr;
-    Py_ssize_t len;
-    
-    Py_Assert(PyString_Check(text),
-	      PyExc_TypeError,
-	      "expected a Python string");
-
-    len = PyString_GET_SIZE(text);
-    ntext = PyString_FromStringAndSize(NULL,len);
-    if (!ntext)
-	goto onError;
-    
-    /* Translate */
-    tr = (unsigned char *)PyString_AS_STRING(mx_ToLower);
-    orig = (unsigned char *)PyString_AS_STRING(text);
-    s = (unsigned char *)PyString_AS_STRING(ntext);
-    for (i = 0; i < len; i++, s++, orig++)
-	*s = tr[*orig];
-    
-    return ntext;
-    
- onError:
-    return NULL;
-}
-
-#ifdef HAVE_UNICODE
-static 
-PyObject *mxTextTools_UnicodeLower(PyObject *text)
-{
-    PyObject *ntext;
-    register Py_UNICODE *s;
-    register Py_UNICODE *orig;
-    register Py_ssize_t i;
-    Py_ssize_t	len;
-    
-    text = PyUnicode_FromObject(text);
-    if (text == NULL)
-	goto onError;
-
-    len = PyUnicode_GET_LENGTH(text);
-    ntext = PyUnicode_New(len, 1114111);
-    if (!ntext)
-	goto onError;
-    
-    /* Translate */
-    orig = (Py_UNICODE *)mxte_get_unicode_data(text);
-    s = (Py_UNICODE *)mxte_get_unicode_data(ntext);
-    for (i = 0; i < len; i++, s++, orig++)
-	*s = Py_UNICODE_TOLOWER(*orig);
-    
-    Py_DECREF(text);
-    return ntext;
-    
- onError:
-    Py_XDECREF(text);
-    return NULL;
-}
-#endif
 
 /* --- Module functions ------------------------------------------------*/
 
@@ -5035,47 +4695,6 @@ Py_C_Function( mxTextTools_setsplitx,
     return NULL;
 }
 
-Py_C_Function( mxTextTools_upper,
-	       "upper(text)\n\n"
-	       "Return text converted to upper case.")
-{
-    PyObject *text;
-    
-    Py_GetArgObject(text);
-    if (PyString_Check(text))
-	return mxTextTools_Upper(text);
-#ifdef HAVE_UNICODE
-    else if (PyUnicode_Check(text))
-	return mxTextTools_UnicodeUpper(text);
-#endif
-    else
-	Py_Error(PyExc_TypeError,
-		 "expected string or unicode");
-
- onError:
-    return NULL;
-}
-
-Py_C_Function( mxTextTools_lower,
-	       "lower(text)\n\n"
-	       "Return text converted to lower case.")
-{
-    PyObject *text;
-    
-    Py_GetArgObject(text);
-    if (PyString_Check(text))
-	return mxTextTools_Lower(text);
-#ifdef HAVE_UNICODE
-    else if (PyUnicode_Check(text))
-	return mxTextTools_UnicodeLower(text);
-#endif
-    else
-	Py_Error(PyExc_TypeError,
-		 "expected string or unicode");
-    
- onError:
-    return NULL;
-}
 
 Py_C_Function( mxTextTools_str2hex,
 	       "str2hex(text)\n\n"
@@ -5109,25 +4728,6 @@ Py_C_Function( mxTextTools_hex2str,
     return NULL;
 }
 
-Py_C_Function( mxTextTools_isascii,
-	       "isascii(text,start=0,stop=len(text))\n\n"
-	       "Return 1/0 depending on whether text only contains ASCII\n"
-	       "characters."
-	       )
-{
-    PyObject *text;
-    Py_ssize_t start=0, stop = INT_MAX;
-    int rc;
-    
-    Py_GetArgObject(text);
-    rc = mxTextTools_IsASCII(text, start, stop);
-    if (rc < 0)
-	goto onError;
-    return PyInt_FromLong(rc);
-    
- onError:
-    return NULL;
-}
 
 /* --- module init --------------------------------------------------------- */
 

@@ -548,7 +548,7 @@ int TE_ENGINE_API(
 										Py_INCREF( objectToCall );
 										Py_INCREF( parameter );
 										DPRINTF( " lock released\n" );
-										objectCallResult =  PyEval_CallObject( objectToCall, parameter );
+										objectCallResult =  PyObject_CallObject( objectToCall, parameter );
 										DPRINTF( " call finished\n" );
 										Py_DECREF( objectToCall );
 										Py_DECREF( parameter );

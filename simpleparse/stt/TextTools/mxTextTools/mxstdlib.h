@@ -144,10 +144,15 @@
 
  */
 
-static
+static __attribute__((unused))
 int mxDebugPrintf(const char *format, ...)
 {
+#ifdef MAL_DEBUG
     return 1;
+#else
+    /* No-op when debugging is disabled */
+    return 0;
+#endif
 }
 
 #ifdef MAL_DEBUG
