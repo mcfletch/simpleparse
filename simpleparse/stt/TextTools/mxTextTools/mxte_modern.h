@@ -677,8 +677,8 @@ static inline Py_UCS4 mxte_fast_unicode_read(int kind, void *data, Py_ssize_t in
     }
 }
 
-/* ASCII-only fast path using memcmp - 2-5x faster for ASCII strings */
-static inline Py_ssize_t mxte_ascii_fast_search(PyObject *text_obj, PyObject *match_obj, 
+/* 1-byte Unicode fast path using memcmp - 2-5x faster for Latin-1/ASCII strings */
+static inline Py_ssize_t mxte_1byte_fast_search(PyObject *text_obj, PyObject *match_obj, 
                                                  Py_ssize_t start, Py_ssize_t stop) {
     const char *text_data = (const char *)PyUnicode_1BYTE_DATA(text_obj);
     const char *match_data = (const char *)PyUnicode_1BYTE_DATA(match_obj);
@@ -791,9 +791,9 @@ static inline Py_ssize_t mxte_optimized_unicode_search(PyObject *text_obj, PyObj
     int text_kind = PyUnicode_KIND(text_obj);
     int match_kind = PyUnicode_KIND(match_obj);
     
-    /* ASCII-only fast path - highest performance */
-    if (PyUnicode_IS_ASCII(text_obj) && PyUnicode_IS_ASCII(match_obj)) {
-        return mxte_ascii_fast_search(text_obj, match_obj, start, stop);
+    /* 1-byte Unicode fast path - highest performance for Latin-1/ASCII */
+    if (text_kind == PyUnicode_1BYTE_KIND && match_kind == PyUnicode_1BYTE_KIND) {
+        return mxte_1byte_fast_search(text_obj, match_obj, start, stop);
     }
     
     /* Same-kind optimization - good performance */

@@ -424,12 +424,12 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 		    return 1;
 		}
 		
-		/* ASCII optimization: if pattern is ASCII and fits in char buffer, use fast path */
-		if (PyUnicode_IS_ASCII(so->match) && match_len == 1) {
-		    /* Single ASCII character - use memchr */
-		    Py_UCS1 ascii_char = PyUnicode_READ_CHAR(so->match, 0);
-		    if (ascii_char <= 127) {  /* Verify it's actually ASCII */
-			const char *result = (const char *)memchr(text + start, (char)ascii_char, stop - start);
+		/* 1-byte Unicode optimization: if pattern is 1-byte and single char, use fast path */
+		if (PyUnicode_KIND(so->match) == PyUnicode_1BYTE_KIND && match_len == 1) {
+		    /* Single 1-byte character - use memchr for Latin-1/ASCII */
+		    Py_UCS1 byte_char = PyUnicode_READ_CHAR(so->match, 0);
+		    if (byte_char <= 255) {  /* Always true for 1-byte, but explicit for clarity */
+			const char *result = (const char *)memchr(text + start, (char)byte_char, stop - start);
 			if (result) {
 			    nextpos = (result - text) + 1;  /* Position after match */
 			    *sliceleft = result - text;
