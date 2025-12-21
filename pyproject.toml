@@ -34,10 +34,11 @@ classifiers = [
 requires-python = ">=3.3"
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "ruff"]
+docs = ["sphinx", "sphinx-rtd-theme"]
 
 [project.urls]
-Homepage = "http://simpleparse.sourceforge.net/"
+Homepage = "https://mcfletch.github.io/simpleparse/"
 Source = "https://github.com/mcfletch/simpleparse"
 
 [tool.setuptools]
@@ -58,3 +59,21 @@ version = {attr = "simpleparse.__version__"}
 
 [tool.setuptools.package-data]
 simpleparse = ["*.txt", "**/*.txt", "**/*.ebnf", "**/*.html", "**/*.pyx", "**/*.h", "**/*.def"]
+
+[tool.ruff.format]
+quote-style="preserve"
+
+[tool.ruff.lint]
+dummy-variable-rgx="^(_|err)$"
+ignore = [
+    'D200', # Allow multiline docstring even when it could fit on one line
+
+    'C408', # Allow instantiating dictionary as dict(key=value)
+    'E501', # Line too long
+    'PTH', # allow os.path
+    'PLR0913', # allow "too many" arguments
+
+    'E401', # I prefer multiple imports/line generally
+    'E402', # We often need to run setupdefaults to get django setup done
+    'F401', # unused imports, not an error, but should be cleaned up
+]
