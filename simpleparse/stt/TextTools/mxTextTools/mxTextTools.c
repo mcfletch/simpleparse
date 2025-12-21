@@ -400,9 +400,20 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 	    if (PyString_Check(so->match)) {
 		match = PyString_AS_STRING(so->match);
 		match_len = PyString_GET_SIZE(so->match);
+		/* ASCII fast path optimization */
+		if (match_len == 1) {
+		    /* Single character search - use memchr for maximum speed */
+		    const char *result = (const char *)memchr(text + start, match[0], stop - start);
+		    if (result) {
+			nextpos = (result - text) + 1;  /* Position after match for consistency */
+		    } else {
+			return 0;  /* Not found */
+		    }
+		    break;
+		}
 	    }
 	    else if (PyUnicode_Check(so->match)) {
-		/* Handle Unicode patterns by doing character-by-character comparison */
+		/* Handle Unicode patterns - optimize for ASCII case */
 		if (PyUnicode_READY(so->match) < 0)
 		    goto onError;
 		match_len = PyUnicode_GET_LENGTH(so->match);
@@ -412,7 +423,25 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 		    *sliceright = start;
 		    return 1;
 		}
-		/* Do Unicode-aware search */
+		
+		/* ASCII optimization: if pattern is ASCII and fits in char buffer, use fast path */
+		if (PyUnicode_IS_ASCII(so->match) && match_len == 1) {
+		    /* Single ASCII character - use memchr */
+		    Py_UCS1 ascii_char = PyUnicode_READ_CHAR(so->match, 0);
+		    if (ascii_char <= 127) {  /* Verify it's actually ASCII */
+			const char *result = (const char *)memchr(text + start, (char)ascii_char, stop - start);
+			if (result) {
+			    nextpos = (result - text) + 1;  /* Position after match */
+			    *sliceleft = result - text;
+			    *sliceright = (result - text) + 1;
+			    return 1;
+			} else {
+			    return 0;  /* Not found */
+			}
+		    }
+		}
+		
+		/* Fall back to character-by-character Unicode search */
 		for (Py_ssize_t i = start; i <= stop - match_len; i++) {
 		    Py_ssize_t j;
 		    for (j = 0; j < match_len; j++) {
@@ -594,8 +623,8 @@ Py_ssize_t mxTextSearch_SearchUnicode_Modern(PyObject *self,
                 return -1;
             }
             
-            /* Use the modern trivial search helper function from mxte_modern.h */
-            nextpos = mxte_trivial_unicode_search_modern(text, start, stop, match_obj);
+            /* Use the optimized Unicode search with ASCII fast path and same-kind optimization */
+            nextpos = mxte_optimized_unicode_search(text, match_obj, start, stop);
             
             Py_XDECREF(u);
         }
@@ -623,7 +652,7 @@ Py_ssize_t mxTextSearch_SearchUnicode_Modern(PyObject *self,
                 return -1;
             }
             
-            nextpos = mxte_trivial_unicode_search_modern(text, start, stop, match_obj);
+            nextpos = mxte_optimized_unicode_search(text, match_obj, start, stop);
             
             Py_XDECREF(u);
         }
