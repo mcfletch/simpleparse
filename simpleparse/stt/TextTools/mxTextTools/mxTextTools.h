@@ -157,6 +157,7 @@ typedef struct {
 
 #define MXTAGTABLE_STRINGTYPE	0
 #define MXTAGTABLE_UNICODETYPE	1
+#define MXTAGTABLE_ENCODEDTYPE	2  /* Bytes with specified encoding */
 
 typedef struct {
     PyObject_VAR_HEAD
@@ -165,7 +166,10 @@ typedef struct {
                                    needed for caching */
     int tabletype;              /* Type of compiled table:
                                    0 - 8-bit string args
-                                   1 - Unicode args */
+                                   1 - Unicode args
+                                   2 - encoded bytes args */
+    const char *encoding;       /* Encoding name (e.g., "utf-8") or NULL */
+    int is_multibyte;           /* 1 for UTF-8, 0 for single-byte encodings */
     int numentries;             /* number of allocated entries */
     mxTagTableEntry entry[1];   /* Variable length array of
                                    mxTagTableEntry fields */
@@ -182,10 +186,17 @@ MXTEXTTOOLS_EXTERNALIZE(PyTypeObject) mxTagTable_Type;
 	(((mxTagTableObject *)(v))->definition)
 
 /* Exporting these APIs for mxTextTools internal use only ! */
-extern 
+extern
 PyObject *mxTagTable_New(PyObject *definition,
 			 int tabletype,
 			 int cacheable);
+
+/* Create encoded tag table - encodes Unicode patterns to specified encoding */
+extern
+PyObject *mxTagTable_NewEncoded(PyObject *definition,
+				const char *encoding,
+				int is_multibyte,
+				int cacheable);
 
 /* --- Tagging Engine -------------------------------------------*/
 

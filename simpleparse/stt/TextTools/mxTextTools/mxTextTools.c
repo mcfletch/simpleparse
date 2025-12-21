@@ -2106,6 +2106,11 @@ PyObject *mxTagTable_New(PyObject *definition,
 			 int tabletype,
 			 int cacheable);
 
+PyObject *mxTagTable_NewEncoded(PyObject *definition,
+				const char *encoding,
+				int is_multibyte,
+				int cacheable);
+
 /* internal APIs */
 
 static
@@ -2166,15 +2171,47 @@ Py_ssize_t tc_add_jumptarget(PyObject *jumpdict,
 }
 
 /* Convert a string command argument to either an 8-bit string or
-   Unicode depending on the tabletype. */
+   Unicode depending on the tabletype.
+
+   For encoded tables (encoding != NULL), Unicode patterns are encoded
+   to bytes using the specified encoding. */
 
 static
 PyObject *tc_convert_string_arg(PyObject *arg,
 				Py_ssize_t tableposition,
-				int tabletype)
+				int tabletype,
+				const char *encoding)
 {
-    /* Convert to strings */
-    if (tabletype == MXTAGTABLE_STRINGTYPE) {
+    /* Encoded mode: convert Unicode to bytes using specified encoding */
+    if (encoding != NULL) {
+	if (PyString_Check(arg)) {
+	    /* Bytes - keep as-is. Assume they're already in the right encoding
+	       or the user knows what they're doing. */
+	    return arg;
+	}
+	else if (PyUnicode_Check(arg)) {
+	    /* Encode Unicode to bytes using the specified encoding */
+	    PyObject *encoded = PyUnicode_AsEncodedString(arg, encoding, "strict");
+	    if (encoded == NULL) {
+		/* PyUnicode_AsEncodedString already set the exception.
+		   Note: we don't DECREF arg here - the caller owns it and will
+		   clean up. If we DECREF'd here and returned NULL, the caller's
+		   error handler would try to DECREF again causing a double-free. */
+		goto onError;
+	    }
+	    Py_DECREF(arg);  /* Release the original Unicode object */
+	    return encoded;
+	}
+	else {
+	    Py_ErrorWithArg(PyExc_TypeError,
+			    "tag table entry %d: "
+			    "command argument must be a "
+			    "string or unicode", (unsigned int)tableposition);
+	}
+    }
+
+    /* Convert to strings (original STRINGTYPE behavior) */
+    else if (tabletype == MXTAGTABLE_STRINGTYPE) {
 	if (PyString_Check(arg))
 	    return arg;
 	else if (PyUnicode_Check(arg)) {
@@ -2223,7 +2260,7 @@ PyObject *tc_convert_string_arg(PyObject *arg,
 		 "unsupported table type");
 
     return arg;
-    
+
  onError:
     return NULL;
 }
@@ -2245,14 +2282,17 @@ int tc_cleanup(mxTagTableObject *tagtable)
     return 0;
 }
 
-/* Initialize the tag table (this is the actual Tag Table compiler) */
+/* Initialize the tag table (this is the actual Tag Table compiler)
+
+   encoding: if not NULL, encode Unicode patterns to this encoding */
 
 static
 int init_tag_table(mxTagTableObject *tagtable,
 		   PyObject *table,
 		   Py_ssize_t size,
 		   int tabletype,
-		   int cacheable)
+		   int cacheable,
+		   const char *encoding)
 {
     Py_ssize_t i;
     PyObject *entry;
@@ -2384,7 +2424,7 @@ int init_tag_table(mxTagTableObject *tagtable,
 	case MATCH_WORD:
 	case MATCH_WORDSTART:
 	case MATCH_WORDEND:
-	    args = tc_convert_string_arg(args, i, tabletype);
+	    args = tc_convert_string_arg(args, i, tabletype, encoding);
 	    if (args == NULL)
 		goto onError;
 	    break;
@@ -2438,7 +2478,16 @@ int init_tag_table(mxTagTableObject *tagtable,
 	    */
 	    if (!mxTagTable_Check(args) && !PyInt_Check(args)) {
 		Py_DECREF(args);
-		args = mxTagTable_New(args, tabletype, cacheable);
+		/* Use encoded version if encoding is set, otherwise use standard */
+		if (encoding != NULL) {
+		    /* is_multibyte is determined by the parent table */
+		    int is_multibyte = (strcasecmp(encoding, "utf-8") == 0 ||
+					strcasecmp(encoding, "utf8") == 0);
+		    args = mxTagTable_NewEncoded(args, encoding, is_multibyte, cacheable);
+		}
+		else {
+		    args = mxTagTable_New(args, tabletype, cacheable);
+		}
 		if (args == NULL)
 		    goto onError;
 	    }
@@ -2583,9 +2632,10 @@ int init_tag_table(mxTagTableObject *tagtable,
     return 0;
 
  onError:
-    if (own_args) {
+    if (own_args && args != NULL) {
 	Py_DECREF(args);
     }
+    Py_XDECREF(jumpdict);
     return -1;
 }
 
@@ -2689,7 +2739,7 @@ PyObject *mxTagTable_New(PyObject *definition,
 		 "tag table definition must be a tuple or a list");
 
     tagtable = PyObject_NEW_VAR(mxTagTableObject, &mxTagTable_Type, size);
-    if (tagtable == NULL) 
+    if (tagtable == NULL)
 	goto onError;
     if (cacheable) {
 	Py_INCREF(definition);
@@ -2698,15 +2748,67 @@ PyObject *mxTagTable_New(PyObject *definition,
     else
 	tagtable->definition = NULL;
     tagtable->tabletype = tabletype;
-    
+    tagtable->encoding = NULL;
+    tagtable->is_multibyte = 0;
+
     /* Compile table ... */
-    if (init_tag_table(tagtable, definition, size, tabletype, cacheable))
+    if (init_tag_table(tagtable, definition, size, tabletype, cacheable, NULL))
 	goto onError;
 
     /* Cache the compiled table if it is cacheable and derived from a
        tuple */
     if (add_to_tagtable_cache(definition, tabletype, cacheable, 
 			      (PyObject *)tagtable))
+	goto onError;
+
+    return (PyObject *)tagtable;
+
+ onError:
+    Py_XDECREF(tagtable);
+    return NULL;
+}
+
+/* Create an encoded tag table - Unicode patterns are encoded to bytes
+   using the specified encoding. This is used for parsing byte streams
+   with a specified encoding (e.g., UTF-8 bytes with Unicode grammars). */
+
+PyObject *mxTagTable_NewEncoded(PyObject *definition,
+				const char *encoding,
+				int is_multibyte,
+				int cacheable)
+{
+    mxTagTableObject *tagtable = 0;
+    Py_ssize_t size;
+
+    /* Note: We don't cache encoded tables because they depend on the encoding
+       and caching by (definition, encoding) would require changing the cache key */
+
+    size = tc_length(definition);
+    if (size < 0)
+	Py_Error(PyExc_TypeError,
+		 "tag table definition must be a tuple or a list");
+
+    tagtable = PyObject_NEW_VAR(mxTagTableObject, &mxTagTable_Type, size);
+    if (tagtable == NULL)
+	goto onError;
+
+    /* Store definition if cacheable (though we don't cache encoded tables) */
+    if (cacheable) {
+	Py_INCREF(definition);
+	tagtable->definition = definition;
+    }
+    else
+	tagtable->definition = NULL;
+
+    /* Set table type to STRINGTYPE since we're working with bytes,
+       but mark it as encoded so we know the patterns are encoding-aware */
+    tagtable->tabletype = MXTAGTABLE_STRINGTYPE;
+    tagtable->encoding = encoding;  /* Store encoding name */
+    tagtable->is_multibyte = is_multibyte;
+
+    /* Compile table with encoding - this encodes Unicode patterns to bytes */
+    if (init_tag_table(tagtable, definition, size, MXTAGTABLE_STRINGTYPE,
+		       cacheable, encoding))
 	goto onError;
 
     return (PyObject *)tagtable;
@@ -4281,12 +4383,16 @@ PyObject *mxTextTools_SetSplitX(char *tx,
 
 /* Interface to the tagging engine in mxte.c */
 
-Py_C_Function_WithKeywords( 
+Py_C_Function_WithKeywords(
                mxTextTools_tag,
-	       "tag(text,tagtable,sliceleft=0,sliceright=len(text),taglist=[],context=None) \n"""
+	       "tag(text,tagtable,sliceleft=0,sliceright=len(text),taglist=[],context=None,encoding=None)\n"
 	       "Produce a tag list for a string, given a tag-table\n"
 	       "- returns a tuple (success, taglist, nextindex)\n"
-	       "- if taglist == None, then no taglist is created"
+	       "- if taglist == None, then no taglist is created\n"
+	       "- encoding: if specified and text is bytes, compile grammar for this encoding\n"
+	       "  Supported: utf-8, latin-1, iso-8859-*, windows-1252, ascii, etc.\n"
+	       "  Multi-byte encodings other than UTF-8 are not supported.\n"
+	       "  Positions in result are byte positions."
 	       )
 {
     PyObject *text;
@@ -4296,11 +4402,12 @@ Py_C_Function_WithKeywords(
     PyObject *taglist = 0;
     Py_ssize_t taglist_len;
     PyObject *context = 0;
+    const char *encoding = NULL;  /* NEW: optional encoding parameter */
     Py_ssize_t next, result;
     PyObject *res;
-    
-    Py_KeywordsGet6Args("OO|iiOO:tag",
-			text,tagtable,sliceleft,sliceright,taglist,context);
+
+    Py_KeywordsGet7Args("OO|nnOOz:tag",
+			text,tagtable,sliceleft,sliceright,taglist,context,encoding);
 
     if (taglist == NULL) { 
 	/* not given, so use default: an empty list */
@@ -4329,33 +4436,104 @@ Py_C_Function_WithKeywords(
 	      PyExc_TypeError,
 	      "tagtable must be a TagTable instance, list or tuple");
 
+    /* Validate encoding parameter if provided */
+    if (encoding != NULL) {
+        /* Check for disallowed multi-byte encodings */
+        if (strcasecmp(encoding, "utf-16") == 0 ||
+            strcasecmp(encoding, "utf-16-le") == 0 ||
+            strcasecmp(encoding, "utf-16-be") == 0 ||
+            strcasecmp(encoding, "utf-32") == 0 ||
+            strcasecmp(encoding, "utf-32-le") == 0 ||
+            strcasecmp(encoding, "utf-32-be") == 0 ||
+            strcasecmp(encoding, "shift-jis") == 0 ||
+            strcasecmp(encoding, "shift_jis") == 0 ||
+            strcasecmp(encoding, "gb2312") == 0 ||
+            strcasecmp(encoding, "gbk") == 0 ||
+            strcasecmp(encoding, "gb18030") == 0 ||
+            strcasecmp(encoding, "big5") == 0 ||
+            strcasecmp(encoding, "euc-jp") == 0 ||
+            strcasecmp(encoding, "euc-kr") == 0) {
+            Py_Error(PyExc_ValueError,
+                "Multi-byte encodings other than UTF-8 are not supported");
+        }
+
+        /* Validation of encoding existence happens when patterns are encoded.
+           If an unknown encoding is used, the error will occur during tag table
+           compilation with a clear error message. */
+
+        /* Encoding only makes sense with bytes input */
+        if (!PyBytes_Check(text)) {
+            Py_Error(PyExc_TypeError,
+                "encoding parameter is only valid when text is bytes");
+        }
+    }
+
     /* Prepare the argument for the Tagging Engine and let it process
        the request */
     if (PyString_Check(text)) {
 
-	Py_CheckStringSlice(text, sliceleft, sliceright);
+        if (encoding != NULL) {
+            /* Phase 2: Compile Unicode patterns to byte sequences and parse bytes directly.
+               Positions in results are byte positions. */
+            int is_multibyte = (strcasecmp(encoding, "utf-8") == 0 ||
+                                strcasecmp(encoding, "utf8") == 0);
 
-        if (!mxTagTable_Check(tagtable)) {
-	    tagtable = mxTagTable_New(tagtable, MXTAGTABLE_STRINGTYPE, 1);
-	    if (tagtable == NULL)
-		goto onError;
-	}
-	else if (mxTagTable_Type(tagtable) != MXTAGTABLE_STRINGTYPE) {
-	    Py_Error(PyExc_TypeError,
-		     "TagTable instance is not intended for parsing strings");
-	}
-	else
-	    Py_INCREF(tagtable);
+            Py_CheckStringSlice(text, sliceleft, sliceright);
 
-	/* Call the Tagging Engine */
-	result = mxTextTools_TaggingEngine(text,
-					   sliceleft,
-					   sliceright,
-					   (mxTagTableObject *)tagtable,
-					   taglist,
-					   context,
-					   &next);
-	Py_DECREF(tagtable);
+            if (!mxTagTable_Check(tagtable)) {
+                /* Create encoded tag table - converts Unicode patterns to bytes */
+                tagtable = mxTagTable_NewEncoded(tagtable, encoding, is_multibyte, 1);
+                if (tagtable == NULL)
+                    goto onError;
+            }
+            else {
+                /* Pre-compiled TagTable - check compatibility */
+                mxTagTableObject *tt = (mxTagTableObject *)tagtable;
+                if (tt->encoding == NULL) {
+                    Py_Error(PyExc_TypeError,
+                        "Pre-compiled TagTable was not created with encoding support. "
+                        "Use a tuple/list definition with the encoding parameter.");
+                }
+                /* Note: Could also check encoding matches, but for now we trust the user */
+                Py_INCREF(tagtable);
+            }
+
+            /* Call the byte-based Tagging Engine */
+            result = mxTextTools_TaggingEngine(text,
+                              sliceleft,
+                              sliceright,
+                              (mxTagTableObject *)tagtable,
+                              taglist,
+                              context,
+                              &next);
+            Py_DECREF(tagtable);
+        }
+        else {
+            /* No encoding - use original bytes parsing */
+            Py_CheckStringSlice(text, sliceleft, sliceright);
+
+            if (!mxTagTable_Check(tagtable)) {
+                tagtable = mxTagTable_New(tagtable, MXTAGTABLE_STRINGTYPE, 1);
+                if (tagtable == NULL)
+                    goto onError;
+            }
+            else if (mxTagTable_Type(tagtable) != MXTAGTABLE_STRINGTYPE) {
+                Py_Error(PyExc_TypeError,
+                    "TagTable instance is not intended for parsing strings");
+            }
+            else
+                Py_INCREF(tagtable);
+
+            /* Call the Tagging Engine */
+            result = mxTextTools_TaggingEngine(text,
+                              sliceleft,
+                              sliceright,
+                              (mxTagTableObject *)tagtable,
+                              taglist,
+                              context,
+                              &next);
+            Py_DECREF(tagtable);
+        }
 
     }
     else if (PyUnicode_Check(text)) {

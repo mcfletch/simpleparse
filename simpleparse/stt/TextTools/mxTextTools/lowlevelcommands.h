@@ -87,26 +87,72 @@
 				}
 			}
 #else
-			/* Bytes mode - use original pointer arithmetic */
-			register TE_CHAR *tx = &text[childPosition];
-			if (ml > 1)
+			/* Bytes mode */
+			if (table->is_multibyte)
 			{
-				for (; childPosition < sliceright; tx++, childPosition++)
+				/* UTF-8 mode: decode UTF-8 from text and match, compare codepoints */
+				while (childPosition < sliceright)
 				{
-					register Py_ssize_t j;
-					register TE_CHAR *mj = m;
-					register TE_CHAR ctx = *tx;
-					for (j = 0; j < ml && ctx != *mj; mj++, j++)
-						;
-					if (j == ml)
-						break;
+					Py_UCS4 text_codepoint;
+					int text_utf8_len = te_utf8_decode(
+						(const unsigned char *)&text[childPosition],
+						sliceright - childPosition,
+						&text_codepoint);
+
+					if (text_utf8_len <= 0)
+						break;  /* Invalid UTF-8 - stop matching */
+
+					/* Search for this codepoint in the match string */
+					Py_ssize_t match_pos = 0;
+					int found = 0;
+					while (match_pos < ml)
+					{
+						Py_UCS4 match_codepoint;
+						int match_utf8_len = te_utf8_decode(
+							(const unsigned char *)&m[match_pos],
+							ml - match_pos,
+							&match_codepoint);
+
+						if (match_utf8_len <= 0)
+							break;  /* Invalid UTF-8 in match - stop */
+
+						if (text_codepoint == match_codepoint)
+						{
+							found = 1;
+							break;
+						}
+						match_pos += match_utf8_len;
+					}
+
+					if (!found)
+						break;  /* Codepoint not in match set */
+
+					childPosition += text_utf8_len;
 				}
 			}
-			else if (ml == 1)
+			else
 			{
-				/* one char only: use faster variant: */
-				for (; childPosition < sliceright && *tx == *m; tx++, childPosition++)
-					;
+				/* Single-byte mode - use original pointer arithmetic */
+				register TE_CHAR *tx = &text[childPosition];
+				if (ml > 1)
+				{
+					for (; childPosition < sliceright; tx++, childPosition++)
+					{
+						register Py_ssize_t j;
+						register TE_CHAR *mj = m;
+						register TE_CHAR ctx = *tx;
+						for (j = 0; j < ml && ctx != *mj; mj++, j++)
+							;
+						if (j == ml)
+							break;
+					}
+				}
+				else if (ml == 1)
+				{
+					/* one char only: use faster variant: */
+					for (; childPosition < sliceright && *tx == *m; tx++, childPosition++)
+						;
+				}
 			}
 #endif
 			break;
@@ -146,26 +192,72 @@
 				}
 			}
 #else
-			/* Bytes mode - use original pointer arithmetic */
-			register TE_CHAR *tx = &text[childPosition];
-			if (ml > 1)
+			/* Bytes mode */
+			if (table->is_multibyte)
 			{
-				for (; childPosition < sliceright; tx++, childPosition++)
+				/* UTF-8 mode: decode UTF-8 from text and match, compare codepoints */
+				while (childPosition < sliceright)
 				{
-					register Py_ssize_t j;
-					register TE_CHAR *mj = m;
-					register TE_CHAR ctx = *tx;
-					for (j = 0; j < ml && ctx != *mj; mj++, j++)
-						;
-					if (j != ml)
-						break;
+					Py_UCS4 text_codepoint;
+					int text_utf8_len = te_utf8_decode(
+						(const unsigned char *)&text[childPosition],
+						sliceright - childPosition,
+						&text_codepoint);
+
+					if (text_utf8_len <= 0)
+						break;  /* Invalid UTF-8 - stop matching */
+
+					/* Search for this codepoint in the match string */
+					Py_ssize_t match_pos = 0;
+					int found = 0;
+					while (match_pos < ml)
+					{
+						Py_UCS4 match_codepoint;
+						int match_utf8_len = te_utf8_decode(
+							(const unsigned char *)&m[match_pos],
+							ml - match_pos,
+							&match_codepoint);
+
+						if (match_utf8_len <= 0)
+							break;  /* Invalid UTF-8 in match - stop */
+
+						if (text_codepoint == match_codepoint)
+						{
+							found = 1;
+							break;
+						}
+						match_pos += match_utf8_len;
+					}
+
+					if (found)
+						break;  /* Codepoint IS in match set - stop */
+
+					childPosition += text_utf8_len;
 				}
 			}
-			else if (ml == 1)
+			else
 			{
-				/* one char only: use faster variant: */
-				for (; childPosition < sliceright && *tx != *m; tx++, childPosition++)
-					;
+				/* Single-byte mode - use original pointer arithmetic */
+				register TE_CHAR *tx = &text[childPosition];
+				if (ml > 1)
+				{
+					for (; childPosition < sliceright; tx++, childPosition++)
+					{
+						register Py_ssize_t j;
+						register TE_CHAR *mj = m;
+						register TE_CHAR ctx = *tx;
+						for (j = 0; j < ml && ctx != *mj; mj++, j++)
+							;
+						if (j != ml)
+							break;
+					}
+				}
+				else if (ml == 1)
+				{
+					/* one char only: use faster variant: */
+					for (; childPosition < sliceright && *tx != *m; tx++, childPosition++)
+						;
+				}
 			}
 #endif
 			break;
@@ -216,10 +308,48 @@
 					childPosition++;
 			}
 #else
-			/* Bytes mode - use original pointer arithmetic */
-			register TE_CHAR ctx = text[childPosition];
-			if (ml > 0 && childPosition < sliceright)
+			/* Bytes mode */
+			if (table->is_multibyte && ml > 0 && childPosition < sliceright)
 			{
+				/* UTF-8 mode: decode UTF-8 from text and match, compare codepoints */
+				Py_UCS4 text_codepoint;
+				int text_utf8_len = te_utf8_decode(
+					(const unsigned char *)&text[childPosition],
+					sliceright - childPosition,
+					&text_codepoint);
+
+				if (text_utf8_len > 0)
+				{
+					/* Search for this codepoint in the match string */
+					Py_ssize_t match_pos = 0;
+					int found = 0;
+					while (match_pos < ml)
+					{
+						Py_UCS4 match_codepoint;
+						int match_utf8_len = te_utf8_decode(
+							(const unsigned char *)&m[match_pos],
+							ml - match_pos,
+							&match_codepoint);
+
+						if (match_utf8_len <= 0)
+							break;
+
+						if (text_codepoint == match_codepoint)
+						{
+							found = 1;
+							break;
+						}
+						match_pos += match_utf8_len;
+					}
+
+					if (found)
+						childPosition += text_utf8_len;
+				}
+			}
+			else if (ml > 0 && childPosition < sliceright)
+			{
+				/* Single-byte mode - use original pointer arithmetic */
+				register TE_CHAR ctx = text[childPosition];
 				register Py_ssize_t j;
 				register TE_CHAR *mj = m;
 				for (j = 0; j < ml && ctx != *mj; mj++, j++)
@@ -256,10 +386,56 @@
 			else
 				childPosition++;
 #else
-			/* Bytes mode - use original pointer arithmetic */
-			register TE_CHAR ctx = text[childPosition];
-			if (ml > 0 && childPosition < sliceright)
+			/* Bytes mode */
+			if (table->is_multibyte && childPosition < sliceright)
 			{
+				/* UTF-8 mode: decode UTF-8 from text and match, compare codepoints */
+				Py_UCS4 text_codepoint;
+				int text_utf8_len = te_utf8_decode(
+					(const unsigned char *)&text[childPosition],
+					sliceright - childPosition,
+					&text_codepoint);
+
+				if (text_utf8_len > 0)
+				{
+					if (ml > 0)
+					{
+						/* Search for this codepoint in the match string */
+						Py_ssize_t match_pos = 0;
+						int found = 0;
+						while (match_pos < ml)
+						{
+							Py_UCS4 match_codepoint;
+							int match_utf8_len = te_utf8_decode(
+								(const unsigned char *)&m[match_pos],
+								ml - match_pos,
+								&match_codepoint);
+
+							if (match_utf8_len <= 0)
+								break;
+
+							if (text_codepoint == match_codepoint)
+							{
+								found = 1;
+								break;
+							}
+							match_pos += match_utf8_len;
+						}
+
+						if (!found)
+							childPosition += text_utf8_len;
+					}
+					else
+					{
+						/* Empty match string - everything matches "not in" */
+						childPosition += text_utf8_len;
+					}
+				}
+			}
+			else if (ml > 0 && childPosition < sliceright)
+			{
+				/* Single-byte mode - use original pointer arithmetic */
+				register TE_CHAR ctx = text[childPosition];
 				register Py_ssize_t j;
 				register TE_CHAR *mj = m;
 				for (j = 0; j < ml && ctx != *mj; mj++, j++)
@@ -446,30 +622,94 @@
 		case MATCH_ALLINCHARSET:
 
 		{
-			Py_ssize_t matching;
-
 			DPRINTF("\nAllInCharSet :\n"
 					" looking for   = CharSet at 0x%lx\n"
 					" in string     = '%.40s'\n",
 					(long)match, &text[childPosition]);
 
-			matching = mxCharSet_Match(match,
-									   textobj,
-									   childPosition,
-									   sliceright,
-									   1);
-			if (matching < 0)
+#if (TE_TABLETYPE == MXTAGTABLE_STRINGTYPE)
+			/* Check if we're in UTF-8 encoded mode */
+			if (table->is_multibyte)
 			{
-				childReturnCode = ERROR_CODE;
-				errorType = PyExc_SystemError;
-				errorMessage = PyString_FromFormat(
-					"Character set match returned value < 0 (%d): probable bug in text processing engine",
-					(unsigned int)matching);
+				/* UTF-8 mode: decode UTF-8 sequences one at a time and test each codepoint */
+				while (childPosition < sliceright)
+				{
+					Py_UCS4 codepoint;
+					int utf8_len = te_utf8_decode(
+						(const unsigned char *)&text[childPosition],
+						sliceright - childPosition,
+						&codepoint);
+
+					if (utf8_len <= 0)
+					{
+						/* Invalid UTF-8 sequence - stop matching */
+						break;
+					}
+
+					int test = mxCharSet_ContainsUnicodeChar(match, codepoint);
+					if (test < 0)
+					{
+						childReturnCode = ERROR_CODE;
+						errorType = PyExc_SystemError;
+						errorMessage = PyString_FromFormat(
+							"Character set match returned value < 0 (%d): probable bug in text processing engine",
+							test);
+						break;
+					}
+					else if (test)
+					{
+						childPosition += utf8_len;  /* Advance by UTF-8 sequence length */
+					}
+					else
+					{
+						/* Character not in set - stop matching */
+						break;
+					}
+				}
 			}
 			else
 			{
-				childPosition += matching;
+				/* Single-byte mode: use original mxCharSet_Match */
+				Py_ssize_t matching = mxCharSet_Match(match,
+													  textobj,
+													  childPosition,
+													  sliceright,
+													  1);
+				if (matching < 0)
+				{
+					childReturnCode = ERROR_CODE;
+					errorType = PyExc_SystemError;
+					errorMessage = PyString_FromFormat(
+						"Character set match returned value < 0 (%d): probable bug in text processing engine",
+						(unsigned int)matching);
+				}
+				else
+				{
+					childPosition += matching;
+				}
 			}
+#else
+			/* Unicode mode: use original mxCharSet_Match */
+			{
+				Py_ssize_t matching = mxCharSet_Match(match,
+													  textobj,
+													  childPosition,
+													  sliceright,
+													  1);
+				if (matching < 0)
+				{
+					childReturnCode = ERROR_CODE;
+					errorType = PyExc_SystemError;
+					errorMessage = PyString_FromFormat(
+						"Character set match returned value < 0 (%d): probable bug in text processing engine",
+						(unsigned int)matching);
+				}
+				else
+				{
+					childPosition += matching;
+				}
+			}
+#endif
 			break;
 		}
 
@@ -484,10 +724,53 @@
 					(long)match, &text[childPosition]);
 
 #if (TE_TABLETYPE == MXTAGTABLE_STRINGTYPE)
-			test = mxCharSet_ContainsChar(match, text[childPosition]);
+			/* Check if we're in UTF-8 encoded mode */
+			if (table->is_multibyte && childPosition < sliceright)
+			{
+				/* UTF-8 mode: decode the UTF-8 sequence and test the codepoint */
+				Py_UCS4 codepoint;
+				int utf8_len = te_utf8_decode(
+					(const unsigned char *)&text[childPosition],
+					sliceright - childPosition,
+					&codepoint);
+
+				if (utf8_len > 0)
+				{
+					test = mxCharSet_ContainsUnicodeChar(match, codepoint);
+					if (test < 0)
+					{
+						childReturnCode = ERROR_CODE;
+						errorType = PyExc_SystemError;
+						errorMessage = PyString_FromFormat(
+							"Character set match returned value < 0 (%i): probable bug in text processing engine",
+							test);
+					}
+					else if (test)
+					{
+						childPosition += utf8_len;  /* Advance by UTF-8 sequence length */
+					}
+				}
+				/* If utf8_len == 0, invalid UTF-8 - no match, childPosition unchanged */
+			}
+			else
+			{
+				/* Single-byte mode: test byte directly */
+				test = mxCharSet_ContainsChar(match, text[childPosition]);
+				if (test < 0)
+				{
+					childReturnCode = ERROR_CODE;
+					errorType = PyExc_SystemError;
+					errorMessage = PyString_FromFormat(
+						"Character set match returned value < 0 (%i): probable bug in text processing engine",
+						test);
+				}
+				else if (test)
+				{
+					childPosition++;
+				}
+			}
 #else
 			test = mxCharSet_ContainsUnicodeChar(match, text[childPosition]);
-#endif
 			if (test < 0)
 			{
 				childReturnCode = ERROR_CODE;
@@ -500,6 +783,7 @@
 			{
 				childPosition++;
 			}
+#endif
 			break;
 		}
 		default:

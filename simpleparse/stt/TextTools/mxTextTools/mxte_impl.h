@@ -31,6 +31,76 @@
 # define TE_ENGINE_API mxTextTools_TaggingEngine
 #endif
 
+/* --- UTF-8 Decoding Helper ---------------------------------------------- */
+/* Decodes a UTF-8 sequence starting at 'bytes' with up to 'max_bytes' available.
+   Returns the decoded Unicode codepoint in *codepoint.
+   Returns the number of bytes consumed (1-4), or 0 on error.
+
+   This is used for CharSet matching in UTF-8 encoded mode. */
+
+#ifndef TE_UTF8_DECODE_DEFINED
+#define TE_UTF8_DECODE_DEFINED
+
+static inline int te_utf8_decode(const unsigned char *bytes,
+                                  Py_ssize_t max_bytes,
+                                  Py_UCS4 *codepoint) {
+    unsigned char b0;
+
+    if (max_bytes < 1) return 0;
+
+    b0 = bytes[0];
+
+    /* ASCII (0xxxxxxx) */
+    if (b0 < 0x80) {
+        *codepoint = b0;
+        return 1;
+    }
+
+    /* 2-byte sequence (110xxxxx 10xxxxxx) */
+    if ((b0 & 0xE0) == 0xC0) {
+        if (max_bytes < 2) return 0;
+        if ((bytes[1] & 0xC0) != 0x80) return 0;  /* Invalid continuation */
+        *codepoint = ((b0 & 0x1F) << 6) | (bytes[1] & 0x3F);
+        /* Check for overlong encoding */
+        if (*codepoint < 0x80) return 0;
+        return 2;
+    }
+
+    /* 3-byte sequence (1110xxxx 10xxxxxx 10xxxxxx) */
+    if ((b0 & 0xF0) == 0xE0) {
+        if (max_bytes < 3) return 0;
+        if ((bytes[1] & 0xC0) != 0x80) return 0;
+        if ((bytes[2] & 0xC0) != 0x80) return 0;
+        *codepoint = ((b0 & 0x0F) << 12) |
+                     ((bytes[1] & 0x3F) << 6) |
+                     (bytes[2] & 0x3F);
+        /* Check for overlong encoding and surrogates */
+        if (*codepoint < 0x800) return 0;
+        if (*codepoint >= 0xD800 && *codepoint <= 0xDFFF) return 0;
+        return 3;
+    }
+
+    /* 4-byte sequence (11110xxx 10xxxxxx 10xxxxxx 10xxxxxx) */
+    if ((b0 & 0xF8) == 0xF0) {
+        if (max_bytes < 4) return 0;
+        if ((bytes[1] & 0xC0) != 0x80) return 0;
+        if ((bytes[2] & 0xC0) != 0x80) return 0;
+        if ((bytes[3] & 0xC0) != 0x80) return 0;
+        *codepoint = ((b0 & 0x07) << 18) |
+                     ((bytes[1] & 0x3F) << 12) |
+                     ((bytes[2] & 0x3F) << 6) |
+                     (bytes[3] & 0x3F);
+        /* Check for overlong encoding and valid range */
+        if (*codepoint < 0x10000) return 0;
+        if (*codepoint > 0x10FFFF) return 0;
+        return 4;
+    }
+
+    /* Invalid start byte */
+    return 0;
+}
+
+#endif /* TE_UTF8_DECODE_DEFINED */
 
 /* --- Tagging Engine ----------------------------------------------------- */
 /*  Non-recursive restructuring by Mike Fletcher to support SimpleParse

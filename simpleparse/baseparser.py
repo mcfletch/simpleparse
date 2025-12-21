@@ -10,10 +10,10 @@ class BaseParser:
     """
     _rootProduction = ""
     # primary API...
-    def parse( self, data, production=None, processor=None, start=0, stop=None):
+    def parse( self, data, production=None, processor=None, start=0, stop=None, encoding=None):
         """Parse data with production "production" of this parser
 
-        data -- data to be parsed, a Python string, for now
+        data -- data to be parsed, a Python string or bytes
         production -- optional string specifying a non-default production to use
             for parsing data
         processor -- optional pointer to a Processor or MethodSource object for
@@ -21,13 +21,19 @@ class BaseParser:
             of the parsing pass.  Can be None if neither is desired (default)
         start -- starting index for the parsing, default 0
         stop -- stoping index for the parsing, default len(data)
+        encoding -- optional encoding for bytes input (e.g., 'utf-8', 'latin-1').
+            When specified with bytes input, the grammar patterns are compiled
+            to match the encoded byte sequences. Supported encodings:
+            - Single-byte: latin-1, iso-8859-*, windows-1252, ascii, etc.
+            - Multi-byte: utf-8 only (other multi-byte encodings not supported)
+            Positions in the result are byte positions when encoding is used.
         """
         self.resetBeforeParse()
         if processor is None:
             processor = self.buildProcessor()
         if stop is None:
             stop = len(data)
-        value = tag( data, self.buildTagger( production, processor), start, stop )
+        value = tag( data, self.buildTagger( production, processor), start, stop, encoding=encoding )
         if processor and callable(processor):
             return processor( value, data )
         else:
