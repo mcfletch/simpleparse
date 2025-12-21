@@ -521,9 +521,6 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 
     case MXTEXTSEARCH_BOYERMOORE_MODERN:
 	{
-	    fprintf(stderr, "DEBUG: Buffer search Boyer-Moore Modern called\n");
-	    fflush(stderr);
-	    
 	    mxbm_context_unicode *bm_ctx = (mxbm_context_unicode *)so->data;
 	    
 	    /* Modern Boyer-Moore only supports bytes for char* text input */
@@ -538,9 +535,6 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 		goto onError;
 	    
 	    Py_ssize_t result = mxbm_search_unicode(bm_ctx, text_bytes, 0, stop - start);
-	    fprintf(stderr, "DEBUG: Buffer Boyer-Moore result: %ld\n", result);
-	    fflush(stderr);
-	    
 	    Py_DECREF(text_bytes);
 	    
 	    if (result >= 0) {
@@ -677,9 +671,6 @@ Py_ssize_t mxTextSearch_SearchUnicode_Modern(PyObject *self,
         return -1;
     }
 
-    fprintf(stderr, "DEBUG: Using algorithm %d\n", so->algorithm);
-    fflush(stderr);
-    
     switch (so->algorithm) {
 
     case MXTEXTSEARCH_BOYERMOORE:
@@ -746,13 +737,9 @@ Py_ssize_t mxTextSearch_SearchUnicode_Modern(PyObject *self,
     case MXTEXTSEARCH_BOYERMOORE_MODERN:
         {
             mxbm_context_unicode *bm_ctx = (mxbm_context_unicode *)so->data;
-            
+
             /* Use modern Boyer-Moore search directly */
             nextpos = mxbm_search_unicode(bm_ctx, text, start, stop);
-            
-            /* DEBUG: Print search results */
-            fprintf(stderr, "DEBUG: mxbm_search_unicode(%p, %p, %ld, %ld) = %ld\n", 
-                   bm_ctx, text, start, stop, nextpos);
         }
         break;
 
@@ -1008,7 +995,7 @@ PyObject *mxTextSearch_Repr(mxTextSearchObject *self)
 	algoname = "";
     }
 
-    sprintf(t, "<%.50s TextSearch object for %.400s at 0x%lx>",
+    snprintf(t, sizeof(t), "<%.50s TextSearch object for %.400s at 0x%lx>",
 	    algoname, reprstr, (long)self);
     Py_DECREF(v);
     return PyString_FromString(t);
@@ -1432,6 +1419,9 @@ int mxCharSet_ContainsUnicodeChar(PyObject *self,
     }
     else if (cs->mode == MXCHARSET_UCS2MODE) {
 	unicode_charset *lookup = (unicode_charset *)cs->lookup;
+	/* Bounds check: UCS2 mode only supports characters 0-65535 */
+	if (ch > 0xFFFF)
+	    return 0;
 	unsigned char *bitmap = lookup->bitmaps[lookup->bitmapindex[ch >> 8]];
 	return ((bitmap[(ch >> 3) & 31] & (1 << (ch & 7))) != 0);
     }
@@ -2035,7 +2025,7 @@ PyObject *mxCharSet_Repr(mxCharSetObject *self)
     reprstr = PyString_AsString(v);
     if (reprstr == NULL)
 	return NULL;
-    sprintf(t, "<Character Set object for %.400s at 0x%lx>",
+    snprintf(t, sizeof(t), "<Character Set object for %.400s at 0x%lx>",
 	    reprstr, (long)self);
     Py_DECREF(v);
     return PyString_FromString(t);
@@ -2123,16 +2113,16 @@ PyObject *tc_get_item(register PyObject *obj,
 		      register Py_ssize_t i)
 {
     if (PyTuple_Check(obj)) {
-	if (i > PyTuple_GET_SIZE(obj))
+	if (i < 0 || i >= PyTuple_GET_SIZE(obj))
 	    return NULL;
 	return PyTuple_GET_ITEM(obj, i);
     }
     else if (PyList_Check(obj)) {
-	if (i > PyList_GET_SIZE(obj))
+	if (i < 0 || i >= PyList_GET_SIZE(obj))
 	    return NULL;
 	return PyList_GET_ITEM(obj, i);
     }
-    else 
+    else
 	return NULL;
 }
 
@@ -2861,11 +2851,11 @@ PyObject *mxTagTable_Repr(mxTagTableObject *self)
     char t[100];
 
     if (self->tabletype == MXTAGTABLE_STRINGTYPE)
-	sprintf(t,"<String Tag Table object at 0x%lx>", (long)self);
+	snprintf(t, sizeof(t), "<String Tag Table object at 0x%lx>", (long)self);
     else if (self->tabletype == MXTAGTABLE_UNICODETYPE)
-	sprintf(t,"<Unicode Tag Table object at 0x%lx>", (long)self);
+	snprintf(t, sizeof(t), "<Unicode Tag Table object at 0x%lx>", (long)self);
     else
-	sprintf(t,"<Tag Table object at 0x%lx>", (long)self);
+	snprintf(t, sizeof(t), "<Tag Table object at 0x%lx>", (long)self);
     return PyString_FromString(t);
 }
 

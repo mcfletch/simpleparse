@@ -230,58 +230,69 @@ static inline int mxte_unicode_copy_to_buffer(const mxte_unicode_access_t *acces
     return 0;
 }
 
-/* Simple and correct approach - use static buffers when possible, Unicode operations when not */
+/* Modern Unicode functions that return UCS4 data
 
-/* Return static buffer from Unicode object when possible, convert when necessary */
-/* Modern Unicode functions that return UCS4 data */
-static inline Py_UCS4* mxte_get_unicode_data_as_ucs4(PyObject *str) {
-    static Py_UCS4 *conversion_cache = NULL;
-    static Py_ssize_t cache_size = 0;
-    static PyObject *cached_object = NULL;
-    
+   NOTE: These functions allocate memory that must be freed by the caller
+   when buffer is non-NULL. When the string is already UCS4, the direct
+   pointer is returned and *needs_free is set to 0.
+*/
+
+/* Return UCS4 buffer from Unicode object. Caller must free if *needs_free is true. */
+static inline Py_UCS4* mxte_get_unicode_data_as_ucs4_ex(PyObject *str, int *needs_free) {
+    *needs_free = 0;
+
     if (!PyUnicode_Check(str)) {
         return NULL;
     }
-    
+
     if (PyUnicode_READY(str) < 0) {
         return NULL;
     }
-    
+
     int kind = PyUnicode_KIND(str);
     void *data = PyUnicode_DATA(str);
-    
+
     /* Return direct pointer if it's already UCS4 */
     if (kind == PyUnicode_4BYTE_KIND) {
         return (Py_UCS4 *)data;
     }
-    
-    /* For other kinds, check cache first */
-    if (cached_object == str && conversion_cache != NULL) {
-        return conversion_cache;
-    }
-    
-    /* Convert to UCS4 format */
+
+    /* Convert to UCS4 format - caller must free this buffer */
     Py_ssize_t length = PyUnicode_GET_LENGTH(str);
-    
-    if (cache_size < length + 1) {
-        PyMem_Free(conversion_cache);
-        conversion_cache = (Py_UCS4 *)PyMem_Malloc(sizeof(Py_UCS4) * (length + 1));
-        if (!conversion_cache) {
-            cache_size = 0;
-            PyErr_NoMemory();
-            return NULL;
-        }
-        cache_size = length + 1;
+    Py_UCS4 *buffer = (Py_UCS4 *)PyMem_Malloc(sizeof(Py_UCS4) * (length + 1));
+    if (!buffer) {
+        PyErr_NoMemory();
+        return NULL;
     }
-    
+
     /* Convert data character by character using PyUnicode_READ */
     for (Py_ssize_t i = 0; i < length; i++) {
-        conversion_cache[i] = PyUnicode_READ(kind, data, i);
+        buffer[i] = PyUnicode_READ(kind, data, i);
     }
-    conversion_cache[length] = 0; /* Null terminate */
-    
-    cached_object = str;
-    return conversion_cache;
+    buffer[length] = 0; /* Null terminate */
+
+    *needs_free = 1;
+    return buffer;
+}
+
+/* Convenience wrapper - returns direct pointer for UCS4, NULL otherwise.
+   Use mxte_get_unicode_data_as_ucs4_ex() if you need conversion. */
+static inline Py_UCS4* mxte_get_unicode_data_as_ucs4(PyObject *str) {
+    if (!PyUnicode_Check(str)) {
+        return NULL;
+    }
+
+    if (PyUnicode_READY(str) < 0) {
+        return NULL;
+    }
+
+    /* Only return direct pointer for UCS4 strings */
+    if (PyUnicode_KIND(str) == PyUnicode_4BYTE_KIND) {
+        return (Py_UCS4 *)PyUnicode_DATA(str);
+    }
+
+    /* For non-UCS4 strings, return NULL - caller should use PyUnicode_READ() */
+    return NULL;
 }
 
 /* Create Unicode string from UCS4 array */
@@ -289,56 +300,11 @@ static inline PyObject* mxte_create_unicode_from_ucs4(const Py_UCS4 *data, Py_ss
     return PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, data, length);
 }
 
-/* DEPRECATED - Use mxte_get_unicode_data_as_ucs4() instead */
+/* DEPRECATED - Use mxte_get_unicode_data_as_ucs4() or PyUnicode_READ() instead.
+   This function now only returns direct pointers for UCS4 strings. */
 static inline Py_UCS4* mxte_get_unicode_data(PyObject *str) {
-    static Py_UCS4 *conversion_cache = NULL;
-    static Py_ssize_t cache_size = 0;
-    static PyObject *cached_object = NULL;
-    
-    if (!PyUnicode_Check(str)) {
-        return NULL;
-    }
-    
-    if (PyUnicode_READY(str) < 0) {
-        return NULL;
-    }
-    
-    int kind = PyUnicode_KIND(str);
-    void *data = PyUnicode_DATA(str);
-    
-    /* For UCS4, return direct pointer if it's already 4-byte */
-    if (kind == PyUnicode_4BYTE_KIND) {
-        return (Py_UCS4 *)data;
-    }
-    
-    /* For mismatched sizes, check cache first */
-    if (cached_object == str && conversion_cache != NULL) {
-        return conversion_cache;
-    }
-    
-    /* Convert to UCS4 format */
-    Py_ssize_t length = PyUnicode_GET_LENGTH(str);
-    
-    if (cache_size < length + 1) {
-        PyMem_Free(conversion_cache);
-        conversion_cache = (Py_UCS4 *)PyMem_Malloc(sizeof(Py_UCS4) * (length + 1));
-        if (!conversion_cache) {
-            cache_size = 0;
-            PyErr_NoMemory();
-            return NULL;
-        }
-        cache_size = length + 1;
-    }
-    
-    /* Convert data character by character */
-    for (Py_ssize_t i = 0; i < length; i++) {
-        conversion_cache[i] = PyUnicode_READ(kind, data, i);
-    }
-    conversion_cache[length] = 0;
-    
-    cached_object = str; /* Note: This is a weak reference */
-    
-    return conversion_cache;
+    /* Redirect to the safe version */
+    return mxte_get_unicode_data_as_ucs4(str);
 }
 
 /* Check if two Unicode strings can use direct buffer comparison */
@@ -557,27 +523,33 @@ static inline PyObject* mxte_unicode_substring_from_buffer(PyObject *str, Py_UCS
     return mxte_unicode_slice(str, start, length);
 }
 
-/* Modern replacement for PyObject_AsCharBuffer using buffer protocol */
+/* Modern replacement for PyObject_AsCharBuffer.
+
+   NOTE: This function only supports PyBytes objects directly for safety.
+   The previous implementation using buffer protocol had a use-after-free bug
+   where the buffer was released before the caller could use it.
+
+   For other buffer-like objects, callers should use PyObject_GetBuffer()
+   directly and manage the Py_buffer lifecycle properly.
+*/
 static inline int mxte_get_char_buffer(PyObject *obj, const char **buffer, Py_ssize_t *buffer_len) {
     if (PyBytes_Check(obj)) {
         *buffer = PyBytes_AS_STRING(obj);
         *buffer_len = PyBytes_GET_SIZE(obj);
         return 0;
     }
-    
-    /* For other objects, try buffer protocol */
-    Py_buffer view;
-    if (PyObject_GetBuffer(obj, &view, PyBUF_SIMPLE) != 0) {
-        return -1;
+
+    if (PyByteArray_Check(obj)) {
+        *buffer = PyByteArray_AS_STRING(obj);
+        *buffer_len = PyByteArray_GET_SIZE(obj);
+        return 0;
     }
-    
-    *buffer = (const char *)view.buf;
-    *buffer_len = view.len;
-    
-    /* Note: We release the buffer immediately, which isn't perfect
-       but maintains the same API. Callers should migrate to buffer protocol. */
-    PyBuffer_Release(&view);
-    return 0;
+
+    /* Other object types are not supported - callers should use
+       PyObject_GetBuffer() directly for proper buffer lifecycle management */
+    PyErr_SetString(PyExc_TypeError,
+                    "expected bytes or bytearray object");
+    return -1;
 }
 
 /* Modern replacement for PyUnicode_GET_DATA_SIZE */

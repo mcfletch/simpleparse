@@ -116,14 +116,39 @@
 
 		{
 			register Py_ssize_t ml = TE_STRING_GET_SIZE(match);
+
+			DPRINTF("\nAllNotIn (modern) :\n"
+					" looking for characters not in match\n");
+
+#if (TE_TABLETYPE == MXTAGTABLE_UNICODETYPE)
+			/* Unicode character-level comparison */
+			if (ml > 1)
+			{
+				for (; childPosition < sliceright; childPosition++)
+				{
+					register Py_ssize_t j;
+					Py_UCS4 ctx = GET_TEXT_CHAR(textobj, childPosition);
+					for (j = 0; j < ml; j++) {
+						Py_UCS4 mch = GET_MATCH_CHAR(match, j);
+						if (ctx == mch) break;
+					}
+					if (j != ml)
+						break;
+				}
+			}
+			else if (ml == 1)
+			{
+				/* one char only: use faster variant: */
+				Py_UCS4 match_char = GET_MATCH_CHAR(match, 0);
+				for (; childPosition < sliceright; childPosition++) {
+					if (GET_TEXT_CHAR(textobj, childPosition) == match_char)
+						break;
+				}
+			}
+#else
+			/* Bytes mode - use original pointer arithmetic */
 			register TE_CHAR *tx = &text[childPosition];
-
-			DPRINTF("\nAllNotIn :\n"
-					" looking for   = '%.40s'\n"
-					" not in string = '%.40s'\n",
-					m, tx);
-
-			if (ml != 1)
+			if (ml > 1)
 			{
 				for (; childPosition < sliceright; tx++, childPosition++)
 				{
@@ -136,27 +161,36 @@
 						break;
 				}
 			}
-			else
+			else if (ml == 1)
 			{
 				/* one char only: use faster variant: */
 				for (; childPosition < sliceright && *tx != *m; tx++, childPosition++)
 					;
 			}
+#endif
 			break;
 		}
 
 		case MATCH_IS:
 
 		{
-			DPRINTF("\nIs :\n"
-					" looking for   = '%.40s'\n"
-					" in string     = '%.40s'\n",
-					m, text + childPosition);
+			DPRINTF("\nIs (modern) :\n"
+					" looking for single character match\n");
 
+#if (TE_TABLETYPE == MXTAGTABLE_UNICODETYPE)
+			/* Unicode character-level comparison */
+			if (childPosition < sliceright &&
+				GET_TEXT_CHAR(textobj, childPosition) == GET_MATCH_CHAR(match, 0))
+			{
+				childPosition++;
+			}
+#else
+			/* Bytes mode - use original pointer arithmetic */
 			if (childPosition < sliceright && *(&text[childPosition]) == *m)
 			{
 				childPosition++;
 			}
+#endif
 			break;
 		}
 
@@ -164,13 +198,26 @@
 
 		{
 			register Py_ssize_t ml = TE_STRING_GET_SIZE(match);
+
+			DPRINTF("\nIsIn (modern) :\n"
+					" looking for character in match set\n");
+
+#if (TE_TABLETYPE == MXTAGTABLE_UNICODETYPE)
+			/* Unicode character-level comparison */
+			if (ml > 0 && childPosition < sliceright)
+			{
+				register Py_ssize_t j;
+				Py_UCS4 ctx = GET_TEXT_CHAR(textobj, childPosition);
+				for (j = 0; j < ml; j++) {
+					if (ctx == GET_MATCH_CHAR(match, j))
+						break;
+				}
+				if (j != ml)
+					childPosition++;
+			}
+#else
+			/* Bytes mode - use original pointer arithmetic */
 			register TE_CHAR ctx = text[childPosition];
-
-			DPRINTF("\nIsIn :\n"
-					" looking for   = '%.40s'\n"
-					" in string     = '%.40s'\n",
-					m, text + childPosition);
-
 			if (ml > 0 && childPosition < sliceright)
 			{
 				register Py_ssize_t j;
@@ -180,6 +227,7 @@
 				if (j != ml)
 					childPosition++;
 			}
+#endif
 
 			break;
 		}
@@ -188,13 +236,28 @@
 
 		{
 			register Py_ssize_t ml = TE_STRING_GET_SIZE(match);
+
+			DPRINTF("\nIsNotIn (modern) :\n"
+					" looking for character not in match set\n");
+
+#if (TE_TABLETYPE == MXTAGTABLE_UNICODETYPE)
+			/* Unicode character-level comparison */
+			if (ml > 0 && childPosition < sliceright)
+			{
+				register Py_ssize_t j;
+				Py_UCS4 ctx = GET_TEXT_CHAR(textobj, childPosition);
+				for (j = 0; j < ml; j++) {
+					if (ctx == GET_MATCH_CHAR(match, j))
+						break;
+				}
+				if (j == ml)
+					childPosition++;
+			}
+			else
+				childPosition++;
+#else
+			/* Bytes mode - use original pointer arithmetic */
 			register TE_CHAR ctx = text[childPosition];
-
-			DPRINTF("\nIsNotIn :\n"
-					" looking for   = '%.40s'\n"
-					" not in string = '%.40s'\n",
-					m, text + childPosition);
-
 			if (ml > 0 && childPosition < sliceright)
 			{
 				register Py_ssize_t j;
@@ -206,6 +269,7 @@
 			}
 			else
 				childPosition++;
+#endif
 
 			break;
 		}
@@ -214,27 +278,44 @@
 
 		{
 			Py_ssize_t ml1 = TE_STRING_GET_SIZE(match) - 1;
-			register TE_CHAR *tx = &text[childPosition + ml1];
-			register Py_ssize_t j = ml1;
-			register TE_CHAR *mj = &m[j];
 
-			DPRINTF("\nWord :\n"
-					" looking for   = '%.40s'\n"
-					" in string     = '%.40s'\n",
-					m, &text[childPosition]);
+			DPRINTF("\nWord (modern) :\n"
+					" looking for exact word match\n");
 
 			if (childPosition + ml1 >= sliceright)
 				break;
 
-			/* compare from right to left */
-			for (; j >= 0 && *tx == *mj;
-				 tx--, mj--, j--)
-				;
+#if (TE_TABLETYPE == MXTAGTABLE_UNICODETYPE)
+			/* Unicode character-level comparison - compare from right to left */
+			{
+				register Py_ssize_t j = ml1;
+				for (; j >= 0; j--) {
+					if (GET_TEXT_CHAR(textobj, childPosition + j) != GET_MATCH_CHAR(match, j))
+						break;
+				}
+				if (j >= 0)						   /* not matched */
+					childPosition = startPosition; /* reset */
+				else
+					childPosition += ml1 + 1;
+			}
+#else
+			/* Bytes mode - use original pointer arithmetic */
+			{
+				register TE_CHAR *tx = &text[childPosition + ml1];
+				register Py_ssize_t j = ml1;
+				register TE_CHAR *mj = &m[j];
 
-			if (j >= 0)						   /* not matched */
-				childPosition = startPosition; /* reset */
-			else
-				childPosition += ml1 + 1;
+				/* compare from right to left */
+				for (; j >= 0 && *tx == *mj;
+					 tx--, mj--, j--)
+					;
+
+				if (j >= 0)						   /* not matched */
+					childPosition = startPosition; /* reset */
+				else
+					childPosition += ml1 + 1;
+			}
+#endif
 			break;
 		}
 
@@ -244,14 +325,43 @@
 		{
 			Py_ssize_t ml1 = TE_STRING_GET_SIZE(match) - 1;
 
+			DPRINTF("\nWordStart/End (modern) :\n"
+					" searching for word in text\n");
+
 			if (ml1 >= 0)
 			{
-				register TE_CHAR *tx = &text[childPosition];
+#if (TE_TABLETYPE == MXTAGTABLE_UNICODETYPE)
+				/* Unicode character-level comparison - brute-force search */
+				for (;;)
+				{
+					register Py_ssize_t j = ml1;
 
-				DPRINTF("\nWordStart/End :\n"
-						" looking for   = '%.40s'\n"
-						" in string     = '%.40s'\n",
-						m, tx);
+					if (childPosition + j >= sliceright)
+					{
+						/* reached eof: no match, rewind */
+						childPosition = startPosition;
+						break;
+					}
+
+					/* scan from right to left */
+					for (; j >= 0; j--) {
+						if (GET_TEXT_CHAR(textobj, childPosition + j) != GET_MATCH_CHAR(match, j))
+							break;
+					}
+
+					if (j < 0)
+					{
+						/* found */
+						if (command == MATCH_WORDEND)
+							childPosition += ml1 + 1;
+						break;
+					}
+					/* not found: advance one char */
+					childPosition++;
+				}
+#else
+				/* Bytes mode - use original pointer arithmetic */
+				register TE_CHAR *tx = &text[childPosition];
 
 				/* Brute-force method; from right to left */
 				for (;;)
@@ -270,10 +380,6 @@
 					for (tx += j; j >= 0 && *tx == *mj;
 						 tx--, mj--, j--)
 						;
-					/*
-					DPRINTF("match text[%i+%i]: %c == %c\n",
-							childPosition,j,*tx,*mj);
-					*/
 
 					if (j < 0)
 					{
@@ -286,6 +392,7 @@
 					tx -= j - 1;
 					childPosition++;
 				}
+#endif
 			}
 
 			break;

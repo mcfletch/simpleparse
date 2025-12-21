@@ -164,6 +164,12 @@ XXX Not sure if loop vars are table or tag specific
 */
 #define PUSH_STACK( newTable, newResults ) {\
 	stackTemp = (recursive_stack_entry *) PyMem_Malloc( sizeof( recursive_stack_entry ));\
+	if (stackTemp == NULL) {\
+		childReturnCode = ERROR_CODE;\
+		errorType = PyExc_MemoryError;\
+		errorMessage = PyString_FromString("failed to allocate stack entry");\
+		break;\
+	}\
 	stackTemp->parent = stackParent;\
 	stackTemp->position = position;\
 	stackTemp->startPosition = startPosition;\
