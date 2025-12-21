@@ -33,6 +33,9 @@ classifiers = [
 ]
 requires-python = ">=3.3"
 
+[project.optional-dependencies]
+dev = ["pytest"]
+
 [project.urls]
 Homepage = "http://simpleparse.sourceforge.net/"
 Source = "https://github.com/mcfletch/simpleparse"

@@ -20,6 +20,7 @@
 #include "mxstdlib.h"
 #include "mxTextTools.h"
 #include "mxte_modern.h"
+#include "mxbm_modern.h"
 
 /* Forward declarations for search API functions */
 Py_ssize_t mxTextSearch_SearchBuffer_1BYTE(PyObject *self,
@@ -222,7 +223,25 @@ Py_ssize_t mxTextSearch_SearchBuffer_1BYTE(PyObject *self,
             return 0; /* No match possible */
         }
         
-        /* Simple brute force search for 1-byte characters with Unicode pattern */
+        /* Boyer-Moore available but disabled by default - benchmarks showed no performance benefit
+         * and slight overhead for typical SimpleParse use cases. Can still be explicitly enabled. */
+        if (0 && so->algorithm == MXTEXTSEARCH_BOYERMOORE_MODERN && match_len >= 2) {
+            /* Use modern Boyer-Moore search for 1-byte Unicode */
+            mxbm_context_unicode *bm_ctx = (mxbm_context_unicode *)so->data;
+            
+            if (bm_ctx && bm_ctx->kind == MXBM_KIND_1BYTE) {
+                Py_ssize_t result = mxbm_search_1byte(&bm_ctx->u.ctx_1byte, text, stop, start);
+                
+                if (result >= 0) {
+                    *sliceleft = result;
+                    *sliceright = result + match_len;
+                    return 1;
+                }
+                return 0; /* No match found */
+            }
+        }
+        
+        /* Fall back to simple brute force search for 1-byte characters with Unicode pattern */
         for (Py_ssize_t i = start; i <= stop - match_len; i++) {
             Py_ssize_t j;
             for (j = 0; j < match_len; j++) {

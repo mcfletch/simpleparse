@@ -34,6 +34,7 @@ extern "C" {
 #define MXTEXTSEARCH_BOYERMOORE		0
 #define MXTEXTSEARCH_FASTSEARCH		1
 #define MXTEXTSEARCH_TRIVIAL		2
+#define MXTEXTSEARCH_BOYERMOORE_MODERN	3
 
 typedef struct {
     PyObject_HEAD

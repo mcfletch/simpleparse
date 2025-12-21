@@ -18,6 +18,7 @@
 #include "mx.h"
 #include "mxTextTools.h"
 #include "mxte_modern.h"  /* Modern Unicode engine implementation - Python 3.3+ */
+#include "mxbm_modern.h"  /* Modern Boyer-Moore search implementation */
 #include "structmember.h"
 #include <ctype.h>
 
@@ -207,6 +208,29 @@ PyObject *mxTextSearch_New(PyObject *match,
 		  "error initializing the search object");
 	break;
 
+    case MXTEXTSEARCH_BOYERMOORE_MODERN:
+	Py_Assert(PyString_Check(match) || PyUnicode_Check(match) || PyBytes_Check(match),
+		  PyExc_TypeError,
+		  "match must be a string, unicode, or bytes for modern Boyer-Moore");
+	Py_Assert(so->translate == NULL,
+		  PyExc_TypeError,
+		  "modern Boyer-Moore algorithm does not support translate");
+	
+	/* Allocate and initialize Boyer-Moore context */
+	so->data = PyMem_Malloc(sizeof(mxbm_context_unicode));
+	if (so->data == NULL) {
+	    PyErr_NoMemory();
+	    goto onError;
+	}
+	
+	if (mxbm_init_unicode((mxbm_context_unicode *)so->data, match) < 0) {
+	    PyMem_Free(so->data);
+	    so->data = NULL;
+	    Py_Error(PyExc_ValueError,
+		     "error initializing modern Boyer-Moore search");
+	}
+	break;
+
     case MXTEXTSEARCH_TRIVIAL:
 	Py_Assert(PyString_Check(match) || PyUnicode_Check(match),
 		  PyExc_TypeError,
@@ -243,10 +267,29 @@ Py_C_Function_WithKeywords(
     Py_KeywordsGet3Args("O|Oi:TextSearch",match,translate,algorithm);
 
     if (algorithm == -424242) {
-	if (PyUnicode_Check(match))
+	/* Auto-select algorithm based on pattern characteristics */
+	Py_ssize_t pattern_len = 0;
+	if (PyUnicode_Check(match)) {
+	    if (PyUnicode_READY(match) == 0) {
+		pattern_len = PyUnicode_GET_LENGTH(match);
+	    }
+	    /* Use modern Boyer-Moore for longer Unicode patterns */
+	    if (pattern_len >= MXBM_MIN_PATTERN_LEN) {
+		algorithm = MXTEXTSEARCH_BOYERMOORE_MODERN;
+	    } else {
+		algorithm = MXTEXTSEARCH_TRIVIAL;
+	    }
+	} else if (PyBytes_Check(match)) {
+	    pattern_len = PyBytes_GET_SIZE(match);
+	    /* Use modern Boyer-Moore for longer byte patterns */
+	    if (pattern_len >= MXBM_MIN_PATTERN_LEN) {
+		algorithm = MXTEXTSEARCH_BOYERMOORE_MODERN;
+	    } else {
+		algorithm = MXTEXTSEARCH_BOYERMOORE;  /* Keep old for bytes < 2 */
+	    }
+	} else {
 	    algorithm = MXTEXTSEARCH_TRIVIAL;
-	else
-	    algorithm = MXTEXTSEARCH_BOYERMOORE;
+	}
     }
     return mxTextSearch_New(match, translate, algorithm);
 
@@ -262,6 +305,13 @@ void mxTextSearch_Free(mxTextSearchObject *so)
 
 	case MXTEXTSEARCH_BOYERMOORE:
 	    bm_free(so->data);
+	    break;
+
+	case MXTEXTSEARCH_BOYERMOORE_MODERN:
+	    if (so->data) {
+		mxbm_cleanup_unicode((mxbm_context_unicode *)so->data);
+		PyMem_Free(so->data);
+	    }
 	    break;
 
 	case MXTEXTSEARCH_TRIVIAL:
@@ -469,6 +519,40 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 	}
 	break;
 
+    case MXTEXTSEARCH_BOYERMOORE_MODERN:
+	{
+	    fprintf(stderr, "DEBUG: Buffer search Boyer-Moore Modern called\n");
+	    fflush(stderr);
+	    
+	    mxbm_context_unicode *bm_ctx = (mxbm_context_unicode *)so->data;
+	    
+	    /* Modern Boyer-Moore only supports bytes for char* text input */
+	    if (bm_ctx->kind != MXBM_KIND_BYTES) {
+		Py_Error(PyExc_TypeError,
+			 "modern Boyer-Moore with char* text requires byte pattern");
+	    }
+	    
+	    /* Create a temporary bytes object for the text slice */
+	    PyObject *text_bytes = PyBytes_FromStringAndSize(text + start, stop - start);
+	    if (text_bytes == NULL)
+		goto onError;
+	    
+	    Py_ssize_t result = mxbm_search_unicode(bm_ctx, text_bytes, 0, stop - start);
+	    fprintf(stderr, "DEBUG: Buffer Boyer-Moore result: %ld\n", result);
+	    fflush(stderr);
+	    
+	    Py_DECREF(text_bytes);
+	    
+	    if (result >= 0) {
+		/* Found match - adjust result back to original coordinates */
+		*sliceleft = start + result;
+		*sliceright = start + result + PyBytes_GET_SIZE(so->match);
+		return 1;
+	    }
+	    return 0; /* Not found */
+	}
+	break;
+
     default:
 	Py_Error(mxTextTools_Error,
 		 "unknown algorithm type in mxTextSearch_SearchBuffer");
@@ -488,8 +572,6 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
  onError:
     return -1;
 }
-
-
 
 Py_ssize_t mxTextSearch_SearchUnicode(PyObject *self,
 			       Py_UCS4 *text,
@@ -580,7 +662,7 @@ Py_ssize_t mxTextSearch_SearchUnicode_Modern(PyObject *self,
                                              Py_ssize_t *sliceleft,
                                              Py_ssize_t *sliceright)
 {
-    Py_ssize_t nextpos;
+    Py_ssize_t nextpos = -1;
 
     Py_Assert(mxTextSearch_Check(self),
               PyExc_TypeError,
@@ -595,6 +677,9 @@ Py_ssize_t mxTextSearch_SearchUnicode_Modern(PyObject *self,
         return -1;
     }
 
+    fprintf(stderr, "DEBUG: Using algorithm %d\n", so->algorithm);
+    fflush(stderr);
+    
     switch (so->algorithm) {
 
     case MXTEXTSEARCH_BOYERMOORE:
@@ -655,6 +740,19 @@ Py_ssize_t mxTextSearch_SearchUnicode_Modern(PyObject *self,
             nextpos = mxte_optimized_unicode_search(text, match_obj, start, stop);
             
             Py_XDECREF(u);
+        }
+        break;
+
+    case MXTEXTSEARCH_BOYERMOORE_MODERN:
+        {
+            mxbm_context_unicode *bm_ctx = (mxbm_context_unicode *)so->data;
+            
+            /* Use modern Boyer-Moore search directly */
+            nextpos = mxbm_search_unicode(bm_ctx, text, start, stop);
+            
+            /* DEBUG: Print search results */
+            fprintf(stderr, "DEBUG: mxbm_search_unicode(%p, %p, %ld, %ld) = %ld\n", 
+                   bm_ctx, text, start, stop, nextpos);
         }
         break;
 
@@ -4857,6 +4955,7 @@ static PyObject* mxTextToolsModule_Initialize(void)
     Py_DECREF(mxTextTools_TagTables);
 
     ADD_INT_CONSTANT("BOYERMOORE", MXTEXTSEARCH_BOYERMOORE);
+    ADD_INT_CONSTANT("BOYERMOORE_MODERN", MXTEXTSEARCH_BOYERMOORE_MODERN);
     ADD_INT_CONSTANT("FASTSEARCH", MXTEXTSEARCH_FASTSEARCH);
     ADD_INT_CONSTANT("TRIVIAL", MXTEXTSEARCH_TRIVIAL);
 

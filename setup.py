@@ -50,6 +50,7 @@ if __name__ == "__main__":
         'simpleparse/stt/TextTools/mxTextTools/mxte_modern.c',
         'simpleparse/stt/TextTools/mxTextTools/mxte_smart.c', 
         'simpleparse/stt/TextTools/mxTextTools/mxbmse.c',
+        'simpleparse/stt/TextTools/mxTextTools/mxbm_modern.c',
     ]
     
     define_macros = [ 
