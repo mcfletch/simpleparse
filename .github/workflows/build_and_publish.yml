@@ -7,6 +7,8 @@ on:
     branches:
       - master
       - develop
+      - '**'  # All branches
+
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -41,22 +43,42 @@ jobs:
           name: cibw-sdist
           path: dist/*.tar.gz
 
-  upload_pypi_test:
+  upload_testpypi:
+    name: Upload to TestPyPI
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      id-token: write
+    # Upload to TestPyPI for non-master branches
+    if: github.event_name == 'push' && github.ref != 'refs/heads/master'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  upload_pypi:
+    name: Upload to PyPI
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
       id-token: write
-    # only push to pypi if we are pushing to master
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/master')
+    # Upload to real PyPI only for master branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
       - uses: actions/download-artifact@v4
         with:
-          # unpacks all CIBW artifacts into dist/
           pattern: cibw-*
           path: dist
           merge-multiple: true
 
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
