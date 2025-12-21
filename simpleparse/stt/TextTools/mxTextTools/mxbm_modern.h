@@ -149,13 +149,6 @@ static inline int mxbm_cache_index_4byte(Py_UCS4 ch) {
     return ch % MXBM_4BYTE_CACHE_SIZE;
 }
 
-/* Internal helper functions */
-static void mxbm_build_good_suffix_table(const void *pattern, Py_ssize_t pattern_len, 
-                                         Py_ssize_t *table, int char_size);
-static void mxbm_build_border_array(const void *pattern, Py_ssize_t pattern_len, 
-                                    Py_ssize_t *border, int char_size);
-static int mxbm_chars_equal(const void *a, const void *b, int char_size);
-
 /* Performance optimization macros */
 #define MXBM_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MXBM_MIN(a, b) ((a) < (b) ? (a) : (b))

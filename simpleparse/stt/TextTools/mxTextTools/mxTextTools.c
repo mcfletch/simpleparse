@@ -1239,7 +1239,7 @@ int init_unicode_charset(mxCharSetObject *cs,
 		Py_Error(PyExc_ValueError,
 			 "unicode ordinal out of supported range");
 	    }
-	    for (j = range_left; j <= range_right; j++)
+	    for (j = (Py_ssize_t)range_left; j <= (Py_ssize_t)range_right; j++)
 		bigmap[j >> 3] |= 1 << (j & 7);
 	    i += 2; /* Skip the '-' and range_right character */
 	    continue;

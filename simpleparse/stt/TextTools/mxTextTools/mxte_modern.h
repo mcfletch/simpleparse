@@ -26,6 +26,13 @@ extern Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
                                             Py_ssize_t *sliceleft,
                                             Py_ssize_t *sliceright);
 
+extern Py_ssize_t mxTextSearch_SearchBuffer_1BYTE(PyObject *self,
+                                                  TE_CHAR_1BYTE *text,
+                                                  Py_ssize_t start,
+                                                  Py_ssize_t stop,
+                                                  Py_ssize_t *sliceleft,
+                                                  Py_ssize_t *sliceright);
+
 extern Py_ssize_t mxTextSearch_SearchUnicode_2BYTE(PyObject *self,
                                                    TE_CHAR_2BYTE *text,
                                                    Py_ssize_t start,

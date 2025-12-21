@@ -15,6 +15,7 @@
 
 #include "mxbm_modern.h"
 #include "mxte_modern.h"
+#include "mxstdlib.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -31,8 +32,8 @@ static int mxbm_chars_equal(const void *a, const void *b, int char_size) {
     }
 }
 
-static void mxbm_build_border_array(const void *pattern, Py_ssize_t pattern_len, 
-                                    Py_ssize_t *border, int char_size) {
+static MX_UNUSED void mxbm_build_border_array(const void *pattern, Py_ssize_t pattern_len,
+                                              Py_ssize_t *border, int char_size) {
     /* Build the border array for good suffix preprocessing */
     border[0] = -1;
     

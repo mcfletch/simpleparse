@@ -16,6 +16,19 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+
+/* Windows compatibility */
+#ifdef _MSC_VER
+# define strcasecmp _stricmp
+# define strncasecmp _strnicmp
+#endif
+
+/* Compiler-specific unused attribute */
+#if defined(__GNUC__) || defined(__clang__)
+# define MX_UNUSED __attribute__((unused))
+#else
+# define MX_UNUSED
+#endif
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #else
@@ -144,8 +157,7 @@
 
  */
 
-static __attribute__((unused))
-int mxDebugPrintf(const char *format, ...)
+static MX_UNUSED int mxDebugPrintf(const char *format, ...)
 {
 #ifdef MAL_DEBUG
     return 1;
