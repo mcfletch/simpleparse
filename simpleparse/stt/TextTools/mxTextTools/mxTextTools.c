@@ -481,7 +481,6 @@ Py_ssize_t mxTextSearch_SearchBuffer(PyObject *self,
 		    if (byte_char <= 255) {  /* Always true for 1-byte, but explicit for clarity */
 			const char *result = (const char *)memchr(text + start, (char)byte_char, stop - start);
 			if (result) {
-			    nextpos = (result - text) + 1;  /* Position after match */
 			    *sliceleft = result - text;
 			    *sliceright = (result - text) + 1;
 			    return 1;
