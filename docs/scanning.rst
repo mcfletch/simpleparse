@@ -1,10 +1,8 @@
 Scanning with SimpleParse
 =========================
 
-SimpleParse provides a parser generator which converts an EBNF grammar into a
-run-time parser for use in scanning/marking up texts. This document describes
-the process of developing and using an EBNF grammar to perform the text-scanning
-process.
+SimpleParse converts an EBNF grammar into a run-time parser. This document
+covers developing and using an EBNF grammar to scan text.
 
 **Prerequisites:**
 

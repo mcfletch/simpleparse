@@ -438,12 +438,9 @@ purposes).
 Pre-built and Library Element Tokens
 ------------------------------------
 
-There are situations where the base parsing library simply isn't capable of
-accomplishing a particular matching task, or where it would be much easier to
-define a method for matching a particular class of value than to define it with
-an EBNF grammar. In other instances, a particularly common pattern, such as
-floating point numbers or strings with standard (Python) escapes are wanted,
-and have been provided in a parsing library.
+Sometimes the parsing library can't handle a particular matching task, or a
+method is easier than an EBNF grammar. Common patterns like floating point
+numbers and escaped strings are provided in a parsing library.
 
 SimpleParse allows you to pass a set of "pre-built" element tokens to the
 Parser during initialization. These pre-built parsers can either be instances

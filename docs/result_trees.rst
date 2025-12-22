@@ -96,7 +96,7 @@ single character may occupy multiple bytes.
 DispatchProcessor
 -----------------
 
-SimpleParse provides a simple mechanism for processing result trees, a
+SimpleParse provides a mechanism for processing result trees, a
 recursive series of calls to attributes of a "Processor" object with functions
 to automate the call-by-name dispatching. This processor implementation is
 available for examination in the ``simpleparse.dispatchprocessor`` module.
@@ -189,12 +189,10 @@ If no processor is explicitly specified in the parse call, your
 Non-standard Result Trees
 -------------------------
 
-SimpleParse includes features which expose certain of the mx.TextTools library's
-features for producing non-standard result trees: AppendMatch, AppendToTagobj,
-AppendTagobj, and CallTag. Although not generally recommended for use in
-"normal" parsers, these features are useful for certain types of text
-processing, and their exposure was requested. Each flag has a different effect
-on the result tree, the particular effects are discussed below.
+SimpleParse exposes mx.TextTools features for producing non-standard result
+trees: AppendMatch, AppendToTagobj, AppendTagobj, and CallTag. These are useful
+for specialized text processing but not recommended for typical parsers. Each
+flag has a different effect on the result tree, discussed below.
 
 The exposure is through the Processor (or more precisely, a super-class of
 Processor called "MethodSource") object. To specify the use of one of the flags,

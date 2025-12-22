@@ -65,11 +65,19 @@ Features & Changelog
 New in 3.0
 ~~~~~~~~~~
 
-* **Full Unicode support** — Native Unicode parsing with support for the full
-  Unicode range including astral plane characters
-* **Encoding parameter** — Parse UTF-8 or other encoded bytes directly with
-  the ``encoding`` parameter
-* **Python 3.3+ only** — Simplified codebase focused on modern Python
+* **Multi-width Unicode engine** — Three implementations handle different string widths:
+
+  * **UCS-1 (Latin-1)** — 1-byte characters, uses ``memchr`` for single-character searches
+  * **UCS-2 (BMP)** — 2-byte characters for the Basic Multilingual Plane
+  * **UCS-4** — 4-byte characters for the full Unicode range including astral planes
+  * **Byte strings** — Direct parsing of ``bytes`` objects without decoding
+
+  The engine selects the appropriate implementation based on the input string's
+  internal representation.
+
+* **Encoding parameter** — Parse UTF-8 or other encoded bytes with the
+  ``encoding`` parameter; results are byte positions
+* **Python 3.3+ only** — Python 2 compatibility code removed
 * **Python 3.12, 3.13, 3.14 support** — Tested with latest Python versions
 * **Modern build system** — Uses pyproject.toml and modern setuptools
 
