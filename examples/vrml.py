@@ -6,8 +6,6 @@ VRML97 constructs, and should be correct for any VRML97
 content you can produce.  The parser is fairly fast
 (parsing around 280,000 cps on a 1GHz Athlon machine).
 """
-from __future__ import print_function
-
 from simpleparse.parser import Parser
 
 #print file

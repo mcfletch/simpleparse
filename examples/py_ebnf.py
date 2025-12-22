@@ -46,7 +46,6 @@ here's the copyright notice:
 You should have a full copy of the Python license in your Python
 distribution.
 """
-from __future__ import print_function
 declaration = r"""
 
 declarationset      :=  declaration+

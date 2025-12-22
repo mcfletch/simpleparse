@@ -1,6 +1,5 @@
 """Abstract representation of an in-memory grammar that generates parsers"""
 from simpleparse.stt.TextTools import TextTools
-import traceback
 
 class Generator:
     '''Abstract representation of an in-memory grammar that generates parsers
@@ -34,7 +33,7 @@ class Generator:
         '''Return the list of root generator objects'''
         return self.rootObjects
     def getNames( self, ):
-        '''Return the list of root generator objects'''
+        '''Return the list of production names'''
         return self.names
     def getRootObject( self, name ):
         """Get a particular root object by name"""
@@ -98,8 +97,8 @@ class Generator:
         returns ( flags or 0 , tagobject)
         """
         testName = "_m_"+name
-        if hasattr( self.methodSource, testName):
-            method = getattr( self.methodSource, testName )
+        method = getattr( self.methodSource, testName, None )
+        if method is not None:
             if callable(method):
                 return  TextTools.CallTag, method
             elif method == TextTools.AppendMatch:
@@ -116,9 +115,9 @@ class Generator:
     def getTagObjectForName( self, name ):
         """Get any explicitly defined tag object for the given name"""
         testName = "_o_"+name
-        if hasattr( self.methodSource, testName):
-            object = getattr( self.methodSource, testName )
-            return object
+        obj = getattr( self.methodSource, testName, None )
+        if obj is not None:
+            return obj
         return name
     def addDefinitionSource( self, item ):
         """Add a source for definitions when the current grammar doesn't supply

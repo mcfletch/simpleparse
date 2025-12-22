@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 declaration = r"""
 
 firstLine := "This is first line"

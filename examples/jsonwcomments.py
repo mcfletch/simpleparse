@@ -1,6 +1,4 @@
 """Simple example of a json parser with comment support"""
-from __future__ import print_function
-
 from simpleparse.common import numbers, strings, comments
 
 declaration = r'''

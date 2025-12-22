@@ -12,8 +12,6 @@ obvious of which is the permute method, which takes care of
 the negative, optional, and repeating flags for the normal
 case (with character ranges and literals being non-normal).
 """
-from __future__ import print_function
-
 from simpleparse.stt.TextTools.TextTools import *
 
 ### Direct use of BMS is deprecated now...
@@ -536,7 +534,6 @@ class ErrorOnFail(ElementToken):
         error.position = position
         raise error
     def copy( self ):
-        import copy
         return copy.copy( self )
     
 
@@ -600,7 +597,7 @@ class LibraryElement( ElementToken ):
             source = self.methodSource
         basetable = self.generator.buildParser( self.production, source )
         try:
-            if type(basetable[0]) == type(()):
+            if isinstance(basetable[0], tuple):
                 if len(basetable) == 1 and len(basetable[0]) == 3:
                     basetable = basetable[0]
                 else:

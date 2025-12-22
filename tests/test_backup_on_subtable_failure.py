@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 declaration = r'''testparser := (a,b)*
 a := 'a'
 b := 'b'

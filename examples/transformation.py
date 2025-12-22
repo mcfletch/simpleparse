@@ -16,8 +16,6 @@ making atom non-reporting gives a 15% speedup on my
 machine.
 """
 
-from __future__ import print_function
-
 declaration = r'''
 set       := (interesting/multset/plusset)+
 multset   := '*',(set/atom), (set/atom)

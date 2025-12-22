@@ -1,11 +1,6 @@
-from __future__ import unicode_literals
 from simpleparse.xmlparser import xml_parser
 from simpleparse.parser import Parser
 import unittest, sys
-try:
-    unicode
-except NameError:
-    unicode = str
 import pytest
 p = Parser( xml_parser.declaration )
 skip_on_python3 = pytest.mark.skipif(sys.version_info[:1]>=(3,))
@@ -18,7 +13,7 @@ def production_test(production, should, shouldnot):
     def test_final( self ):
         """Perform the test"""
         for item in should:
-            if isinstance(item,unicode):
+            if isinstance(item,str):
                 item = item.encode('utf-8')
             try:
                 success, children, next = p.parse( item, production )
@@ -28,7 +23,7 @@ def production_test(production, should, shouldnot):
             assert success, """Didn't parse %s as a %s, should have"""%( repr(item), production)
             assert next == len(item), """Didn't parse whole of %s as a %s, parsed %s of %s characters, results were:\n%s\nRest was:\n%s"""%( repr(item), production, next, len(item), children, item[next:])
         for item in shouldnot:
-            if isinstance(item,unicode):
+            if isinstance(item,str):
                 item = item.encode('utf-8')
             success, children, next = p.parse( item, production )
             assert not success, """Parsed %s chars of %s as a %s, shouldn't have, result was:\n%s"""%( next, repr(item), production, children)

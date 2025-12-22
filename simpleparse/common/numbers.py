@@ -146,34 +146,11 @@ class FloatInterpreter(DispatchProcessor):
         (tag, left, right, children) = info
         return float( buffer[left:right])
 
-import sys
-if hasattr( sys,'version_info') and sys.version_info[:2] > (2,0):
-    class BinaryInterpreter(DispatchProcessor):
-        def __call__( self, info, buffer):
-            """Interpret a bitfield set as an integer"""
-            (tag, left, right, children) = info
-            return _toInt( buffer[left:right-1], 2)
-else:
-    class BinaryInterpreter(DispatchProcessor):
-        def __call__( self, info, buffer):
-            """Interpret a bitfield set as an integer, not sure this algo
-            is correct, will see I suppose"""
-            (tag, left, right, children) = info
-            sign = 1
-            if len(children) > 2:
-                s = children[0]
-                for schar in buffer[s[1]:s[2]]:
-                    if schar == '-':
-                        sign = sign * -1
-                bits = buffer[children[1][1]:children[1][2]]
-            else:
-                bits = buffer[children[0][1]:children[0][2]]
-            value = 0
-            for bit in bits:
-                value = (value << 1)
-                if bit == '1':
-                    value = value + 1
-            return value
+class BinaryInterpreter(DispatchProcessor):
+    def __call__( self, info, buffer):
+        """Interpret a bitfield set as an integer"""
+        (tag, left, right, children) = info
+        return _toInt( buffer[left:right-1], 2)
         
 class ImaginaryInterpreter( DispatchProcessor ):
     map = {
@@ -181,10 +158,9 @@ class ImaginaryInterpreter( DispatchProcessor ):
         "int":IntInterpreter()
     }
     def __call__( self, info, buffer):
-        """Interpret a bitfield set as an integer, not sure this algo
-        is correct, will see I suppose"""
+        """Interpret a numeric value as an imaginary number"""
         (tag, left, right, children) = info
         base = children[0]
-        base = self.mapSet[base[0]](base, buffer)
+        base = self.map[base[0]](base, buffer)
         return base * 1j
     

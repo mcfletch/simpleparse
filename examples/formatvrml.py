@@ -1,7 +1,5 @@
 """Example using a parser to format VRML97 code as HTML w/CSS
 """
-from __future__ import print_function
-
 import sys
 import os
 from simpleparse.parser import Parser

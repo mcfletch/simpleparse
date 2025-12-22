@@ -12,8 +12,6 @@ no speed penalty for the errorOnFail version compared to
 the original version, as the errorOnFail code is not touched
 unless a syntax error is actually found in the input text.
 """
-from __future__ import print_function
-
 from simpleparse.parser import Parser
 from simpleparse.common import chartypes
 

@@ -8,8 +8,6 @@ function.  This example demonstrates the technique.
 The example also (obviously) demonstrates the use of an
 re object during the parsing process.
 """
-from __future__ import print_function
-
 import re
 from simpleparse.stt.TextTools.TextTools import *
 from simpleparse.parser import Parser

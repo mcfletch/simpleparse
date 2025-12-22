@@ -40,6 +40,7 @@ from simpleparse import common, objectgenerator
 from simpleparse.common import chartypes
 assert chartypes
 from simpleparse.dispatchprocessor import *
+from simpleparse.common.escapeutils import SPECIAL_ESCAPED_MAP
 
 c = {}
 
@@ -148,21 +149,10 @@ class StringInterpreter(DispatchProcessor):
     def backslash_char( self, info, buffer):
         return "\\"
 
+    specialescapedmap = SPECIAL_ESCAPED_MAP
+
     def string_special_escapes( self, info, buffer):
         """Maps "special" escapes to the corresponding characters"""
         (tag, left, right, sublist) = info
         return self.specialescapedmap[ buffer[left:right]]
-    specialescapedmap = {
-    'a':'\a',
-    'b':'\b',
-    'f':'\f',
-    'n':'\n',
-    'r':'\r',
-    't':'\t',
-    'v':'\v',
-    '\\':'\\',
-    '\n':'',
-    '"':'"',
-    "'":"'",
-    }
     

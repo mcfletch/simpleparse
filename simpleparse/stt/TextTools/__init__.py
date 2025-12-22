@@ -9,10 +9,7 @@
 from .TextTools import *
 from .TextTools import __version__
 
-try:
-    import copyreg
-except ImportError:
-    import copy_reg as copyreg
+import copyreg
 
 
 ### Make the types pickleable:

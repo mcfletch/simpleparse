@@ -5,8 +5,6 @@
     See the documentation for further information on copyrights,
     or contact the author. All Rights Reserved.
 """
-from __future__ import print_function
-
 import types
 
 #
@@ -151,10 +149,10 @@ def word_in_list(l):
     keys = list(d.keys())
     if len(keys) < 18: # somewhat arbitrary bound
         # fast hint for small sets
-        t.append((None,IsIn,''.join(list(d.keys()))))
+        t.append((None,IsIn,''.join(d.keys())))
         t.append((None,Skip,-1))
     # test groups
-    for c, group in list(d.items()):
+    for c, group in d.items():
         t.append(None) # hint will be filled in later
         i = len(t)-1
         for w in group:

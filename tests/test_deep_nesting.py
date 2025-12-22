@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from simpleparse.simpleparsegrammar import Parser
 from simpleparse.stt.TextTools import TextTools
 from .genericvalues import NullResult

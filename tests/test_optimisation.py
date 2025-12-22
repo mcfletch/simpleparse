@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import unittest, pprint, traceback
 from simpleparse.parser import Parser
 from simpleparse import printers

@@ -10,8 +10,6 @@ Note: Original grammar was from a sample in the YAPPS
 documentation.  Though it's kinda hard to recognise here.
 """
 
-from __future__ import print_function
-
 definition = r"""
 ### A simple LISP parser
 
