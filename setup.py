@@ -53,10 +53,9 @@ if __name__ == "__main__":
         'simpleparse/stt/TextTools/mxTextTools/mxbm_modern.c',
     ]
     
-    define_macros = [ 
+    define_macros = [
         ('MX_BUILDING_MXTEXTTOOLS', 1),
         ('PY_SSIZE_T_CLEAN', 1),
-        ('DEBUG', 1),
     ]
     
     # For all Python 3.3+, force use of modern APIs and eliminate legacy compatibility
