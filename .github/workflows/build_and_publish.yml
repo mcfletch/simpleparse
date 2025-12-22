@@ -20,8 +20,8 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.20.0
         env:
-          # Skip Python 3.6 on macos-15-intel (produces broken wheels)
-          CIBW_SKIP: ${{ matrix.os == 'macOS-15-intel' && 'cp36-*' || '' }}
+          # Skip Python 3.6 (EOL Dec 2021, produces broken wheel metadata)
+          CIBW_SKIP: cp36-*
 
       - uses: actions/upload-artifact@v4
         with:
