@@ -1031,20 +1031,28 @@ PyTypeObject mxTextSearch_Type = {
     0,                                  /*tp_itemsize*/
     /* methods */
     (destructor)mxTextSearch_Free,      /*tp_dealloc*/
+#if PY_VERSION_HEX >= 0x03080000
+    0,                                  /*tp_vectorcall_offset*/
+#else
     (printfunc)0,                       /*tp_print*/
+#endif
     (getattrfunc)0,                     /*tp_getattr*/
     (setattrfunc)0,                     /*tp_setattr*/
-    0,                                  /*tp_compare*/
+#if PY_VERSION_HEX >= 0x03050000
+    0,                                  /*tp_as_async*/
+#else
+    0,                                  /*tp_reserved*/
+#endif
     (reprfunc)mxTextSearch_Repr,        /*tp_repr*/
     0,                                  /*tp_as_number*/
-    0,                                  /*tp_as_number*/
+    0,                                  /*tp_as_sequence*/
     0,                                  /*tp_as_mapping*/
     (hashfunc)0,                        /*tp_hash*/
     (ternaryfunc)0,                     /*tp_call*/
     (reprfunc)0,                        /*tp_str*/
     (getattrofunc)0,                    /*tp_getattro*/
     (setattrofunc)0,                    /*tp_setattro*/
-    0,                                  /*tp_asbuffer*/
+    0,                                  /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT,                 /*tp_flags*/
     "mxTextTools text-search object",   /*tp_doc*/
     0,                                  /*tp_traverse*/
@@ -2073,10 +2081,18 @@ PyTypeObject mxCharSet_Type = {
     0,                                  /* tp_itemsize */
     /* methods */
     (destructor)mxCharSet_Free,         /* tp_dealloc */
+#if PY_VERSION_HEX >= 0x03080000
+    0,                                  /* tp_vectorcall_offset */
+#else
     (printfunc)0,                       /* tp_print */
+#endif
     (getattrfunc)0,                     /* tp_getattr */
     (setattrfunc)0,                     /* tp_setattr */
-    0,                                  /* tp_compare */
+#if PY_VERSION_HEX >= 0x03050000
+    0,                                  /* tp_as_async */
+#else
+    0,                                  /* tp_reserved */
+#endif
     (reprfunc)mxCharSet_Repr,           /* tp_repr */
     0,                                  /* tp_as_number */
     &mxCharSet_TypeAsSequence,          /* tp_as_sequence */
@@ -2986,10 +3002,18 @@ PyTypeObject mxTagTable_Type = {
     sizeof(mxTagTableEntry),                /* tp_itemsize */
     /* methods */
     (destructor)mxTagTable_Free,            /* tp_dealloc */
+#if PY_VERSION_HEX >= 0x03080000
+    0,                                      /* tp_vectorcall_offset */
+#else
     (printfunc)0,                           /* tp_print */
+#endif
     (getattrfunc)0,                         /* tp_getattr */
     (setattrfunc)0,                         /* tp_setattr */
-    0,                                      /* tp_compare */
+#if PY_VERSION_HEX >= 0x03050000
+    0,                                      /* tp_as_async */
+#else
+    0,                                      /* tp_reserved */
+#endif
     (reprfunc)mxTagTable_Repr,              /* tp_repr */
     0,                                      /* tp_as_number */
     0,                                      /* tp_as_sequence */
@@ -5104,22 +5128,33 @@ static PyObject* mxTextToolsModule_Initialize(void)
     /* Add some symbolic constants to the module */
     if (PyModule_AddStringConstant(module, "__version__", VERSION) < 0)
         return NULL;
+
+    /* Note: PyModule_AddObject steals a reference on success only.
+       On failure, we must DECREF. Also, after successful add, the global
+       variables become borrowed references to the module's objects. */
     mx_ToUpper = mxTextTools_ToUpper();
     if (!mx_ToUpper)
         return NULL;
-    if (PyModule_AddObject(module, "to_upper", mx_ToUpper) < 0)
+    if (PyModule_AddObject(module, "to_upper", mx_ToUpper) < 0) {
+        Py_DECREF(mx_ToUpper);
         return NULL;
+    }
+
     mx_ToLower = mxTextTools_ToLower();
     if (!mx_ToLower)
         return NULL;
-    if (PyModule_AddObject(module, "to_lower", mx_ToLower) < 0)
+    if (PyModule_AddObject(module, "to_lower", mx_ToLower) < 0) {
+        Py_DECREF(mx_ToLower);
         return NULL;
+    }
 
     /* Let the tag table cache live in the module dictionary; we just
        keep a weak reference in mxTextTools_TagTables around. */
-    if (PyModule_AddObject(module, "tagtable_cache", mxTextTools_TagTables) < 0)
+    if (PyModule_AddObject(module, "tagtable_cache", mxTextTools_TagTables) < 0) {
+        Py_DECREF(mxTextTools_TagTables);
         return NULL;
-    Py_DECREF(mxTextTools_TagTables);
+    }
+    /* mxTextTools_TagTables is now a borrowed reference to the dict in module */
 
     ADD_INT_CONSTANT("BOYERMOORE", MXTEXTSEARCH_BOYERMOORE);
     ADD_INT_CONSTANT("BOYERMOORE_MODERN", MXTEXTSEARCH_BOYERMOORE_MODERN);
@@ -5130,19 +5165,28 @@ static PyObject* mxTextToolsModule_Initialize(void)
     mxTextTools_Error = PyErr_NewException("mxTextTools.Error", PyExc_Exception, NULL);
     if (!mxTextTools_Error)
         return NULL;
-    if (PyModule_AddObject(module, "Error", mxTextTools_Error) < 0)
+    if (PyModule_AddObject(module, "Error", mxTextTools_Error) < 0) {
+        Py_DECREF(mxTextTools_Error);
         return NULL;
+    }
 
-    /* Type objects */
+    /* Type objects - these are static types, so we INCREF before AddObject.
+       On failure, we must DECREF since AddObject didn't steal the ref. */
     Py_INCREF(&mxTextSearch_Type);
-    if (PyModule_AddObject(module, "TextSearchType", (PyObject*) &mxTextSearch_Type) < 0)
+    if (PyModule_AddObject(module, "TextSearchType", (PyObject*) &mxTextSearch_Type) < 0) {
+        Py_DECREF(&mxTextSearch_Type);
         return NULL;
+    }
     Py_INCREF(&mxCharSet_Type);
-    if (PyModule_AddObject(module, "CharSetType", (PyObject*) &mxCharSet_Type) < 0)
+    if (PyModule_AddObject(module, "CharSetType", (PyObject*) &mxCharSet_Type) < 0) {
+        Py_DECREF(&mxCharSet_Type);
         return NULL;
+    }
     Py_INCREF(&mxTagTable_Type);
-    if (PyModule_AddObject(module, "TagTableType", (PyObject*) &mxTagTable_Type) < 0)
+    if (PyModule_AddObject(module, "TagTableType", (PyObject*) &mxTagTable_Type) < 0) {
+        Py_DECREF(&mxTagTable_Type);
         return NULL;
+    }
 
     /* Tag Table command symbols (these will be exposed via
        simpleparse.stt.TextTools.Constants.TagTables) */
