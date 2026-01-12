@@ -62,7 +62,14 @@ For development installation:
 Features & Changelog
 --------------------
 
-New in 3.0
+New in 3.0.0a2
+~~~~~~~~~~~~~~
+
+* **Thread-safe module initialization** — Fixed a race condition in the C extension
+  module initialization that could cause rare segfaults (~1/2000 imports) on Python 3.14.
+  The module now uses proper locking to prevent concurrent initialization attempts.
+
+New in 3.0.0a1
 ~~~~~~~~~~
 
 * **Multi-width Unicode engine** — Three implementations handle different string widths:
