@@ -37,10 +37,11 @@
 /* Define this to enable the copy-protocol (__copy__, __deepcopy__) */
 #define COPY_PROTOCOL
 
-/* Convenience macro for reducing clutter */
+/* Convenience macro for reducing clutter.
+   Note: Uses goto error_cleanup which requires the label to be defined. */
 #define ADD_INT_CONSTANT(name, value) \
     if (PyModule_AddIntConstant(module, name, value) < 0) \
-        return NULL;
+        goto error_cleanup;
 
 /* --- module doc-string -------------------------------------------------- */
 
@@ -72,8 +73,15 @@ static PyObject *mxTextTools_TagTables;	/* TagTable cache dictionary */
 /* Thread safety for TagTable cache */
 static PyThread_type_lock mxTextTools_TagTables_lock = NULL;
 
-/* Flag telling us whether the module was initialized or not. */
+/* Thread safety for module initialization (protects against concurrent init) */
+static PyThread_type_lock mxTextTools_Init_lock = NULL;
+
+/* Flag telling us whether the module was initialized or not.
+   Protected by mxTextTools_Init_lock for thread-safe access. */
 static int mxTextTools_Initialized = 0;
+
+/* Cached module reference for re-import scenarios */
+static PyObject *mxTextTools_Module = NULL;
 
 /* --- forward declarations ----------------------------------------------- */
 
@@ -5064,19 +5072,24 @@ static PyMethodDef Module_methods[] =
     {NULL,NULL} /* end of list */
 };
 
-/* Cleanup function */
-static 
+/* Cleanup function - called at interpreter shutdown */
+static
 void mxTextToolsModule_Cleanup(void)
 {
     mxTextTools_TagTables = NULL;
-    
+    mxTextTools_Module = NULL;
+
     /* Cleanup the TagTable cache lock */
     if (mxTextTools_TagTables_lock) {
         PyThread_free_lock(mxTextTools_TagTables_lock);
         mxTextTools_TagTables_lock = NULL;
     }
 
-    /* Reset mxTextTools_Initialized flag */
+    /* Reset mxTextTools_Initialized flag.
+       Note: We don't free mxTextTools_Init_lock here because it needs to
+       remain valid to protect against concurrent access during shutdown.
+       The lock was allocated before Py_AtExit was called, so it's safe
+       to leave it allocated (it will be freed when the process exits). */
     mxTextTools_Initialized = 0;
 }
 
@@ -5091,83 +5104,148 @@ static struct PyModuleDef mxTextTools_ModuleDef = {
 static PyObject* mxTextToolsModule_Initialize(void)
 {
     PyObject *module;
+    int already_initialized = 0;
 
+    /* Allocate the init lock on first call (before any locking).
+       This uses a simple atomic pattern: if NULL, try to allocate.
+       PyThread_allocate_lock is thread-safe to call. */
+    if (!mxTextTools_Init_lock) {
+        PyThread_type_lock new_lock = PyThread_allocate_lock();
+        if (!new_lock) {
+            PyErr_SetString(PyExc_MemoryError,
+                    "failed to allocate initialization lock");
+            return NULL;
+        }
+        /* Use a simple compare-and-swap pattern.
+           If another thread allocated the lock first, free ours. */
+        if (mxTextTools_Init_lock) {
+            /* Another thread beat us - free our lock */
+            PyThread_free_lock(new_lock);
+        } else {
+            mxTextTools_Init_lock = new_lock;
+        }
+    }
+
+    /* Acquire the initialization lock to ensure thread-safe init.
+       This protects against concurrent initialization attempts. */
+    PyThread_acquire_lock(mxTextTools_Init_lock, WAIT_LOCK);
+
+    /* Check if already initialized (while holding the lock) */
     if (mxTextTools_Initialized) {
+        already_initialized = 1;
+    }
+
+    if (already_initialized) {
+        PyThread_release_lock(mxTextTools_Init_lock);
+        /* Return a new reference to the cached module if available,
+           otherwise raise an error */
+        if (mxTextTools_Module) {
+            Py_INCREF(mxTextTools_Module);
+            return mxTextTools_Module;
+        }
         PyErr_SetString(PyExc_SystemError,
-                "can't initialize "MXTEXTTOOLS_MODULE" more than once");
+                "mxTextTools module was initialized but module object is missing");
         return NULL;
     }
 
     /* Init type objects */
-    if (PyType_Ready(&mxTextSearch_Type) < 0)
+    if (PyType_Ready(&mxTextSearch_Type) < 0) {
+        PyThread_release_lock(mxTextTools_Init_lock);
         return NULL;
-    if (PyType_Ready(&mxCharSet_Type) < 0)
+    }
+    if (PyType_Ready(&mxCharSet_Type) < 0) {
+        PyThread_release_lock(mxTextTools_Init_lock);
         return NULL;
-    if (PyType_Ready(&mxTagTable_Type) < 0)
+    }
+    if (PyType_Ready(&mxTagTable_Type) < 0) {
+        PyThread_release_lock(mxTextTools_Init_lock);
         return NULL;
+    }
 
     /* create module */
     module = PyModule_Create(&mxTextTools_ModuleDef);
-    if (!module)
+    if (!module) {
+        PyThread_release_lock(mxTextTools_Init_lock);
         return NULL;
+    }
 
     /* Init TagTable cache */
     mxTextTools_TagTables = PyDict_New();
-    if (!mxTextTools_TagTables)
+    if (!mxTextTools_TagTables) {
+        Py_DECREF(module);
+        PyThread_release_lock(mxTextTools_Init_lock);
         return NULL;
-        
+    }
+
     /* Initialize TagTable cache lock for thread safety */
     mxTextTools_TagTables_lock = PyThread_allocate_lock();
-    if (!mxTextTools_TagTables_lock)
+    if (!mxTextTools_TagTables_lock) {
+        Py_DECREF(mxTextTools_TagTables);
+        mxTextTools_TagTables = NULL;
+        Py_DECREF(module);
+        PyThread_release_lock(mxTextTools_Init_lock);
         return NULL;
+    }
 
     /* Register cleanup function */
-    if (Py_AtExit(mxTextToolsModule_Cleanup) < 0)
+    if (Py_AtExit(mxTextToolsModule_Cleanup) < 0) {
+        PyThread_free_lock(mxTextTools_TagTables_lock);
+        mxTextTools_TagTables_lock = NULL;
+        Py_DECREF(mxTextTools_TagTables);
+        mxTextTools_TagTables = NULL;
+        Py_DECREF(module);
+        PyThread_release_lock(mxTextTools_Init_lock);
         return NULL;
+    }
 
     /* Add some symbolic constants to the module */
     if (PyModule_AddStringConstant(module, "__version__", VERSION) < 0)
-        return NULL;
+        goto error_cleanup;
 
     /* Note: PyModule_AddObject steals a reference on success only.
        On failure, we must DECREF. Also, after successful add, the global
        variables become borrowed references to the module's objects. */
     mx_ToUpper = mxTextTools_ToUpper();
     if (!mx_ToUpper)
-        return NULL;
+        goto error_cleanup;
     if (PyModule_AddObject(module, "to_upper", mx_ToUpper) < 0) {
         Py_DECREF(mx_ToUpper);
-        return NULL;
+        goto error_cleanup;
     }
 
     mx_ToLower = mxTextTools_ToLower();
     if (!mx_ToLower)
-        return NULL;
+        goto error_cleanup;
     if (PyModule_AddObject(module, "to_lower", mx_ToLower) < 0) {
         Py_DECREF(mx_ToLower);
-        return NULL;
+        goto error_cleanup;
     }
 
     /* Let the tag table cache live in the module dictionary; we just
        keep a weak reference in mxTextTools_TagTables around. */
     if (PyModule_AddObject(module, "tagtable_cache", mxTextTools_TagTables) < 0) {
         Py_DECREF(mxTextTools_TagTables);
-        return NULL;
+        mxTextTools_TagTables = NULL;
+        goto error_cleanup;
     }
     /* mxTextTools_TagTables is now a borrowed reference to the dict in module */
 
-    ADD_INT_CONSTANT("BOYERMOORE", MXTEXTSEARCH_BOYERMOORE);
-    ADD_INT_CONSTANT("BOYERMOORE_MODERN", MXTEXTSEARCH_BOYERMOORE_MODERN);
-    ADD_INT_CONSTANT("FASTSEARCH", MXTEXTSEARCH_FASTSEARCH);
-    ADD_INT_CONSTANT("TRIVIAL", MXTEXTSEARCH_TRIVIAL);
+    if (PyModule_AddIntConstant(module, "BOYERMOORE", MXTEXTSEARCH_BOYERMOORE) < 0)
+        goto error_cleanup;
+    if (PyModule_AddIntConstant(module, "BOYERMOORE_MODERN", MXTEXTSEARCH_BOYERMOORE_MODERN) < 0)
+        goto error_cleanup;
+    if (PyModule_AddIntConstant(module, "FASTSEARCH", MXTEXTSEARCH_FASTSEARCH) < 0)
+        goto error_cleanup;
+    if (PyModule_AddIntConstant(module, "TRIVIAL", MXTEXTSEARCH_TRIVIAL) < 0)
+        goto error_cleanup;
 
     /* Init exceptions */
     mxTextTools_Error = PyErr_NewException("mxTextTools.Error", PyExc_Exception, NULL);
     if (!mxTextTools_Error)
-        return NULL;
+        goto error_cleanup;
     if (PyModule_AddObject(module, "Error", mxTextTools_Error) < 0) {
         Py_DECREF(mxTextTools_Error);
-        return NULL;
+        goto error_cleanup;
     }
 
     /* Type objects - these are static types, so we INCREF before AddObject.
@@ -5175,17 +5253,17 @@ static PyObject* mxTextToolsModule_Initialize(void)
     Py_INCREF(&mxTextSearch_Type);
     if (PyModule_AddObject(module, "TextSearchType", (PyObject*) &mxTextSearch_Type) < 0) {
         Py_DECREF(&mxTextSearch_Type);
-        return NULL;
+        goto error_cleanup;
     }
     Py_INCREF(&mxCharSet_Type);
     if (PyModule_AddObject(module, "CharSetType", (PyObject*) &mxCharSet_Type) < 0) {
         Py_DECREF(&mxCharSet_Type);
-        return NULL;
+        goto error_cleanup;
     }
     Py_INCREF(&mxTagTable_Type);
     if (PyModule_AddObject(module, "TagTableType", (PyObject*) &mxTagTable_Type) < 0) {
         Py_DECREF(&mxTagTable_Type);
-        return NULL;
+        goto error_cleanup;
     }
 
     /* Tag Table command symbols (these will be exposed via
@@ -5253,10 +5331,23 @@ static PyObject* mxTextToolsModule_Initialize(void)
     DPRINTF("sizeof(string_charset)=%i bytes\n", sizeof(string_charset));
     DPRINTF("sizeof(unicode_charset)=%i bytes\n", sizeof(unicode_charset));
 
-    /* We are now initialized */
+    /* Store module reference and mark as initialized.
+       These must be set atomically (while holding the lock) to ensure
+       other threads see a consistent state. */
+    mxTextTools_Module = module;
     mxTextTools_Initialized = 1;
 
+    /* Release the initialization lock */
+    PyThread_release_lock(mxTextTools_Init_lock);
+
     return module;
+
+error_cleanup:
+    /* Clean up on error - release the lock and return NULL.
+       Note: We don't clean up the module here as it may be partially
+       initialized. Python's import machinery will handle the cleanup. */
+    PyThread_release_lock(mxTextTools_Init_lock);
+    return NULL;
 }
 
 #if PY_MAJOR_VERSION >= 3
