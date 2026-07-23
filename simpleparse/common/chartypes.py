@@ -36,7 +36,13 @@ too common to provide meaningful interpreters).
 """
 from simpleparse import objectgenerator, common
 import string, locale
-locale.setlocale(locale.LC_ALL, "" )
+try:
+    locale.setlocale(locale.LC_ALL, "" )
+except locale.Error:
+    # Environment requests a locale that isn't installed (common in minimal
+    # containers). localeconv() still works against the default C locale, so
+    # the only consequence is C-locale decimal/thousands conventions below.
+    pass
 
 c = {}
 
