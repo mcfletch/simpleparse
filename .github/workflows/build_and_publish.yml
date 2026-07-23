@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.20.0
+        uses: pypa/cibuildwheel@v2.23.0
         env:
           # Skip Python 3.6 (EOL Dec 2021, produces broken wheel metadata)
           CIBW_SKIP: cp36-*
