@@ -13,7 +13,7 @@ copyright = '1998-2025, Mike C. Fletcher'
 author = 'Mike C. Fletcher'
 
 # The full version, including alpha/beta/rc tags
-release = '3.0.0a1'
+release = '3.0.0a3'
 version = '3.0'
 
 # -- General configuration ---------------------------------------------------

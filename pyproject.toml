@@ -15,11 +15,6 @@ keywords = ["parse", "parser", "parsing", "text", "ebnf", "grammar", "generator"
 classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.3",
-    "Programming Language :: Python :: 3.4",
-    "Programming Language :: Python :: 3.5",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -31,10 +26,10 @@ classifiers = [
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
 ]
-requires-python = ">=3.3"
+requires-python = ">=3.8"
 
 [project.optional-dependencies]
-dev = ["pytest", "ruff"]
+dev = ["pytest", "ruff", "tox>=4.11", "tox-uv>=1"]
 docs = ["sphinx", "sphinx-rtd-theme"]
 
 [project.urls]

@@ -16,10 +16,15 @@ file formats and similar structured text (as distinct from natural language pars
 
 SimpleParse includes a patched copy of the mxTextTools tagging library with a
 non-recursive rewrite of the core parsing loop. This provides a uniform parsing
-platform where all features are always available.
+platform where all features are always available. As of version 3.0.0 this 
+rewrite also includes modifications to directly support Unicode 1, 2 and 4 byte
+python internal representations as well as bytes.
 
 SimpleParse is developed `on GitHub <https://github.com/mcfletch/simpleparse>`_
 where you can create issues and pull requests.
+
+Version 3.0.0 has used an LLM to support the adaptation to the new Unicode 
+internal formats.
 
 Quick Start
 -----------
@@ -45,7 +50,7 @@ Quick Start
 Installation
 ------------
 
-SimpleParse requires Python 3.3 or above. If you are compiling from source,
+SimpleParse requires Python 3.8 or above. If you are compiling from source,
 you'll also need a C compiler compatible with your Python. Pre-built wheels
 are available for common platforms.
 
@@ -61,6 +66,12 @@ For development installation:
 
 Features & Changelog
 --------------------
+
+New in 3.0.0a3 
+~~~~~~~~~~~~~~
+
+* Missing file from the 3.0.0a2 release 
+* Fix for running in docker environments with only C locale
 
 New in 3.0.0a2
 ~~~~~~~~~~~~~~
