@@ -3,7 +3,10 @@ name: Build and upload to PyPI
 on:
   workflow_dispatch:
   pull_request:
-  push: # Triggers on push to any branch
+  # Every branch builds; only `main` uploads to PyPI (see `upload_pypi`), and
+  # everything else goes to TestPyPI, which is what makes a release candidate
+  # something that can be installed and tried before it is out.
+  push:
 
 jobs:
   build_wheels:
@@ -64,15 +67,52 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
 
+  # Whether there is anything to publish. Asked before the upload rather than
+  # left to PyPI to reject, so a push that does not bump the version is an
+  # ordinary build rather than an upload nobody reads the result of.
+  version:
+    name: version
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.check.outputs.publish }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - id: check
+        name: Is this version already on PyPI?
+        run: |
+          VERSION=$(python -c "import re,pathlib,sys; t=pathlib.Path('simpleparse/__init__.py').read_text(); m=re.search(r'^__version__\s*=\s*[\'\"]([^\'\"]+)', t, re.M); sys.exit('no __version__ in simpleparse/__init__.py') if not m else print(m.group(1))")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          PUBLISH=false
+          for DIST in simpleparse; do
+            # Only 200 and 404 are answers. Anything else -- a 5xx, a timeout, a
+            # DNS failure -- means PyPI did not tell us, and guessing "not
+            # published" would turn an outage into an upload against a version
+            # that cannot be replaced.
+            CODE=$(curl -sS -o /dev/null -w '%{http_code}' --retry 3 --retry-delay 5 \
+                   "https://pypi.org/pypi/$DIST/$VERSION/json" || echo 000)
+            case "$CODE" in
+              200) echo "$DIST $VERSION is already on PyPI." ;;
+              404) echo "$DIST $VERSION is not on PyPI; it will be published."; PUBLISH=true ;;
+              *)   echo "PyPI answered HTTP $CODE for $DIST $VERSION; refusing to guess."; exit 1 ;;
+            esac
+          done
+          echo "publish=$PUBLISH" >> "$GITHUB_OUTPUT"
+
   upload_pypi:
     name: Upload to PyPI
-    needs: [build_wheels, build_sdist]
+    needs: [build_wheels, build_sdist, version]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
       id-token: write
-    # Upload to real PyPI only for master branch
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    # Only from the release branch, and only a version that is not out yet.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        && needs.version.outputs.publish == 'true'
     steps:
       - uses: actions/download-artifact@v4
         with:
