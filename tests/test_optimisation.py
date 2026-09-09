@@ -16,7 +16,7 @@ def _rcmp( item1, item2 ):
     if len(item1) != len(item2):
         return 0
     if item1[1] in (204,):
-        if cmp(item1[:2], item2[:2]) != 0:
+        if item1[:2] != item2[:2]:
             return 0
         try:
             if not rcmp( item1[2][0][item1[2][1]], item2[2][0][item2[2][1]]):
@@ -103,7 +103,6 @@ class OptimisationTests(unittest.TestCase):
     def testNoReportPassDown( self ):
         """Test that a non-reporting production does not produce reporting sub-productions"""
         first =""" a := b <b>:= d,e d:= e e:= 'this'"""
-        second =""" a := 'this' """
         assert Parser( first, 'a').parse( 'thisthis' ) == (1,[
         ],8)
         

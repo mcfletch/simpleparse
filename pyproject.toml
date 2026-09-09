@@ -58,8 +58,20 @@ simpleparse = ["*.txt", "**/*.txt", "**/*.ebnf", "**/*.html", "**/*.pyx", "**/*.
 [tool.ruff.format]
 quote-style="preserve"
 
+[tool.ruff]
+# Character-set constants, and the characters are the point: the module says
+# `# -*- coding: latin-1 -*-` and holds high bytes deliberately. It imports
+# correctly; ruff reads every file as UTF-8 and cannot open this one.
+extend-exclude = ["simpleparse/stt/TextTools/Constants/Sets.py"]
+
 [tool.ruff.lint]
-dummy-variable-rgx="^(_|err)$"
+# Named explicitly. With `select` unset ruff applies its own default, and that
+# default has widened between releases -- a gate whose meaning moves when a
+# tool is upgraded is not a gate. This says what the project holds itself to.
+select = ["E", "W", "F", "B"]
+# `_`, `err`, and the conventional `_name`: an underscore prefix is how Python
+# says a name is bound but deliberately unused.
+dummy-variable-rgx = "^(_[a-zA-Z0-9_]*|err)$"
 ignore = [
     'D200', # Allow multiline docstring even when it could fit on one line
 
@@ -71,6 +83,22 @@ ignore = [
     'E401', # I prefer multiple imports/line generally
     'E402', # We often need to run setupdefaults to get django setup done
     'F401', # unused imports, not an error, but should be cleaned up
+
+    # The generator's namespaces are built by `from x import *`, which is what
+    # a parser generator's output does; the names are there at run time.
+    'F403',
+    'F405',
+    # Whitespace, accumulated since 2001. Putting it right is a deliberate pass
+    # of its own rather than something a release gate forces into an unrelated
+    # change.
+    'W291',
+    'W293',
+    'W292',
+
+    # `l` and `r` are the left and right bounds of a match in the tag tuple
+    # `(tag, l, r, subtags)` that the engine passes everywhere. The single
+    # letters are the vocabulary of that structure, not carelessness.
+    'E741',
 ]
 
 # uv decides whether its cached metadata for a source tree is still current

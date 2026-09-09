@@ -123,7 +123,7 @@ class TestModernUnicodeEngine:
             ('🎉', 4, "Astral plane"),
         ]
         
-        for char, expected_width, description in test_cases:
+        for char, _expected_width, description in test_cases:
             # Test with TextSearch
             text = f"Find {char} here"
             search_obj = TextSearch(char)

@@ -33,7 +33,7 @@ This is NOT second line
 This is NOT fifth line
 """
 if __name__ == "__main__":
-    import pprint, time
+    import pprint, sys, time
     if sys.platform == 'win32':
         if hasattr(time,'perf_counter'):
             clock = time.perf_counter

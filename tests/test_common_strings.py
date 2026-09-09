@@ -40,7 +40,7 @@ parseTests = [
 class CommonTests(unittest.TestCase):
     def testBasic( self ):
         proc = dispatchprocessor.DispatchProcessor()
-        setattr(proc, "string", strings.StringInterpreter())
+        proc.string = strings.StringInterpreter()
         for production, yestable, notable in parseTests:
             p = Parser( "x := %s"%production, 'x')
             for data in yestable:
@@ -55,7 +55,7 @@ class CommonTests(unittest.TestCase):
                     assert results[0] == expected, """Got different interpreted value for data %s, we got %s, expected %s"""%( repr(data), repr(results[0]), repr(expected))
             for data in notable:
                 success, results, next = p.parse( data)
-                assert not success, """Parsed %s of %s as a %s result=%s"""%( repr(data), production, (success, results, next))
+                assert not success, """Parsed %s of %s as a %s result=%s"""%( repr(data), production, success, (results, next))
                 
         
         

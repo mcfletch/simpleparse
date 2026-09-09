@@ -28,7 +28,7 @@ class Generator:
                     return self.addDefinition( name, source[name])
 ##			import pdb
 ##			pdb.set_trace()
-            raise NameError( '''The name %s is not defined within this generator'''%(repr(name)), self )
+            raise NameError( '''The name %s is not defined within this generator'''%(repr(name)), self ) from None
     def getRootObjects( self, ):
         '''Return the list of root generator objects'''
         return self.rootObjects
@@ -110,7 +110,7 @@ class Generator:
                         raise ValueError( """Method source %s declares production %s to use AppendToTagobj method, but doesn't given an object with an append method in _o_%s (gave %s)"""%(repr(self.methodSource), name,name, repr(object)))
                 return method, object
             else:
-                raise ValueError( """Unrecognised command value %s (not callable, not one of the Append* constants) found in methodSource %s, name=%s"""%( repr(method),repr(methodSource),name))
+                raise ValueError( """Unrecognised command value %s (not callable, not one of the Append* constants) found in methodSource %s, name=%s"""%( repr(method),repr(self.methodSource),name))
         return 0, name
     def getTagObjectForName( self, name ):
         """Get any explicitly defined tag object for the given name"""

@@ -5,10 +5,7 @@ parsed, then linearised, then loaded as a Python module.
 """
 import os, unittest, shutil
 from . import test_grammarparser
-try:
-    reload
-except NameError:
-    from importlib import reload
+from importlib import reload
 HERE = os.path.dirname(__file__)
 
 class PrintersTests(test_grammarparser.SimpleParseGrammarTests):

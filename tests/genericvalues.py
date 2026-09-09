@@ -9,13 +9,13 @@ can say "returns no children" (NullResults) for result-tuples or
 
 class _NullResults(object):
     def __eq__(self, other):
-        return other == [] or other == None
+        return other == [] or other is None
     def __repr__( self ):
         return "<Null Children>"
 NullResult = _NullResults()
 class _AnyInt:
     def __eq__(self, other):
-        return type(other) == type(1)
+        return type(other) is type(1)
     def __repr__( self ):
         return "<Any Integer>"
 AnyInt = _AnyInt()

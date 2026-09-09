@@ -42,7 +42,7 @@ if __name__ == '__main__':
         val = bigtest( file )
         t = t-time.time()
         print('''Parsing Time:''', t)
-        for report, start, stop, children in val[1]:
+        for _report, start, stop, _children in val[1]:
             print(file[ start: stop ].splitlines()[0][:75])
     else:
         print(usage)

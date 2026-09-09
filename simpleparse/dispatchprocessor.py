@@ -49,8 +49,8 @@ def dispatch( source, tag, buffer ):
     except AttributeError:
         try:
             function = source[tag[0]]
-        except:
-            raise AttributeError( '''No processing function for tag "%s" in object %s! Check the parser definition!'''%(tag[0], repr(source)))
+        except Exception:
+            raise AttributeError( '''No processing function for tag "%s" in object %s! Check the parser definition!'''%(tag[0], repr(source))) from None
     return function( tag, buffer )
 
 def dispatchList( source, taglist, buffer ):

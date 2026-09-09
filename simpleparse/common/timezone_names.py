@@ -180,7 +180,6 @@ c[ "timezone_name" ] = timezone_rule
 
 common.share(c)
 
-import time
 if time.daylight:
     LOCAL_ZONE = time.altzone
 else:
@@ -213,6 +212,6 @@ class TimeZoneNameInterpreter:
             try:
                 return timezone_mapping[ value ]/self.seconds
             except KeyError:
-                raise ValueError( "Unrecognised (but parsed!) TimeZone Name %s found at character position %s"%(value, left))
+                raise ValueError( "Unrecognised (but parsed!) TimeZone Name %s found at character position %s"%(value, left)) from None
         else:
             return self.defaultZone/self.seconds

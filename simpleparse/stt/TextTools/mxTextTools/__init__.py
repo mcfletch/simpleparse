@@ -14,7 +14,7 @@ BMS = TextSearch
 BMSType = TextSearchType
 try:
     TextSearch('',None,FASTSEARCH)
-except:
+except Exception:
     FS = BMS
     FSType = BMS
 else:

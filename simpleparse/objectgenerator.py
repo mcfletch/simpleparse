@@ -15,10 +15,6 @@ case (with character ranges and literals being non-normal).
 from simpleparse.stt.TextTools.TextTools import *
 
 ### Direct use of BMS is deprecated now...
-try:
-    TextSearch
-except NameError:
-    TextSearch = BMS
 
 from simpleparse.error import ParserSyntaxError
 import copy

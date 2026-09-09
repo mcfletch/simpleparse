@@ -12,10 +12,7 @@ import re
 from simpleparse.stt.TextTools.TextTools import *
 from simpleparse.parser import Parser
 from simpleparse import dispatchprocessor
-try:
-    raw_input
-except NameError:
-    raw_input = input
+raw_input = input
 
 class REMatch:
     """An object wrapping a regular expression with __call__ (and Call) semantics"""
@@ -54,8 +51,8 @@ class WordProcessor( dispatchprocessor.DispatchProcessor ):
 
 
 parser = Parser( declaration, "v", prebuilts = [
-    ("word", REMatch( "\w+").table()),
-    ("white", REMatch( "\W+").table()),
+    ("word", REMatch( r"\w+").table()),
+    ("white", REMatch( r"\W+").table()),
 ])
 
 if __name__ == "__main__":
