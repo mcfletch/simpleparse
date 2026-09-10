@@ -44,7 +44,10 @@ except locale.Error:
     # the only consequence is C-locale decimal/thousands conventions below.
     pass
 
-c = {}
+#: A generator element per name, of whatever kind that name needs: a Range
+#: for a character class, a Literal for a locale's own punctuation, a Prebuilt
+#: for a tag table written out by hand.
+c: dict = {}
 
 # string-module items...
 

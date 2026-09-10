@@ -53,7 +53,9 @@ include-package-data = true
 version = {attr = "simpleparse.__version__"}
 
 [tool.setuptools.package-data]
-simpleparse = ["*.txt", "**/*.txt", "**/*.ebnf", "**/*.html", "**/*.pyx", "**/*.h", "**/*.def"]
+# `py.typed` and the stubs beside the C extension: what a consumer's
+# checker reads about the tagging engine, which has no Python source.
+simpleparse = ["py.typed", "**/*.pyi", "*.txt", "**/*.txt", "**/*.ebnf", "**/*.html", "**/*.pyx", "**/*.h", "**/*.def"]
 
 [tool.ruff.format]
 quote-style="preserve"
@@ -108,3 +110,13 @@ ignore = [
 # the new one resolves against PyPI rather than this checkout.
 [tool.uv]
 cache-keys = [{ file = "pyproject.toml" }, { file = "simpleparse/__init__.py" }]
+
+# The package's own declarations, checked as a consumer's checker reads them.
+# `check_untyped_defs` rather than `disallow_untyped_defs`: this package is
+# older than annotations, and its *bodies* being checked is the half that finds
+# defects -- the other half is a job of its own.
+[tool.mypy]
+python_version = "3.12"
+check_untyped_defs = true
+warn_unused_ignores = true
+ignore_missing_imports = true

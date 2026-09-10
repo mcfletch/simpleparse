@@ -12,6 +12,8 @@ obvious of which is the permute method, which takes care of
 the negative, optional, and repeating flags for the normal
 case (with character ranges and literals being non-normal).
 """
+from typing import TYPE_CHECKING, Any
+
 from simpleparse.stt.TextTools.TextTools import *
 
 ### Direct use of BMS is deprecated now...
@@ -267,6 +269,12 @@ class Literal( ElementToken ):
         return 1
 
 class _Range( ElementToken ):
+    if TYPE_CHECKING:
+        # What the classes mixed with this supply; declared for a checker and
+        # nothing else, since a base of that name here would be a second copy
+        # in the MRO.
+        def baseToParser(self, generator: Any = None) -> Any: ...
+
     """Range of character values where any one of the characters may match
 
     The Range token allows you to define a set of characters
@@ -409,6 +417,7 @@ class Group( ElementToken ):
         if self.terminalValue in (0,1):
             return self.terminalValue
         self.terminalValue = 0
+        item: Any
         for item in self.children:
             if not item.terminal( generator):
                 return self.terminalValue
@@ -428,7 +437,8 @@ class SequentialGroup( Group ):
     i.e. a series of comma-separated element token definitions.
     """
     def toParser( self, generator=None, noReport=0 ):
-        elset = []
+        elset: list = []
+        child: Any
         for child in self.children:
             elset.extend( child.toParser( generator, noReport ) )
         basic = self.permute( (None, SubTable, tuple( elset)) )
@@ -517,9 +527,9 @@ class ErrorOnFail(ElementToken):
     else -> use a default string
     
     """
-    production = ""
-    message = ""
-    expected = ""
+    production: Any = ""
+    message: Any = ""
+    expected: Any = ""
     def __call__( self, text, position, end ):
         """Method called by mxTextTools iff the base production fails"""
         error = ParserSyntaxError( self.message )
@@ -548,11 +558,12 @@ class FirstOfGroup( Group ):
     i.e. a series of slash-separated element token definitions.
     """
     def toParser( self, generator=None, noReport=0 ):
-        elset = []
+        elset: list = []
         # should catch condition where a child is optional
         # and we are repeating (which causes a crash during
         # parsing), but doing so is rather complex and
         # requires analysis of the whole grammar.
+        el: Any
         for el in self.children:
             assert not el.optional, """Optional child of a FirstOf group created, this would cause an infinite recursion in the engine, child was %s"""%el
             dataset = el.toParser( generator, noReport )
@@ -565,9 +576,8 @@ class FirstOfGroup( Group ):
         for i in range( len( elset) -1): # note that we have to treat last el specially
             procset.append( elset[i] + (1,len(elset)-i) ) # if success, jump past end
         procset.append( elset[-1] ) # will cause a failure if last element doesn't match
-        procset = tuple(procset)
 
-        basetable = (None, SubTable, procset )
+        basetable = (None, SubTable, tuple(procset) )
         return self.permute( basetable )
 
 class Prebuilt( ElementToken ):
@@ -583,9 +593,12 @@ class Prebuilt( ElementToken ):
         return self.value
 class LibraryElement( ElementToken ):
     """Holder for a prebuilt item with it's own generator"""
-    generator = None
-    production = ""
-    methodSource = None
+    #: The generator this production's parser is built with, and the
+    #: production to build. Both are given by whoever builds one.
+    generator: Any = None
+    production: Any = ""
+    methodSource: Any = None
+
     def toParser( self, generator=None, noReport=0 ):
         if self.methodSource is None:
             source = generator.methodSource

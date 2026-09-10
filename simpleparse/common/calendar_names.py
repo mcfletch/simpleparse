@@ -32,10 +32,11 @@ Interpreters:
         than the default (of 1) for the first item in
         the list.
 """
+from typing import TYPE_CHECKING, Any
 import calendar
 from simpleparse import objectgenerator, common
 
-c = {}
+c: dict = {}
 
 da = calendar.day_abbr[:]
 dn = calendar.day_name[:]
@@ -73,6 +74,13 @@ common.share( c )
 
 class NameInterpreter:
     offset = 1
+
+    if TYPE_CHECKING:
+        # What each subclass declares: the lists of names to look a
+        # parsed one up in, and what to call them in the error.
+        tables: Any
+        nameType: str
+
     def __init__( self, offset = 1 ):
         self.offset = offset
     def __call__( self, info, buffer ):

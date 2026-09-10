@@ -113,7 +113,7 @@ if haveMX:
             for item in sublist:
                 set[ item[0] ] = dispatch( self, item, buffer)
             return DateTime.DateTime(
-                set.get("year") or now().year,
+                set.get("year") or DateTime.now().year,
                 set.get("month") or 1,
                 set.get("day") or 1,
             )

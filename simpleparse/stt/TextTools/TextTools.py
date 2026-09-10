@@ -5,6 +5,7 @@
     See the documentation for further information on copyrights,
     or contact the author. All Rights Reserved.
 """
+import builtins
 import types
 
 #
@@ -133,7 +134,7 @@ def normlist(jlist,
 #
 def _lookup_dict(l,index=0):
     
-    d = {}
+    d: dict = {}
     for w in l:
         c = w[index]
         if c in d:
@@ -146,7 +147,9 @@ def word_in_list(l):
 
     """ Creates a lookup table that matches the words in l 
     """
-    t = []
+    # A tag table: each row is a command tuple, and the rows differ in length
+    # -- a `Word` row carries its jumps where an `Is` row does not.
+    t: list = []
     d = _lookup_dict(l)
     keys = list(d.keys())
     if len(keys) < 18: # somewhat arbitrary bound
@@ -345,7 +348,7 @@ def split(text,sep,start=0,stop=None,translate=None,
     else:
         cuts = so.findall(text,start)
     l = 0
-    list = []
+    list: builtins.list = []
     append = list.append
     for left,right in cuts:
         append(text[l:left])
@@ -380,7 +383,7 @@ def tagdict(text,*args):
     rc,taglist,next = tag(*(text,)+args)
     if not rc:
         return (rc,None,next)
-    d = {}
+    d: dict = {}
     tagdict = _tagdict
     for o,l,r,s in taglist:
         pfx = str(o)
@@ -504,10 +507,9 @@ if sys.platform == 'win32':
         clock = time.clock
 else:
 
-    if hasattr(time,'process_time'):
-        clock = time.process_time
-    else:
-        clock = time.clock
+    # CPU time rather than wall clock, which is what a benchmark of a text
+    # operation wants. `time.clock` was the name until 3.3 and is gone.
+    clock = time.process_time
 
 class _timer:
 
@@ -629,46 +631,10 @@ def _bench(file='mxTextTools/mxTextTools.c'):
                 print(rtext)
             print()
 
-    if 0:
-        print()
-        print('String lower/upper')
-        print('-'*72)
-        print()
+    # The section that timed `TextTools.upper` and `TextTools.lower` against
+    # str's own is gone: the extension exports neither any more, so it could
+    # not be switched on -- `str.upper` is what a caller uses.
 
-        op = str.lower
-        t.start()
-        for _i in range(1000):
-            op(text)
-        t.stop()
-        print(' string.lower:',t)
-
-        op = str.upper
-        t.start()
-        for _i in range(1000):
-            op(text)
-        t.stop()
-        print(' string.upper:',t)
-
-        op = upper
-        t.start()
-        for _i in range(1000):
-            op(text)
-        t.stop()
-        print(' TextTools.upper:',t)
-
-        op = lower
-        t.start()
-        for _i in range(1000):
-            op(text)
-        t.stop()
-        print(' TextTools.lower:',t)
-
-        print('Testing...', end=' ')
-        ltext = text.lower()
-        assert ltext == lower(text)
-        utext = text.upper()
-        assert utext == upper(text)
-        print('ok.')
 
     if 0:
         print()

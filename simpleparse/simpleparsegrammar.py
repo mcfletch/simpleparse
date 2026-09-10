@@ -7,20 +7,24 @@ as this is the first grammar being written.
 
 from simpleparse.objectgenerator import *
 from simpleparse import generator, baseparser
+from typing import Any
+
 from simpleparse.dispatchprocessor import *
 from simpleparse.common.escapeutils import SPECIAL_ESCAPED_MAP
 
-try:
-    _unichr = unichr
-    _unicode = unicode
-except NameError:
-    _unichr = chr
-    _unicode = str
+# Python 2's names for these, kept under the spellings the grammar's own
+# callbacks use.
+_unichr = chr
+_unicode = str
 
 # note that whitespace is slightly different
 # due to a bug with NULL-matching repeating groups
 # we make all the ts references ts?
-whitespace = Name(value="ts", report=0)
+#
+# `whitespace_element` rather than `whitespace`: TextTools' star import above
+# brings in a `whitespace` character set, and one name for the two leaves
+# whichever is read second.
+whitespace_element = Name(value="ts", report=0)
 element_token = Name(value="element_token")
 literal = Name(value="literal")
 group = Name(value="group")
@@ -40,7 +44,7 @@ SPGenerator.addDefinition(
     "declaration",
     SequentialGroup(
         children=[
-            whitespace,
+            whitespace_element,
             FirstOfGroup(
                 children=[
                     Name(
@@ -54,7 +58,7 @@ SPGenerator.addDefinition(
                     ),
                 ],
             ),
-            whitespace,
+            whitespace_element,
             Literal(value=":"),
             Literal(value=":", optional=1),
             Literal(
@@ -89,19 +93,19 @@ SPGenerator.addDefinition(
     "seq_group",
     SequentialGroup(
         children=[
-            whitespace,
+            whitespace_element,
             _seq_children,
             SequentialGroup(
                 children=[
-                    whitespace,
+                    whitespace_element,
                     Name(value="seq_indicator"),
-                    whitespace,
+                    whitespace_element,
                     _seq_children,
                 ],
                 repeating=1,
                 optional=1,
             ),
-            whitespace,
+            whitespace_element,
         ],
     ),
 )
@@ -113,9 +117,9 @@ SPGenerator.addDefinition(
             element_token,
             SequentialGroup(
                 children=[
-                    whitespace,
+                    whitespace_element,
                     Name(value="fo_indicator"),
-                    whitespace,
+                    whitespace_element,
                     element_token,
                 ],
                 repeating=1,
@@ -137,9 +141,9 @@ SPGenerator.addDefinition(
     SequentialGroup(
         children=[
             Name(value="lookahead_indicator", optional=1),
-            whitespace,
+            whitespace_element,
             Name(value="negpos_indicator", optional=1),
-            whitespace,
+            whitespace_element,
             FirstOfGroup(
                 children=[
                     literal,
@@ -148,9 +152,9 @@ SPGenerator.addDefinition(
                     name,
                 ]
             ),
-            whitespace,
+            whitespace_element,
             Name(value="occurence_indicator", optional=1),
-            whitespace,
+            whitespace_element,
             Name(value="error_on_fail", optional=1),
         ]
     ),
@@ -173,7 +177,7 @@ SPGenerator.addDefinition(
             Literal(value="!"),
             SequentialGroup(
                 children=[
-                    whitespace,
+                    whitespace_element,
                     Name(value="literal"),
                 ],
                 optional=1,
@@ -187,9 +191,9 @@ SPGenerator.addDefinition(
     SequentialGroup(
         children=[
             Literal(value="<"),
-            whitespace,
+            whitespace_element,
             name,
-            whitespace,
+            whitespace_element,
             Literal(value=">"),
         ]
     ),
@@ -199,9 +203,9 @@ SPGenerator.addDefinition(
     SequentialGroup(
         children=[
             Literal(value=">"),
-            whitespace,
+            whitespace_element,
             name,
-            whitespace,
+            whitespace_element,
             Literal(value="<"),
         ]
     ),
@@ -557,7 +561,10 @@ class SPGrammarProcessor(DispatchProcessor):
     def element_token(self, info, buffer):
         """get the children, then configure"""
         (tag, left, right, sublist) = info
-        base = None
+        #: The element this token is about, set by the `else` arm below:
+        #: every token has one, and the indicators around it are what
+        #: the other arms carry.
+        base: Any = None
         negative = 0
         optional = 0
         repeating = 0
@@ -631,7 +638,7 @@ class SPGrammarProcessor(DispatchProcessor):
             sublist = sublist[1:]
             classObject = CILiteral
         else:
-            classObject = Literal
+            classObject = Literal            # type: ignore[assignment]
         elements = dispatchList(self, sublist, buffer)
         ### Should check for CILiteral with non-CI string or single-character value!
         return classObject(value="".join(elements))

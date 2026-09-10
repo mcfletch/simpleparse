@@ -91,8 +91,6 @@ for name in ["int","hex", "int_unsigned", "number", "float", "binary_number", "f
         production = name,
     )
 
-if __name__ == "__main__":
-    test()
 
 common.share( c )
 

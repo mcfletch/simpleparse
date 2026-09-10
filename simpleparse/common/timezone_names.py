@@ -35,7 +35,7 @@ import time
 
 c = {}
 
-timezone_data = []
+timezone_data: list = []
 civilian_data = [
     # Basically this defines our recognised input locales,
     # it is by no means exhaustive, but it gives fairly

@@ -50,7 +50,7 @@ class Generator:
             return self.getNameIndex( name )
     def buildParser( self, name, methodSource=None ):
         '''Build the given parser definition, returning a TextTools parsing tuple'''
-        self.parserList = []
+        self.parserList: list = []
         self.terminalParserCache = {}
         self.methodSource = methodSource
         i = 0

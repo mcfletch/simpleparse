@@ -67,7 +67,7 @@ def multiMap( taglist, source=None, buffer=None ):
     you can retrieve them all sorted by type with multimap( childlist)
     then access them by tagobject key.
     """
-    set = {}
+    set: dict = {}
     if not taglist:
         return set
     for tag in taglist:
@@ -78,7 +78,7 @@ def multiMap( taglist, source=None, buffer=None ):
     return set
 def singleMap( taglist, source=None, buffer=None ):
     """Convert a taglist to a mapping from tag-object:tag, overwritting early with late tags"""
-    set = {}
+    set: dict = {}
     if not taglist:
         return set
     for tag in taglist:

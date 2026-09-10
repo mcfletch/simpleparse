@@ -13,11 +13,19 @@ from simpleparse.stt.TextTools.mxTextTools.mxTextTools import __version__
 BMS = TextSearch
 BMSType = TextSearchType
 try:
-    TextSearch('',None,FASTSEARCH)
+    TextSearch('', None, FASTSEARCH)
 except Exception:
-    FS = BMS
-    FSType = BMS
+    #: This extension was built without the fast search, so `FS` asks for what
+    #: it does have -- which is what the name meant before the algorithm was
+    #: settled at build time.
+    _FS_ALGORITHM = BOYERMOORE_MODERN
 else:
-    def FS(match, translate=None):
-        return TextSearch(match, translate, FASTSEARCH)
-    FSType = TextSearchType
+    _FS_ALGORITHM = FASTSEARCH
+
+
+def FS(match, translate=None):
+    """Search for `match` with the fastest algorithm this build offers."""
+    return TextSearch(match, translate, _FS_ALGORITHM)
+
+
+FSType = TextSearchType

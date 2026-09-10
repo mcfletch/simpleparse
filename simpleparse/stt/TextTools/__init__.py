@@ -27,37 +27,26 @@ def _BMS(match,translate):
 def _FS(match,translate):
     return FS(match,translate)
 
-# Module init
-class modinit:
+# Register the types with the pickler, so a compiled set, table or search
+# survives being pickled with whatever holds it.  At module level: this was a
+# `class modinit:` whose body ran at import, which is a way of writing module
+# init that predates everything else here and made each function below look
+# like a method of it.
 
-    ### Register the types
+def pickle_CharSet(cs):
+    return _CS, (cs.definition,)
 
-    def pickle_CharSet(cs):
-        return _CS,(cs.definition,)
-    def pickle_TagTable(tt):
-        return _TT,(tt.compiled(),)
-    def pickle_TextSearch(ts):
-        return _TS,(ts.match, ts.translate, ts.algorithm)
-    copyreg.pickle(CharSetType,
-                    pickle_CharSet,
-                    _CS)
-    copyreg.pickle(TagTableType,
-                    pickle_TagTable,
-                    _TT)
-    copyreg.pickle(TextSearchType,
-                    pickle_TextSearch,
-                    _TS)
-    if 0:
-        def pickle_BMS(so):
-            return _BMS,(so.match,so.translate)
-        def pickle_FS(so):
-            return _FS,(so.match,so.translate)
-        copyreg.pickle(BMSType,
-                        pickle_BMS,
-                        _BMS)
-        copyreg.pickle(FSType,
-                        pickle_FS,
-                        _FS)
-        
 
-del modinit
+def pickle_TagTable(tt):
+    return _TT, (tt.compiled(),)
+
+
+def pickle_TextSearch(ts):
+    return _TS, (ts.match, ts.translate, ts.algorithm)
+
+
+copyreg.pickle(CharSetType, pickle_CharSet, _CS)
+copyreg.pickle(TagTableType, pickle_TagTable, _TT)
+# copyreg declares the constructor as taking the reduce tuple; this one
+# takes the three values in it, which is what `_TS`'s own signature says.
+copyreg.pickle(TextSearchType, pickle_TextSearch, _TS)  # type: ignore[arg-type]

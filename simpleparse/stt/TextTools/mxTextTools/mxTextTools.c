@@ -987,9 +987,14 @@ PyObject *mxTextSearch_Repr(mxTextSearchObject *self)
     v = PyObject_Repr(self->match);
     if (v == NULL)
 	return NULL;
-    reprstr = PyString_AsString(v);
-    if (reprstr == NULL)
+    /* PyObject_Repr answers text, so it is read as text: read as bytes it
+       raised TypeError, and a repr that raises takes down every traceback
+       and every log line that happens to name one of these. */
+    reprstr = (char *)PyUnicode_AsUTF8(v);
+    if (reprstr == NULL) {
+	Py_DECREF(v);
 	return NULL;
+    }
 
     switch (self->algorithm) {
     case MXTEXTSEARCH_BOYERMOORE:
@@ -1005,7 +1010,7 @@ PyObject *mxTextSearch_Repr(mxTextSearchObject *self)
     snprintf(t, sizeof(t), "<%.50s TextSearch object for %.400s at 0x%lx>",
 	    algoname, reprstr, (long)self);
     Py_DECREF(v);
-    return PyString_FromString(t);
+    return PyUnicode_FromString(t);
 }
 
 /* Python Method Table */
@@ -2037,13 +2042,16 @@ PyObject *mxCharSet_Repr(mxCharSetObject *self)
     v = PyObject_Repr(self->definition);
     if (v == NULL)
 	return NULL;
-    reprstr = PyString_AsString(v);
-    if (reprstr == NULL)
+    /* Text, for the reason mxTextSearch_Repr gives. */
+    reprstr = (char *)PyUnicode_AsUTF8(v);
+    if (reprstr == NULL) {
+	Py_DECREF(v);
 	return NULL;
+    }
     snprintf(t, sizeof(t), "<Character Set object for %.400s at 0x%lx>",
 	    reprstr, (long)self);
     Py_DECREF(v);
-    return PyString_FromString(t);
+    return PyUnicode_FromString(t);
 }
 
 /* Python Type Tables */
