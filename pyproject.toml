@@ -116,6 +116,9 @@ cache-keys = [{ file = "pyproject.toml" }, { file = "simpleparse/__init__.py" }]
 # older than annotations, and its *bodies* being checked is the half that finds
 # defects -- the other half is a job of its own.
 [tool.mypy]
+# Named here so that `mypy` with no arguments checks the package: the tox
+# environment and a developer's bare `mypy` are then the same run.
+files = ["simpleparse"]
 python_version = "3.12"
 check_untyped_defs = true
 warn_unused_ignores = true
