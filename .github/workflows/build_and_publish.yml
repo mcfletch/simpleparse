@@ -14,7 +14,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # macos-13 is an intel runner, macos-14 is apple silicon
+        # macOS-15-intel is an intel runner, macos-latest is apple silicon.
+        # One row per architecture: cibuildwheel builds natively for whichever
+        # machine it is on, and an Intel Mac cannot run an arm64 wheel, so it
+        # needs one built on x86_64.
         os: [ubuntu-latest, windows-latest, macOS-15-intel, macos-latest]
 
     steps:
