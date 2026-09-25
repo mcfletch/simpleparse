@@ -61,7 +61,7 @@ simpleparse = ["py.typed", "**/*.pyi", "*.txt", "**/*.txt", "**/*.ebnf", "**/*.h
 # The OGC rules (openglcontext-checks) this project is clean of, held by
 # the workspace preflight. The others join as the project reaches zero of
 # each; the counts are in openglcontext/plans/DEFECT-PREVENTION.md.
-select = ["OGC131", "OGC141", "OGC221", "OGC222", "OGC223"]
+select = ["OGC121", "OGC131", "OGC141", "OGC221", "OGC222", "OGC223"]
 
 [tool.ruff.format]
 quote-style="preserve"

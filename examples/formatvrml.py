@@ -103,22 +103,21 @@ class VRMLFormatter:
         return data
         
     def format( self, outfile ):
-        outfile = open( outfile, 'w' )
-        self._format( self.tree, outfile, self.infile )
-        outfile.close()
+        # Written beside the target and renamed over it, so an interrupted
+        # run leaves no half-formatted page where the finished one belongs.
+        partial = outfile + '.partial'
+        with open( partial, 'w' ) as handle:
+            self._format( self.tree, handle, self.infile )
+        os.replace( partial, outfile )
 
 class HTMLVRMLFormatter( VRMLFormatter ):
     '''
     Format VRML files for display in HTML
     '''
     def _escapeData( self, data ):
-        return str.join( str.split( 
-            str.join( str.split( 
-                str.join( str.split( 
-                    str.join( str.split( data, '&' ), '&amp;' ),
-                '<'), '&lt;'),
-            '>'), '&gt;'),
-        '\t'), '  ')
+        for raw, escaped in (('&', '&amp;'), ('<', '&lt;'), ('>', '&gt;'), ('\t', '  ')):
+            data = data.replace( raw, escaped )
+        return data
             
         
     NODEMAP: ClassVar[Dict[str, str]] = {
