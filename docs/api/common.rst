@@ -81,3 +81,29 @@ Character Types Module
 
 The ``simpleparse.common.chartypes`` module provides character classification
 patterns like ``uppercase``, ``lowercase``, ``digits``, etc.
+
+Sharing Your Own Productions
+----------------------------
+
+A module of shared productions builds a ``Parser`` from its declaration and
+hands that parser's ``generator`` to ``objectgenerator.LibraryElement`` for
+each production it offers, then registers them with ``common.share``:
+
+.. code-block:: python
+
+    from simpleparse import common, objectgenerator
+    from simpleparse.parser import Parser
+
+    declaration = '''
+    digits := [0-9]+
+    '''
+
+    _parser = Parser(declaration)
+    common.share({
+        'digits': objectgenerator.LibraryElement(
+            generator=_parser.generator,
+            production='digits',
+        ),
+    })
+
+Every ``Parser`` created after that module is imported can use ``digits``.

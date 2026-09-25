@@ -42,14 +42,16 @@ def dispatch( source, tag, buffer ):
     """Dispatch on source for tag with buffer
 
     Find the attribute or key tag[0] of source,
-    then call it with (tag, buffer)
+    then call it with (tag, buffer).  A source with neither
+    raises AttributeError; an error raised inside the source's
+    own lookup propagates unchanged.
     """
     try:
         function = getattr (source, tag[0])
     except AttributeError:
         try:
             function = source[tag[0]]
-        except Exception:
+        except (LookupError, TypeError):
             raise AttributeError( '''No processing function for tag "%s" in object %s! Check the parser definition!'''%(tag[0], repr(source))) from None
     return function( tag, buffer )
 

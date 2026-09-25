@@ -50,12 +50,9 @@ class TestModernUnicodeEngine:
         ]
 
         for text, description in unicode_cases:
-            # These may or may not match fully, but should not crash
-            try:
-                result = p.parse(text)
-                assert result is not None, f"None result for {description}: {text!r}"
-            except Exception as e:
-                pytest.fail(f"Exception parsing {description} {text!r}: {e}")
+            # These may or may not match fully, but should not raise
+            result = p.parse(text)
+            assert result is not None, f"None result for {description}: {text!r}"
     
     def test_bytes_vs_unicode_parsing(self):
         """Test that bytes and unicode strings both work"""
@@ -137,12 +134,9 @@ class TestModernUnicodeEngine:
             grammar = f"""
             target := '{char}'
             """
-            try:
-                p = parser.Parser(grammar, 'target')
-                parse_result = p.parse(char)
-                assert parse_result is not None, f"Failed to parse {description} character {char!r}"
-            except Exception as e:
-                pytest.fail(f"Parser failed for {description} character {char!r}: {e}")
+            p = parser.Parser(grammar, 'target')
+            parse_result = p.parse(char)
+            assert parse_result is not None, f"Failed to parse {description} character {char!r}"
     
     def test_mixed_unicode_content(self):
         """Test parsing with mixed Unicode content"""
@@ -162,11 +156,8 @@ class TestModernUnicodeEngine:
         ]
         
         for doc in test_documents:
-            try:
-                result = p.parse(doc)
-                assert result is not None, f"Failed to parse mixed content: {doc!r}"
-            except Exception as e:
-                pytest.fail(f"Exception parsing mixed content {doc!r}: {e}")
+            result = p.parse(doc)
+            assert result is not None, f"Failed to parse mixed content: {doc!r}"
     
     def test_empty_and_edge_cases(self):
         """Test empty strings and edge cases"""
@@ -185,13 +176,10 @@ class TestModernUnicodeEngine:
         assert result is not None, "Failed to parse single character"
         
         # Test TextSearch with empty pattern (should handle gracefully)
-        try:
-            search_obj = TextSearch("")
-            result = search_obj.search("test", 0, 4)
-            # Empty pattern should match at position 0
-            assert result == (0, 0), f"Unexpected result for empty pattern: {result}"
-        except Exception as e:
-            pytest.fail(f"Empty pattern search failed: {e}")
+        search_obj = TextSearch("")
+        result = search_obj.search("test", 0, 4)
+        # Empty pattern should match at position 0
+        assert result == (0, 0), f"Unexpected result for empty pattern: {result}"
     
     def test_large_unicode_strings(self):
         """Test with larger Unicode strings to verify engine scalability"""

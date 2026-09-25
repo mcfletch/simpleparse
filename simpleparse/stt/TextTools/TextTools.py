@@ -174,9 +174,9 @@ def word_in_list(l):
 
 def replace(text,what,with_what,start=0,stop=None,
 
-            SearchObject=TextSearch,join=join,joinlist=joinlist,tag=tag,
+            SearchObject=TextSearch,join=join,joinlist=joinlist,tag=tag,  # noqa: ARG001 a keyword of the public signature
             string_replace=str.replace,type=type,
-            StringType=str):
+            StringType=str):  # noqa: ARG001 a keyword of the public signature
 
     """A fast replacement for string.replace.
     
@@ -257,7 +257,7 @@ def _replace3(text,what,with_what,
 
 def _replace4(text,what,with_what,
 
-              join=join,joinlist=joinlist,tag=tag,TextSearch=TextSearch,
+              join=join,joinlist=joinlist,TextSearch=TextSearch,
               TextSearchType=TextSearchType):
 
     if type(what) is not TextSearchType:
@@ -580,7 +580,6 @@ def _bench(file='mxTextTools/mxTextTools.c'):
         print()
         
     text = open(file).read()
-    import string
 
     t = _timer()
     print('Working on a %i byte string' % len(text))

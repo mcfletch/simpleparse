@@ -32,17 +32,27 @@ class Parser( baseparser.BaseParser ):
         """
         self._rootProduction = root
         self._declaration = declaration
-        self._generator = simpleparsegrammar.Parser(
+        #: The generator holding every production of `declaration`; a
+        #: library of shared productions hands it to
+        #: `objectgenerator.LibraryElement`.
+        self.generator = simpleparsegrammar.Parser(
             declaration, prebuilts,
             definitionSources = definitionSources,
         ).generator
+
+    @property
+    def _generator(self):
+        """`generator`, under the name libraries written against earlier
+        releases read."""
+        return self.generator
+
     def buildTagger( self, production=None, processor=None):
         """Get a particular parsing table for a particular production"""
         if production is None:
             production = self._rootProduction
         if processor is None:
             processor = self.buildProcessor()
-        return self._generator.buildParser(
+        return self.generator.buildParser(
             production,
             methodSource=processor,
         )

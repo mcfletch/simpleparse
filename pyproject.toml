@@ -57,6 +57,12 @@ version = {attr = "simpleparse.__version__"}
 # checker reads about the tagging engine, which has no Python source.
 simpleparse = ["py.typed", "**/*.pyi", "*.txt", "**/*.txt", "**/*.ebnf", "**/*.html", "**/*.pyx", "**/*.h", "**/*.def"]
 
+[tool.openglcontext-checks]
+# The OGC rules (openglcontext-checks) this project is clean of, held by
+# the workspace preflight. The others join as the project reaches zero of
+# each; the counts are in openglcontext/plans/DEFECT-PREVENTION.md.
+select = ["OGC131", "OGC141", "OGC221", "OGC222", "OGC223"]
+
 [tool.ruff.format]
 quote-style="preserve"
 
@@ -70,7 +76,28 @@ extend-exclude = ["simpleparse/stt/TextTools/Constants/Sets.py"]
 # Named explicitly. With `select` unset ruff applies its own default, and that
 # default has widened between releases -- a gate whose meaning moves when a
 # tool is upgraded is not a gate. This says what the project holds itself to.
-select = ["E", "W", "F", "B"]
+select = [
+    "E", "W", "F", "B", "PGH003", "PGH004", "PLE0604", "PLE0605",
+    # A noqa that silences nothing.
+    "RUF100",
+    # Errors swallowed silently, caught blind, or logged without their
+    # traceback.
+    "S110", "S112", "TRY400", "BLE001",
+    # Naive datetimes.
+    "DTZ",
+    # exec, eval, unsafe archive extraction, pickle loads, and URL opens.
+    "S102", "S307", "S202", "S301", "S310",
+    # Imports inside functions: each one left is an import cycle, named.
+    "PLC0415",
+    # A private name read from outside its class or module.
+    "SLF001",
+    # Unused arguments; the ones a protocol fixes are named, or say so.
+    "ARG",
+    # Annotations and imports in the spelling the language floor allows.
+    "UP006", "UP007", "UP035",
+    # Mutable class attributes that are not declared ClassVar.
+    "RUF012",
+]
 # `_`, `err`, and the conventional `_name`: an underscore prefix is how Python
 # says a name is bound but deliberately unused.
 dummy-variable-rgx = "^(_[a-zA-Z0-9_]*|err)$"

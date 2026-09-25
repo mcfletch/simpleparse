@@ -15,6 +15,9 @@ usage.  I may have missed some of the possibilities...
     military_alphabet_char_lower -- as for above, but with
         lowercased versions of the above
 
+    military_alphabet -- the list of spellings both productions
+        match, longer variants before their prefixes
+
 No interpreters are provided.  Taking the first character of
 the name will always give you the equivalent character uppercase
 for the military_alphabet_char and lowercase for the
@@ -26,7 +29,7 @@ c = {}
 
 # note that Juliette comes before Juliet, because
 # otherwise Juliette could never match in an FOGroup!
-_letters = """Alpha
+military_alphabet = """Alpha
 Bravo
 Charlie
 Delta
@@ -54,7 +57,7 @@ Yankee
 Zulu""".split()
 
 set1,set2 = [], []
-for item in _letters:
+for item in military_alphabet:
     set1.append(
         objectgenerator.Literal( value=item)
     )

@@ -7,11 +7,9 @@ them and a checker reading a tag table sees undefined names without this.
 See the SimpleParse documentation for what each command matches.
 """
 
-from typing import Dict
-
 #: Each command by its number, for reading a table back. `0` is `Fail/Jump`,
 #: which the two share.
-id2cmd: Dict[int, str]
+id2cmd: dict[int, str]
 
 # -- Where a command starts matching from ---
 Here: int

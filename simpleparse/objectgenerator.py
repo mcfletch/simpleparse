@@ -163,9 +163,9 @@ class ElementToken:
                 ]
     def __repr__( self):
         """Return a readily recognisable version of ourself"""
-        from simpleparse import printers
+        from simpleparse import printers  # noqa: PLC0415 printers star-imports this module
         return printers.asObject( self )
-    def terminal (self, generator):
+    def terminal (self, generator):  # noqa: ARG002 the ElementToken.terminal signature
         """Determine if this element is terminal for the generator"""
         return 0
         
@@ -194,7 +194,7 @@ class Literal( ElementToken ):
         CILiteral -- case-insensitive Literal values
     """
     value = ""
-    def toParser( self, generator=None, noReport=0 ):
+    def toParser( self, generator=None, noReport=0 ):  # noqa: ARG002 the ElementToken.toParser signature
         """Create the parser for the element token"""
         flags = 0
         if self.lookahead:
@@ -207,7 +207,7 @@ class Literal( ElementToken ):
                 return [(None, SubTable+flags, tuple(base))]
         else:
             return base
-    def baseToParser( self, generator=None ):
+    def baseToParser( self, generator=None ):  # noqa: ARG002 the ElementToken.baseToParser signature
         """Parser generation without considering flag settings"""
         svalue = self.value
         if self.negative:
@@ -264,7 +264,7 @@ class Literal( ElementToken ):
                         return [ (None, Word, svalue) ]
                     else:
                         return [ (None, Word, svalue) ]
-    def terminal (self, generator):
+    def terminal (self, generator):  # noqa: ARG002 the ElementToken.terminal signature
         """Determine if this element is terminal for the generator"""
         return 1
 
@@ -304,7 +304,7 @@ class _Range( ElementToken ):
     """
     value = ""
     requiresExpandedSet = 1
-    def toParser( self, generator=None, noReport=0 ):
+    def toParser( self, generator=None, noReport=0 ):  # noqa: ARG002 the ElementToken.toParser signature
         """Create the parser for the element token"""
         flags = 0
         if self.lookahead:
@@ -365,7 +365,7 @@ class Range( _Range ):
     is unable to handle unicode character sets.  However, it will work with
     TextTools 2.0.3, which may be needed in some cases.
     """
-    def baseToParser( self, generator=None ):
+    def baseToParser( self, generator=None ):  # noqa: ARG002 the ElementToken.baseToParser signature
         """Parser generation without considering flag settings"""
         svalue = self.value
         if not svalue:
@@ -400,7 +400,7 @@ class Range( _Range ):
                 else: # not optional
                     #return [ (None, IsInSet, svalue ) ]
                     return [ (None, IsIn, svalue ) ]
-    def terminal (self, generator):
+    def terminal (self, generator):  # noqa: ARG002 the ElementToken.terminal signature
         """Determine if this element is terminal for the generator"""
         return 1
 
@@ -473,7 +473,7 @@ class CILiteral( SequentialGroup ):
         regular literal or character range
     """
     value = ""
-    def toParser( self, generator=None, noReport=0 ):
+    def toParser( self, generator=None, noReport=0 ):  # noqa: ARG002 the ElementToken.toParser signature
         elset = self.ciParse( self.value )
         if len(elset) == 1:
             # XXX should be compressing these out during optimisation...
@@ -530,7 +530,7 @@ class ErrorOnFail(ElementToken):
     production: Any = ""
     message: Any = ""
     expected: Any = ""
-    def __call__( self, text, position, end ):
+    def __call__( self, text, position, end ):  # noqa: ARG002 the Call command passes (text, position, end)
         """Method called by mxTextTools iff the base production fails"""
         error = ParserSyntaxError( self.message )
         error.error_message = self.message
@@ -589,7 +589,7 @@ class Prebuilt( ElementToken ):
     by the other element tokens in your grammar.
     """
     value = ()
-    def toParser( self, generator=None, noReport=0 ):
+    def toParser( self, generator=None, noReport=0 ):  # noqa: ARG002 the ElementToken.toParser signature
         return self.value
 class LibraryElement( ElementToken ):
     """Holder for a prebuilt item with it's own generator"""
@@ -599,7 +599,7 @@ class LibraryElement( ElementToken ):
     production: Any = ""
     methodSource: Any = None
 
-    def toParser( self, generator=None, noReport=0 ):
+    def toParser( self, generator=None, noReport=0 ):  # noqa: ARG002 the ElementToken.toParser signature
         if self.methodSource is None:
             source = generator.methodSource
         else:

@@ -10,7 +10,7 @@ class XMLProductionTests(unittest.TestCase):
     ### ProductionTests will be added here by loop below...
 
 def production_test(production, should, shouldnot):
-    def test_final( self ):
+    def test_final( self ):  # noqa: ARG001 installed below as a TestCase method
         """Perform the test"""
         for item in should:
             if isinstance(item,str):

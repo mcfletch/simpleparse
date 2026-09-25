@@ -10,6 +10,7 @@ was enough.
 
 import unittest
 
+from simpleparse.stt.TextTools.Constants import Sets
 from simpleparse.stt.TextTools.mxTextTools import CharSet, TextSearch
 
 
@@ -31,8 +32,6 @@ class TestACharacterSetPrints(unittest.TestCase):
     def test_a_shipped_set_prints(self):
         """The sets in `Constants.Sets` are built at import, so anything that
         lists that module's contents meets one."""
-        from simpleparse.stt.TextTools.Constants import Sets
-
         self.assertIn('Character Set', repr(Sets.whitespace_charset))
 
 

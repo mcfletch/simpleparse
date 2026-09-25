@@ -41,7 +41,7 @@ class Processor(MethodSource):
     depending on whether a top-level production is being processed),
     and a pointer to the buffer being parsed.
     """
-    def __call__( self, value, buffer ):
+    def __call__( self, value, buffer ):  # noqa: ARG002 the processor protocol passes (value, buffer)
         """Process the results of a parsing run over buffer"""
         return value
     def __repr__( self ):

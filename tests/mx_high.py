@@ -15,7 +15,7 @@ class MXHighTests(unittest.TestCase):
 
     def testCall( self ):
         """Test call-to-match Call command"""
-        def function( text, start, end ):
+        def function( _text, _start, end ):
             return end
     
         self.doBasicTest(
@@ -30,7 +30,7 @@ class MXHighTests(unittest.TestCase):
     def testCall2( self ):
         """Test call-to-match Call command with object instance"""
         class X:
-            def __call__( self, text, start, end ):
+            def __call__( self, _text, _start, end ):
                 return end
     
         self.doBasicTest(
@@ -45,7 +45,7 @@ class MXHighTests(unittest.TestCase):
         
     def testCallArg( self ):
         """Test call-to-match CallArg command"""
-        def function( text, start, end, *arguments ):
+        def function( _text, _start, end, *arguments ):
             assert arguments == (1,2,3), """Passed arguments were not what we passed in"""
             return end
     

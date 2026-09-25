@@ -79,7 +79,7 @@ else:
                 ("02:13:16", "ISO_time"),
                 ("2002-02-01T02:13-0500", "ISO_date_time"),
             ]:
-                success, children, next = iso_date._p.parse( to_parse,production)
+                success, children, next = Parser( iso_date.declaration ).parse( to_parse,production)
                 assert next == len(to_parse), "couldn't parse %s as a %s"%( to_parse, production)
             
         def testProductions2( self ):
@@ -118,5 +118,5 @@ else:
                 ("2002-2-1 2:13 +00:00", "ISO_date_time_loose"),
                 
             ]:
-                success, children, next = iso_date_loose._p.parse( to_parse,production )
+                success, children, next = Parser( iso_date_loose.declaration ).parse( to_parse,production )
                 assert next == len(to_parse), "couldn't parse %s as a %s"%( to_parse, production)

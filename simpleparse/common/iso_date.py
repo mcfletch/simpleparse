@@ -60,7 +60,7 @@ ISO_date_time  := ISO_date, ([T], ISO_time)?, offset?
 _p = Parser( declaration )
 for name in ["ISO_time","ISO_date", "ISO_date_time"]:
     c[ name ] = objectgenerator.LibraryElement(
-        generator = _p._generator,
+        generator = _p.generator,
         production = name,
     )
 common.share( c )

@@ -86,7 +86,7 @@ string_special_escapes     := [\\\\abfnrtv"]
 for name, partial in _stringTypeData:
     _p = Parser( stringDeclaration + partial )
     c[ name ] = objectgenerator.LibraryElement(
-        generator = _p._generator,
+        generator = _p.generator,
         production = "str",
     )
 common.share( c )
@@ -94,7 +94,7 @@ _p = Parser( """
 string :=  string_triple_double/string_triple_single/string_double_quote/string_single_quote
 """ )
 c[ "string"] = objectgenerator.LibraryElement(
-    generator = _p._generator,
+    generator = _p.generator,
     production = "string",
 )
 
@@ -146,7 +146,7 @@ class StringInterpreter(DispatchProcessor):
         (tag, left, right, sublist) = info
         return chr(int( buffer[left:right], 16 ))
     
-    def backslash_char( self, info, buffer):
+    def backslash_char( self, _info, _buffer):
         return "\\"
 
     specialescapedmap = SPECIAL_ESCAPED_MAP

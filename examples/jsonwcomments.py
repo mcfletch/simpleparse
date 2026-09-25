@@ -47,11 +47,11 @@ class Processor( DispatchProcessor ):
     string = strings.StringInterpreter()
     string_double_quote = strings.StringInterpreter()
     string_single_quote = string_double_quote
-    def true( self, tag, buffer ):
+    def true( self, _tag, _buffer ):
         return True
-    def false( self, tag, buffer ):
+    def false( self, _tag, _buffer ):
         return False
-    def null( self, tag, buffer ):
+    def null( self, _tag, _buffer ):
         return None
 
 

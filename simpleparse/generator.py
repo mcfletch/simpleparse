@@ -136,7 +136,7 @@ class GeneratorAPI1:
     simpleparsegrammar.py).
     """
     def __init__( self, production, prebuilt=() ):
-        from simpleparse.parser import Parser
+        from simpleparse.parser import Parser  # noqa: PLC0415 parser imports baseparser, which imports this module
         self.parser = Parser( production, prebuilts=prebuilt )
     def parserbyname( self, name ):
         """Retrieve a tag-table by production name"""

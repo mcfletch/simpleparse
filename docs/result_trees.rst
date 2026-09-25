@@ -112,7 +112,9 @@ The main functions are:
         """Dispatch on source for tag with buffer
 
         Find the attribute or key "tag-object" (tag[0]) of source,
-        then call it with (tag, buffer)
+        then call it with (tag, buffer).  A source with neither
+        raises AttributeError; an error raised inside the source's
+        own lookup propagates unchanged.
         """
 
     def dispatchList(source, taglist, buffer):

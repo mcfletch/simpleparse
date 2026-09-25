@@ -1,3 +1,4 @@
+import ast
 import unittest
 from simpleparse.parser import Parser
 from simpleparse.common import strings
@@ -51,7 +52,7 @@ class CommonTests(unittest.TestCase):
                 assert success and (next == len(data)), """Did not parse string %s as a %s result=%s"""%( repr(data), production, (success, results, next))
                 assert results, """Didn't get any results for string %s as a %s result=%s"""%( repr(data), production, (success, results, next))
                 if production == 'string':
-                    expected = eval( data, {},{})
+                    expected = ast.literal_eval( data )
                     assert results[0] == expected, """Got different interpreted value for data %s, we got %s, expected %s"""%( repr(data), repr(results[0]), repr(expected))
             for data in notable:
                 success, results, next = p.parse( data)

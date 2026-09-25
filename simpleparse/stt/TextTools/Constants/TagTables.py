@@ -9,11 +9,12 @@
     or contact the author. All Rights Reserved.
 
 """
+from simpleparse.stt.TextTools.mxTextTools import mxTextTools
+
 ### Module init.
 
 def _module_init():
 
-    from simpleparse.stt.TextTools.mxTextTools import mxTextTools
     global id2cmd
 
     id2cmd = {}

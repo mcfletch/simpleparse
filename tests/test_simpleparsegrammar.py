@@ -455,9 +455,9 @@ class NameTests(unittest.TestCase):
 class BasicMethodSource:
     def __init__( self ):
         self.results = []
-    def _m_a( self, taglist,text,l,r,subtags ):
+    def _m_a( self, _taglist,text,l,r,_subtags ):
         self.results.append( ('a',text[l:r]))
-    def _m_b( self, taglist, text, l,r,subtags):
+    def _m_b( self, _taglist, _text, l,r,_subtags):
         self.results.append( ('b',l,r) )
     _m_c = TextTools.AppendMatch
     _m_d = TextTools.AppendTagobj
@@ -513,7 +513,8 @@ class CallTests(unittest.TestCase):
             x := d*
             d := 'd'
         """, 'x', 'ddd', source)
-        assert source._o_d == [ (None,0,1,NullResult),(None,1,2,NullResult),(None,2,3,NullResult)], """Method source methods were not called, or called improperly:\n%s"""%(source._o_d,)
+        appended = source._o_d  # noqa: SLF001 a method source's `_o_<production>` is the object AppendToTagobj appends to
+        assert appended == [ (None,0,1,NullResult),(None,1,2,NullResult),(None,2,3,NullResult)], """Method source methods were not called, or called improperly:\n%s"""%(appended,)
 
 
 def getSuite():

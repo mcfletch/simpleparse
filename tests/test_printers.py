@@ -6,14 +6,14 @@ parsed, then linearised, then loaded as a Python module.
 import os, unittest, shutil
 from . import test_grammarparser
 from importlib import reload
+from simpleparse import simpleparsegrammar, parser, printers, baseparser
 HERE = os.path.dirname(__file__)
 
 class PrintersTests(test_grammarparser.SimpleParseGrammarTests):
     def setUp( self ):
-        from simpleparse import simpleparsegrammar, parser, printers, baseparser
         p = parser.Parser( simpleparsegrammar.declaration, 'declarationset')
         ns = {}
-        exec(printers.asGenerator( p._generator ), ns, ns)
+        exec(printers.asGenerator( p.generator ), ns, ns)  # noqa: S102 the module source under test is generated here from the package's own grammar
         class RParser( ns['Parser'], baseparser.BaseParser ):
             pass
         self.recursiveParser = RParser()

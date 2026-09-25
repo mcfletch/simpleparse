@@ -2,6 +2,7 @@
 """
 import sys
 import os
+from typing import ClassVar, Dict
 from simpleparse.parser import Parser
 
 # we use a non-standard VRML parser definition which retains comments and whitespace
@@ -120,7 +121,7 @@ class HTMLVRMLFormatter( VRMLFormatter ):
         '\t'), '  ')
             
         
-    NODEMAP = {
+    NODEMAP: ClassVar[Dict[str, str]] = {
         'vrmlFile': '''<html><head><link href="vrmlCode.css" rel="stylesheet" type="text/css"></head><body><pre>''',
         'vrmlFile_tail':'''\n</pre></body></html>''',
         'header':'<%(head)sfont color="purple">',

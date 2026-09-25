@@ -7,7 +7,7 @@ as this is the first grammar being written.
 
 from simpleparse.objectgenerator import *
 from simpleparse import generator, baseparser
-from typing import Any
+from typing import Any, ClassVar, Dict, Tuple
 
 from simpleparse.dispatchprocessor import *
 from simpleparse.common.escapeutils import SPECIAL_ESCAPED_MAP
@@ -496,7 +496,7 @@ class Parser(baseparser.BaseParser):
 
     _rootProduction = "declarationset"
 
-    def __init__(self, ebnf, prebuilts=(), methodSource=None, definitionSources=()):
+    def __init__(self, ebnf, prebuilts=(), methodSource=None, definitionSources=()):  # noqa: ARG002 methodSource is a keyword of the public signature
         """Create a new generator based on the EBNF in simpleparse format"""
         processor = SPGrammarProcessor(prebuilts, definitionSources)
         success, tags, next = self.parse(
@@ -663,7 +663,7 @@ class SPGrammarProcessor(DispatchProcessor):
         )
 
     ### simple translators
-    occurenceIndicatorMap = {
+    occurenceIndicatorMap: ClassVar[Dict[str, Tuple[int, int]]] = {
         "*": (1, 1),
         "+": (0, 1),
         "?": (1, 0),
@@ -674,7 +674,7 @@ class SPGrammarProcessor(DispatchProcessor):
         value = getString(tup, buffer)
         return self.occurenceIndicatorMap[value]
 
-    def lookahead_indicator(self, tup, buffer):
+    def lookahead_indicator(self, _tup, _buffer):
         """If present, the lookahead indictor just says "yes", so just return 1"""
         return 1
 
@@ -699,7 +699,7 @@ class SPGrammarProcessor(DispatchProcessor):
         if hasattr(self, "currentProduction"):
             errorOnFail.production = self.currentProduction
 
-    negposIndicatorMap = {
+    negposIndicatorMap: ClassVar[Dict[str, int]] = {
         "+": 0,
         "-": 1,
     }
@@ -749,10 +749,10 @@ class SPGrammarProcessor(DispatchProcessor):
         first, second = list(map(ord, (first, second)))
         return "".join([_chr(u) for u in range(first, second + 1)])
 
-    def CHARDASH(self, tup, buffer):
+    def CHARDASH(self, _tup, _buffer):
         return "-"
 
-    def CHARBRACE(self, tup, buffer):
+    def CHARBRACE(self, _tup, _buffer):
         return "]"
 
     def UNICODEESCAPEDCHAR(self, info, buffer):

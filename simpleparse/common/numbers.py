@@ -44,6 +44,8 @@ Interpreters:
         imaginary_number
     
 """
+from typing import ClassVar, Dict
+
 from simpleparse.parser import Parser
 from simpleparse import common, objectgenerator
 from simpleparse.common import chartypes
@@ -87,7 +89,7 @@ number_full         := binary_number/imaginary_number/hex/float/int
 _p = Parser( declaration )
 for name in ["int","hex", "int_unsigned", "number", "float", "binary_number", "float_floatexp", "imaginary_number", "number_full"]:
     c[ name ] = objectgenerator.LibraryElement(
-        generator = _p._generator,
+        generator = _p.generator,
         production = name,
     )
 
@@ -151,7 +153,7 @@ class BinaryInterpreter(DispatchProcessor):
         return _toInt( buffer[left:right-1], 2)
         
 class ImaginaryInterpreter( DispatchProcessor ):
-    map = {
+    map: ClassVar[Dict[str, DispatchProcessor]] = {
         "float":FloatInterpreter(),
         "int":IntInterpreter()
     }

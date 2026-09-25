@@ -14,7 +14,7 @@ BMS = TextSearch
 BMSType = TextSearchType
 try:
     TextSearch('', None, FASTSEARCH)
-except Exception:
+except ValueError:
     #: This extension was built without the fast search, so `FS` asks for what
     #: it does have -- which is what the name meant before the algorithm was
     #: settled at build time.

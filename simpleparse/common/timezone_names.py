@@ -146,7 +146,7 @@ zulu_data = [
 # zones!
 tztemp = []
 for key, value in zulu_data:
-    for item in phonetics._letters:
+    for item in phonetics.military_alphabet:
         if item[0] == key:
             tztemp.append( (item, value) )
 # order is important here, want longer first
