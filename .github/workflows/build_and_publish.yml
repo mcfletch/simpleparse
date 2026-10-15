@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   pull_request:
   # Every branch builds, which is what says the wheels can be built on all four
-  # runners. Only a push to `master` uploads, and only a version PyPI does not
+  # runners. Only a push to `main` uploads, and only a version PyPI does not
   # already have; see `upload_pypi`.
   push:
 
@@ -92,7 +92,7 @@ jobs:
     permissions:
       id-token: write
     # Only from the release branch, and only a version that is not out yet.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         && needs.version.outputs.publish == 'true'
     steps:
       - uses: actions/download-artifact@v4
